@@ -20,6 +20,7 @@
 'use strict';
 
 let Sequelize = require('sequelize');
+const Crypto = require('crypto');
 let db = syzoj.db;
 
 let model = db.define('user', {
@@ -65,7 +66,7 @@ class User extends Model {
   static async create(val) {
     return User.fromRecord(User.model.build(Object.assign({
       username: '',
-      password: '',
+      password: User.passwordEncrypt(''),
       email: '',
 
       nickname: '',
@@ -251,6 +252,12 @@ class User extends Model {
   }
 
   getModel() { return model; }
+
+  static passwordEncrypt(password) {
+    let hash = Crypto.createHash('sha256');
+    hash.update('_oj|' + password + 'syzoj');
+    return hash.digest('hex');
+  }
 }
 
 User.model = model;

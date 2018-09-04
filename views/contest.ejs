@@ -1,4 +1,5 @@
 <% this.title = contest.title + ' - 比赛' %>
+<% include header %>
 <style>
 .ui.label.pointing.below.left::before { left: 12%; }
 .ui.label.pointing.below.right::before { left: 88%; }
@@ -6,11 +7,11 @@
 .ui.label.pointing.below.right { margin-bottom: 0; float: right; }
 #back_to_contest { display: none;  }
 </style>
-<% include header %>
 <div class="padding">
   <h1><%= contest.title %></h1>
   <div style="margin-bottom: 30px;"><%- contest.subtitle %></div>
-  <% let unveiled = (isSupervisior || syzoj.utils.getCurrentDate() >= contest.start_time); %>
+  <% let unveiled = (isSupervisior || (syzoj.utils.getCurrentDate() >= contest.start_time && !needToken)); %>
+  <% let showTokenInput = needToken && isLogin; %>
   <% const seeResult = (isSupervisior || contest.ended); %>
   <% const seeRanklist = seeResult || (contest.allowedSeeingResult() && contest.allowedSeeingOthers()); %>
   <% let start = syzoj.utils.formatDate(contest.start_time), end = syzoj.utils.formatDate(contest.end_time); %>
@@ -97,7 +98,7 @@
                   <% } %>
                 <% } %>
                 </td>
-                <td><a href="<%= syzoj.utils.makeUrl(['contest', contest.id, 'problem', i]) %>"><%= syzoj.utils.removeTitleTag(problem.problem.title) %></a></td>
+                <td><a href="<%= syzoj.utils.makeUrl(['contest', contest.id, 'problem', i]) %>"><%= (contest.type === 'acm' ? String.fromCharCode('A'.charCodeAt(0) + parseInt(i) - 1) + ". " : "") + syzoj.utils.removeTitleTag(problem.problem.title) %></a></td>
                 <% if (hasStatistics) { %>
                   <td class="center aligned" style="white-space: nowrap; ">
                   <a href="<%= syzoj.utils.makeUrl(['contest', contest.id, 'submissions'], { problem_id: i, status: 'Accepted' }) %>"><%= problem.statistics.accepted %></a>
@@ -116,6 +117,24 @@
       </div>
     </div>
   <% } %>
+  <% if (showTokenInput) {%>
+    <div class="row" style="justify-content: center">
+      <div class="column" style="max-width: 450px">
+        <form class="ui large form">
+          <div class="ui error message" id="error" style="font-size: 14px"></div>
+          <div class="ui existing segment">
+            <div class="field">
+              <div class="ui left icon input">
+                <i class="lock icon"></i>
+                <input id="token_id" placeholder="Token码" type="text" onkeydown="key_token(event)">
+              </div>
+            </div>
+            <div class="ui fluid large submit button" onclick="token_submit()" id="token_submit_btn">提交</div>
+          </div>
+        </form>
+      </div>
+    </div>
+  <% } %>
   </div>
 </div>
 
@@ -128,5 +147,57 @@ $(function () {
     });
   }, 5000);
 });
+<% if (showTokenInput) {%>
+function show_error(error) {
+    $("#error").text(error);
+    $("#error").show();
+}
+function success() {
+    window.location.reload();
+}
+function token_submit() {
+  $("#token_submit_btn").addClass("loading");
+  $.ajax({
+      url: "/api/token_submit/",
+      type: 'POST',
+      data: {
+          "token": $("#token_id").val(),
+          "contest_id": <%= contest.id %>,
+          "_csrf": document.head.getAttribute('data-csrf-token')
+      },
+      async: true,
+      success: function(data) {
+          error_code = data.error_code;
+          switch (error_code) {
+              case 1001:
+                  show_error("Token 不存在");
+                  break;
+              case 1002:
+                  show_error("Token 与竞赛不匹配");
+                  break;
+              case 1003:
+                  show_error("Token 已被其他账户绑定");
+                  break;
+              case 1:
+                  success();
+                  return;
+              default:
+                  show_error("未知错误");
+                  break;
+          }
+          $("#token_submit_btn").removeClass("loading");
+      },
+      error:  function(XMLHttpRequest, textStatus, errorThrown) {
+          alert(XMLHttpRequest.responseText);
+          show_error("未知错误");
+      }
+  });
+}
+function key_token(event) {
+  if (event.keyCode == 13) {
+    token_submit();
+  }
+}
+<% } %>
 </script>
 <% include footer %>

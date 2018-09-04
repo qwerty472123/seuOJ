@@ -19,9 +19,15 @@
                 <% } %>
                 <% for (let i = 0; i < problems.length; i++) { %>
                 <th>
-                  <a href="<%= syzoj.utils.makeUrl(['contest', contest.id, 'problem', i + 1]) %>">
+                <% if (contest.type === 'acm') { %>
+                  <a href="<%= syzoj.utils.makeUrl(['contest', contest.id, 'problem', i + 1]) %>" title="<%= syzoj.utils.removeTitleTag(problems[i].title) %>">
+                    <%= String.fromCharCode('A'.charCodeAt(0) + parseInt(i)) %>
+                  </a>
+                <% } else { %>
+                  <a href="<%= syzoj.utils.makeUrl(['contest', contest.id, i + 1]) %>">
                     <%= syzoj.utils.removeTitleTag(problems[i].title) %>
                   </a>
+                <% } %>
                 </th>
                 <% } %>
                 <% if (contest.type === 'noi' || contest.type === 'ioi') { %>
@@ -80,7 +86,7 @@
                   <%= rank %>
                   </div>
                 </td>
-                <td><a href="<%= syzoj.utils.makeUrl(['user', item.user.id]) %>"><%= item.user.username %></a><% if (item.user.nameplate) { %><%- item.user.nameplate %><% } %></td>
+                <td><a href="<%= syzoj.utils.makeUrl(['user', item.user.id]) %>"><%= item.user.username %></a><% if (item.user.nameplate) { %><%- item.user.nameplate %><% } %><% if (item.user.extra_info) { %><br><span style="color:#999"><%- item.user.extra_info %></span><% } %></td>
                 <% if (contest.type === 'acm') { %>
                   <td>
                     <span class="score score_<%= parseInt((item.player.score / ranklist[0].player.score * 10) || 0) %>">

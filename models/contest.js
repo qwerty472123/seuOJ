@@ -26,6 +26,7 @@ let User = syzoj.model('user');
 let Problem = syzoj.model('problem');
 let ContestRanklist = syzoj.model('contest_ranklist');
 let ContestPlayer = syzoj.model('contest_player');
+let ContestToken = syzoj.model('contest_token');
 
 let model = db.define('contest', {
   id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
@@ -57,7 +58,8 @@ let model = db.define('contest', {
   },
 
   is_public: { type: Sequelize.BOOLEAN },
-  hide_statistics: { type: Sequelize.BOOLEAN }
+  hide_statistics: { type: Sequelize.BOOLEAN },
+  need_token: { type: Sequelize.BOOLEAN }
 }, {
     timestamps: false,
     tableName: 'contest',
@@ -86,8 +88,24 @@ class Contest extends Model {
       holder: 0,
       ranklist_id: 0,
       is_public: false,
-      hide_statistics: false
+      hide_statistics: false,
+      need_token: false
     }, val)));
+  }
+
+  async allowedContestToken(req, res) {
+    if (res.locals.user && res.locals.user.is_admin) return true;
+    if (this.isEnded()) return true;
+    if (this.need_token) {
+      if (req.session.contest_token) {console.log(req.session.contest_token);
+        let token = JSON.parse(req.session.contest_token)[this.id];
+        let tokenInfo = await ContestToken.find({ token });
+        if (tokenInfo && this.id == tokenInfo.contest_id && tokenInfo.user_id == res.locals.user.id)
+          return true;
+      }
+      return false;
+    }
+    return true;
   }
 
   async loadRelationships() {

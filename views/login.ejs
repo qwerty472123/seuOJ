@@ -50,7 +50,8 @@ function show_error(error) {
     $("#error").show();
 }
 function success(session_id) {
-    window.location.href = <%- JSON.stringify(req.query.url || '/') %>;
+    var redirectUrl = <%- JSON.stringify(req.query.url || '/') %>;
+    window.location.href = redirectUrl.indexOf("/") == 0 || redirectUrl.indexOf("http://") == 0 || redirectUrl.indexOf("https://") == 0 ? redirectUrl : '/';
 }
 function login() {
     password = md5($("#password").val() + "syzoj2_xxx");

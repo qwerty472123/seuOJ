@@ -53,7 +53,7 @@
 
   <code-box :escape="false" v-bind:content="code"></code-box>
   <code-box v-if="detailResult && detailResult.compile" :escape="false" title="编译信息" v-bind:content="detailResult.compile.message"></code-box>
-  <code-box v-if="detailResult" title="系统信息" :escape="true" v-bind:content="detailResult.systemMessage"></code-box>
+  <code-box v-if="detailResult" title="系统信息" :escape="!(detailResult.systemMessage&&detailResult.systemMessage.startsWith('Error: ===== Special Judge Compilation Message ====='))" v-bind:content="detailResult.systemMessage"></code-box>
 
   <div class="ui styled fluid accordion" :class="singleSubtask ? 'single-subtask' : '' "v-if="detailResult && detailResult.judge && detailResult.judge.subtasks">
     <template v-for="subtask, $index in detailResult.judge.subtasks">
@@ -113,9 +113,9 @@
     </template>
   </div>
 </div>
-<script src="//cdn.bootcss.com/vue/2.4.2/vue.js"></script>
-<script src="//cdn.bootcss.com/socket.io/2.0.3/socket.io.js"></script>
-<script src="//cdn.bootcss.com/jsondiffpatch/0.2.4/jsondiffpatch.js"></script>
+<script src="/cdn/vue.js"></script>
+<script src="/cdn/socket.io.js"></script>
+<script src="/cdn/jsondiffpatch.js"></script>
 
 <% include submissions_item %>
 

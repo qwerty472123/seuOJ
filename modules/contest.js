@@ -25,6 +25,7 @@ let ContestPlayer = syzoj.model('contest_player');
 let Problem = syzoj.model('problem');
 let JudgeState = syzoj.model('judge_state');
 let User = syzoj.model('user');
+let ContestToken = syzoj.model('contest_token');
 
 const jwt = require('jsonwebtoken');
 const { getSubmissionInfo, getRoughResult, processOverallResult } = require('../libs/submissions_process');
@@ -120,6 +121,7 @@ app.post('/contest/:id/edit', async (req, res) => {
     contest.end_time = syzoj.utils.parseDate(req.body.end_time);
     contest.is_public = req.body.is_public === 'on';
     contest.hide_statistics = req.body.hide_statistics === 'on';
+    contest.need_token = req.body.need_token === 'on';
 
     await contest.save();
 
@@ -226,7 +228,9 @@ app.get('/contest/:id', async (req, res) => {
       contest: contest,
       problems: problems,
       hasStatistics: hasStatistics,
-      isSupervisior: isSupervisior
+      isSupervisior: isSupervisior,
+      needToken: !await contest.allowedContestToken(req, res),
+      isLogin: !!curUser
     });
   } catch (e) {
     syzoj.log(e);
@@ -248,6 +252,7 @@ app.get('/contest/:id/ranklist', async (req, res) => {
     contest.isEnded(),
     await contest.isSupervisior(curUser)].every(x => !x))
       throw new ErrorMessage('您没有权限进行此操作。');
+    if (!await contest.allowedContestToken(req, res)) throw new ErrorMessage('您尚未输入Token。');
 
     await contest.loadRelationships();
 
@@ -273,6 +278,10 @@ app.get('/contest/:id/ranklist', async (req, res) => {
       }
 
       let user = await User.fromID(player.user_id);
+      if (contest.need_token) {
+        let token = await ContestToken.find({ contest_id, user_id: player.user_id });
+        if (token) user.extra_info = token.extra_info;
+      }
 
       return {
         user: user,
@@ -315,6 +324,7 @@ app.get('/contest/:id/submissions', async (req, res) => {
     let contest_id = parseInt(req.params.id);
     let contest = await Contest.fromID(contest_id);
     if (!contest.is_public && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛未公开，请耐心等待 (´∀ `)');
+    if (!await contest.allowedContestToken(req, res)) throw new ErrorMessage('您尚未输入Token。');
 
     if (contest.isEnded()) {
       res.redirect(syzoj.utils.makeUrl(['submissions'], { contest: contest_id }));
@@ -421,6 +431,7 @@ app.get('/contest/submission/:id', async (req, res) => {
     }
 
     const contest = await Contest.fromID(judge.type_info);
+    if (!await contest.allowedContestToken(req, res)) throw new ErrorMessage('您尚未输入Token。');
     contest.ended = contest.isEnded();
 
     const displayConfig = getDisplayConfig(contest);
@@ -462,6 +473,7 @@ app.get('/contest/:id/problem/:pid', async (req, res) => {
     let contest_id = parseInt(req.params.id);
     let contest = await Contest.fromID(contest_id);
     if (!contest) throw new ErrorMessage('无此比赛。');
+    if (!await contest.allowedContestToken(req, res)) throw new ErrorMessage('您尚未输入Token。');
     const curUser = res.locals.user;
 
     let problems_id = await contest.getProblems();
@@ -511,6 +523,7 @@ app.get('/contest/:id/:pid/download/additional_file', async (req, res) => {
     let id = parseInt(req.params.id);
     let contest = await Contest.fromID(id);
     if (!contest) throw new ErrorMessage('无此比赛。');
+    if (!await contest.allowedContestToken(req, res)) throw new ErrorMessage('您尚未输入Token。');
 
     let problems_id = await contest.getProblems();
 

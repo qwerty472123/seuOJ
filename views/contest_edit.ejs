@@ -77,6 +77,13 @@
                 <label><span style="visibility: hidden; ">　</span></label>
               </div>
             </div>
+            <div class="inline field">
+              <label class="ui header">需要 Token</label>
+              <div class="ui toggle checkbox">
+                <input type="checkbox"<% if (contest.need_token) { %> checked<% } %> name="need_token">
+                <label><span style="visibility: hidden; ">　</span></label>
+              </div>
+            </div>
             <button type="submit" class="ui button">提交</button>
         </form>
 <script>

@@ -22,6 +22,7 @@
 let User = syzoj.model('user');
 let Problem = syzoj.model('problem');
 let File = syzoj.model('file');
+let ContestToken = syzoj.model('contest_token');
 const Email = require('../libs/email');
 const jwt = require('jsonwebtoken');
 
@@ -37,7 +38,7 @@ app.post('/api/login', async (req, res) => {
 
     if (!user) throw 1001;
     else if (user.password == null || user.password === '') res.send({ error_code: 1003 });
-    else if (user.password !== req.body.password) res.send({ error_code: 1002 });
+    else if (user.password !== User.passwordEncrypt(req.body.password)) res.send({ error_code: 1002 });
     else {
       req.session.user_id = user.id;
       setLoginCookie(user.username, user.password, res);
@@ -130,7 +131,7 @@ app.post('/api/sign_up', async (req, res) => {
     } else {
       user = await User.create({
         username: req.body.username,
-        password: req.body.password,
+        password: User.passwordEncrypt(req.body.password),
         email: req.body.email,
         public_email: true
       });
@@ -178,7 +179,7 @@ app.post('/api/reset_password', async (req, res) => {
     let syzoj2_xxx_md5 = '59cb65ba6f9ad18de0dcd12d5ae11bd2';
     if (req.body.password === syzoj2_xxx_md5) throw new ErrorMessage('密码不能为空。');
     const user = await User.fromID(obj.userId);
-    user.password = req.body.password;
+    user.password = User.passwordEncrypt(req.body.password);
     await user.save();
 
     res.send(JSON.stringify({ error_code: 1 }));
@@ -215,7 +216,7 @@ app.get('/api/sign_up_confirm', async (req, res) => {
 
     user = await User.create({
       username: obj.username,
-      password: obj.password,
+      password: User.passwordEncrypt(obj.password),
       email: obj.email,
       public_email: true
     });
@@ -258,7 +259,7 @@ app.get('/api/sign_up/:token', async (req, res) => {
 
     user = await User.create({
       username: obj.username,
-      password: obj.password,
+      password: User.passwordEncrypt(obj.password),
       email: obj.email,
       public_email: true
     });
@@ -292,5 +293,27 @@ app.get('/static/uploads/answer/:md5', async (req, res) => {
     res.sendFile(File.resolvePath('answer', req.params.md5));
   } catch (e) {
     res.status(500).send(e);
+  }
+});
+
+app.post('/api/token_submit', async (req, res) => {
+  try {
+    res.setHeader('Content-Type', 'application/json');console.log("")
+    let token = await ContestToken.find({ token: req.body.token });
+    if (!token) throw 1001;
+    if (req.body.contest_id != token.contest_id.toString()) throw 1002;
+    if (token.user_id > -1) {
+      if (token.user_id != res.locals.user.id) throw 1003;
+    } else {
+      token.user_id = res.locals.user.id;
+      await token.save();
+    }
+    let json = req.session.contest_token ? JSON.parse(req.session.contest_token) : {};
+    json[req.body.contest_id] = req.body.token;
+    req.session.contest_token = JSON.stringify(json);
+    res.send({ error_code: 1 });
+  } catch (e) {
+    syzoj.log(e);
+    res.send(JSON.stringify({ error_code: e }));
   }
 });

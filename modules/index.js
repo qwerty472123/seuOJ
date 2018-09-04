@@ -22,7 +22,6 @@
 let User = syzoj.model('user');
 let Article = syzoj.model('article');
 let Contest = syzoj.model('contest');
-let Divine = require('syzoj-divine');
 
 app.get('/', async (req, res) => {
   try {
@@ -35,11 +34,6 @@ app.get('/', async (req, res) => {
       date: syzoj.utils.formatDate(article.public_time, 'L')
     }));
 
-    let fortune = null;
-    if (res.locals.user) {
-      fortune = Divine(res.locals.user.username, res.locals.user.sex);
-    }
-
     let where;
     if (res.locals.user && await res.locals.user.is_admin) where = {}
     else where = { is_public: true };
@@ -48,7 +42,6 @@ app.get('/', async (req, res) => {
     res.render('index', {
       ranklist: ranklist,
       notices: notices,
-      fortune: fortune,
       contests: contests,
       links: syzoj.config.links
     });

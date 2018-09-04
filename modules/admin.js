@@ -73,7 +73,6 @@ let configItems = {
   'limit.testdata': { name: '测试数据大小（单位：byte）', type: Number },
   'limit.submit_code': { name: '代码长度（单位：byte）', type: Number },
   'limit.submit_answer': { name: '提交答案题目答案大小（单位：byte）', type: Number },
-  'limit.custom_test_input': { name: '自定义测试输入文件大小（单位：byte）', type: Number },
   'limit.testdata_filecount': { name: '测试数据文件数量（单位：byte）', type: Number },
   '每页显示数量': null,
   'page.problem': { name: '题库', type: Number },

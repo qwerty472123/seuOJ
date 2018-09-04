@@ -89,6 +89,7 @@ app.get('/sign_up', async (req, res) => {
 // Logout
 app.post('/logout', async (req, res) => {
   req.session.user_id = null;
+  req.session.contest_token = null;
   res.clearCookie('login');
   res.redirect(req.query.url || '/');
 });
@@ -184,8 +185,8 @@ app.post('/user/:id/edit', async (req, res) => {
     if (!allowedEdit) throw new ErrorMessage('您没有权限进行此操作。');
 
     if (req.body.old_password && req.body.new_password) {
-      if (user.password !== req.body.old_password && !await res.locals.user.hasPrivilege('manage_user')) throw new ErrorMessage('旧密码错误。');
-      user.password = req.body.new_password;
+      if (user.password !== User.passwordEncrypt(req.body.old_password) && !await res.locals.user.hasPrivilege('manage_user')) throw new ErrorMessage('旧密码错误。');
+      user.password = User.passwordEncrypt(req.body.new_password);
     }
 
     if (res.locals.user && await res.locals.user.hasPrivilege('manage_user')) {
