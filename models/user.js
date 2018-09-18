@@ -255,7 +255,7 @@ class User extends Model {
 
   static passwordEncrypt(password) {
     let hash = Crypto.createHash('sha256');
-    hash.update('_oj|' + password + 'syzoj');
+    hash.update('_oj|' + password + '^split' + syzoj.config.password_secret + '^syzoj');
     return hash.digest('hex');
   }
 }
