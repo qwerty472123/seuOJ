@@ -257,7 +257,7 @@ class User extends Model {
     let hash = Crypto.createHash('sha256');
     hash.update('_oj|' + password + 'syzoj');
 	let reHash = Crypto.createHash('sha256');
-	reHash.update("secret" + hash.digest('hex') + "^split^" + syzoj.config.password_secret + "pwd")
+	reHash.update('secret' + hash.digest('hex') + '^split^' + syzoj.config.password_secret + 'pwd');
     return reHash.digest('hex');
   }
 }
