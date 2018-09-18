@@ -96,7 +96,8 @@ module.exports = {
           bottom: true,
           left: true,
           right: true,
-          "white-space": true
+          "white-space": true,
+		  "line-height": true
         })
       },
       whiteList: whiteList,
@@ -138,13 +139,13 @@ module.exports = {
       if (!keys) {
         if (!obj || !obj.trim()) resolve("");
         else renderer(obj, { mathjaxUseHtml: true }, s => {
-            resolve(replaceUI(replaceXSS(s)));
+            resolve(replaceUI((s)));
         });
       } else {
         let res = obj, cnt = keys.length;
         for (let key of keys) {
           renderer(res[key], { mathjaxUseHtml: true }, (s) => {
-            res[key] = replaceUI(replaceXSS(s));
+            res[key] = replaceUI((s));
             if (!--cnt) resolve(res);
           });
         }
