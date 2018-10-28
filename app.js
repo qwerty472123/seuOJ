@@ -44,8 +44,11 @@ global.syzoj = {
     global.app = Express();
 
     syzoj.production = app.get('env') === 'production';
+    let winstonLib = require('./libs/winston');
+    winstonLib.configureWinston(!syzoj.production);
 
-    app.listen(parseInt(syzoj.config.port), syzoj.config.hostname, () => {
+    app.server = require('http').createServer(app);
+    app.server.listen(parseInt(syzoj.config.port), syzoj.config.hostname, () => {
       this.log(`SYZOJ is listening on ${syzoj.config.hostname}:${parseInt(syzoj.config.port)}...`);
     });
 
@@ -79,10 +82,8 @@ global.syzoj = {
       return router;
     })());
 
-    let csurf = require('csurf');
-    app.use(csurf({ cookie: true }));
-
     await this.connectDatabase();
+    await this.lib('judger').connect();
     this.loadModules();
   },
   async connectDatabase() {
