@@ -168,6 +168,5 @@
   "session_secret": "233",
   "rabbitMQ": "amqp://localhost/",
   "email_jwt_secret": "test",
-  "google_analytics": "UA-XXXXXXXX-X",
   "password_secret": ""
 }
