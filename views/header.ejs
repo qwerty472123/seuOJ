@@ -4,7 +4,9 @@
 <head>
     <meta charset="utf-8">
     <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <% if (syzoj.config.logo.url) { %>
     <link rel="icon" href="<%= syzoj.config.logo.url %>">
+    <% } %>
     <meta name="viewport" content="width=1200">
     <title><%= title %> - <%= syzoj.config.title %></title>
     <link href="/fonts/gstatic/fonts.css" rel="stylesheet">
