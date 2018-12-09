@@ -1,6 +1,7 @@
 let Problem = syzoj.model('problem');
 let JudgeState = syzoj.model('judge_state');
-let FormattedCode = syzoj.model('formatted_code');let WaitingJudge = syzoj.model('waiting_judge');
+let FormattedCode = syzoj.model('formatted_code');
+let WaitingJudge = syzoj.model('waiting_judge');
 let Contest = syzoj.model('contest');
 let ProblemTag = syzoj.model('problem_tag');
 let ProblemTagMap = syzoj.model('problem_tag_map');
