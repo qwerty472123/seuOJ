@@ -47,15 +47,26 @@
       </tr>
     </thead>
     <tbody>
-      <tr is="submission-item" v-bind:data="roughData" :config="displayConfig" :show-rejudge="showRejudge"></tr>
+      <tr is="submission-item" v-bind:data="roughData" :config="displayConfig" :show-rejudge="showRejudge" :progress="getProgress()" :compiling="detailResult && !detailResult.compile"></tr>
     </tbody>
   </table>
 
-  <code-box :escape="false" v-bind:content="code"></code-box>
+  <code-box :escape="false" v-bind:content="code">
+    <% if (formattedCode !== null) { %>
+      <a onclick="toggleFormattedCode()" class="ui button" style="position: absolute; top: 0px; right: -4px; border-top-left-radius: 0; border-bottom-right-radius: 0; ">
+        <template v-if="currentFormatted">
+          显示原始代码
+        </template>
+        <template v-if="!currentFormatted">
+          格式化代码
+        </template>
+      </a>
+    <% } %>
+  </code-box>
   <code-box v-if="detailResult && detailResult.compile" :escape="false" title="编译信息" v-bind:content="detailResult.compile.message"></code-box>
   <code-box v-if="detailResult" title="系统信息" :escape="!(detailResult.systemMessage&&detailResult.systemMessage.startsWith('Error: ===== Special Judge Compilation Message ====='))" v-bind:content="detailResult.systemMessage"></code-box>
 
-  <div class="ui styled fluid accordion" :class="singleSubtask ? 'single-subtask' : '' "v-if="detailResult && detailResult.judge && detailResult.judge.subtasks">
+  <div class="ui styled fluid accordion" :class="singleSubtask ? 'single-subtask' : '' " v-if="detailResult && detailResult.judge && detailResult.judge.subtasks">
     <template v-for="subtask, $index in detailResult.judge.subtasks">
       <div class="title" :class="singleSubtask ? 'active' : ''">
         <div class="ui grid">
@@ -64,7 +75,7 @@
             子任务 #{{ $index + 1 }}
           </div>
           <div class="four wide column">
-            <status-label :status="getSubtaskResult(subtask)"></status-label>
+            <status-label :status="getSubtaskResult(subtask)" :indetail="true" :progress="getProgress($index)"></status-label>
           </div>
           <div class="three wide column" v-if="subtask.score != null">
             得分：<span style="font-weight: normal; ">{{ Math.trunc(subtask.score) }}</span>
@@ -74,14 +85,14 @@
       <div class="content" :class="singleSubtask ? 'active' : ''">
         <div class="accordion">
           <template v-for="curCase, $caseIndex in subtask.cases">
-            <div class="title">
+            <div class="title" :class="checkTestcaseOK(curCase) ? '' : 'unexpandable'">
               <div class="ui grid">
                 <div class="three wide column">
                     <i class="dropdown icon"></i>
                     测试点 #{{ $caseIndex + 1 }}
                 </div>
                 <div class="four wide column">
-                  <status-label :status="getTestcaseStatus(curCase)"></status-label>
+                  <status-label :status="getTestcaseStatus(curCase)" :indetail="true"></status-label>
                 </div>
                 <template v-if="checkTestcaseOK(curCase)">
                   <div class="three wide column">
@@ -125,6 +136,7 @@
            <strong v-html="title"></strong>
         </p>
         <div class="ui existing segment">
+          <slot></slot>
           <pre v-if="escape" style="margin-top: 0; margin-bottom: 0; "><code>{{ content }}</code></pre>
           <pre v-if="!escape" style="margin-top: 0; margin-bottom: 0; "><code v-html="content"></code></pre>
         </div>
@@ -134,7 +146,7 @@
 <script>
 Vue.component("code-box", {
     template: "#codeBoxTemplate",
-    props: ['title', 'content', 'escape'],
+    props: ['title', 'content', 'escape']
 });
 const socketUrl = "/detail";
 const displayConfig = <%- JSON.stringify(displayConfig) %>;
@@ -175,6 +187,19 @@ const TaskStatus = {};
     TaskStatus[TaskStatus["Skipped"] = 4] = "Skipped";
 })(TaskStatus);
 
+const unformattedCode = <%- JSON.stringify(code) %>;
+const formattedCode = <%- JSON.stringify(formattedCode) %>;
+
+function toggleFormattedCode() {
+  if (vueApp.currentFormatted) {
+    vueApp.currentFormatted = false;
+    vueApp.code = unformattedCode;
+  } else {
+    vueApp.currentFormatted = true;
+    vueApp.code = formattedCode;
+  }
+}
+
 const vueApp = new Vue({
   el: '#vueAppFuckSafari',
   data: {
@@ -184,7 +209,8 @@ const vueApp = new Vue({
       running: false,
       displayConfig: displayConfig
     },
-    code: <%- JSON.stringify(code) %>,
+    code: <%- JSON.stringify(preferFormattedCode && formattedCode !== null) -%> ? formattedCode : unformattedCode,
+    currentFormatted: <%- JSON.stringify(preferFormattedCode && formattedCode !== null) -%>,
     detailResult: <%- JSON.stringify(detailResult) %>,
     displayConfig: displayConfig,
   },
@@ -234,13 +260,41 @@ const vueApp = new Vue({
     },
     checkTestcaseOK(c) {
       return c.status === TaskStatus.Done;
+    },
+    getProgress(i) {
+      if (!this.detailResult || !this.detailResult.judge || !this.detailResult.judge.subtasks) return {
+        finished: 0,
+        total: 0
+      };
+
+      let isPending = status => [TaskStatus.Waiting, TaskStatus.Running].includes(status);
+      let subtaskProgress = [], allFinished = 0, allTotal = 0;
+      for (let i in this.detailResult.judge.subtasks) {
+        let subtaskFinished = 0, subtaskTotal = 0;
+        for (let j in this.detailResult.judge.subtasks[i].cases) {
+          subtaskTotal++, allTotal++;
+          if (!isPending(this.detailResult.judge.subtasks[i].cases[j].status)) subtaskFinished++, allFinished++;
+        }
+
+        subtaskProgress.push({
+          finished: subtaskFinished,
+          total: subtaskTotal
+        });
+      }
+
+      let allProgress = {
+        finished: allFinished,
+        total: allTotal
+      };
+
+      return typeof i === 'undefined' ? allProgress : subtaskProgress[i];
     }
   },
   mounted() {
-    $(document).ready(function(){ $('.ui.accordion').accordion()});
+    $(document).ready(function(){ $('.ui.accordion').accordion({ selector: { trigger: '.title:not(.unexpandable)' } })});
   },
   updated() {
-    $('.ui.accordion').accordion("refresh");
+    $('.ui.accordion').off().accordion({ selector: { trigger: '.title:not(.unexpandable)' } });
   }
 });
 if (token != null) {
@@ -254,10 +308,12 @@ if (token != null) {
         vueApp.detailResult = {};
       });
       socket.on('update', function (p) {
-        console.log("Delta: " + JSON.stringify(p));
+        console.log("Delta: ", p);
         if (p.from === currentVersion) {
           currentVersion = p.to;
           jsondiffpatch.patch(vueApp.detailResult, p.delta);
+          vueApp.detailResult = JSON.parse(JSON.stringify(vueApp.detailResult));// WTF?
+          vueApp.roughData.result = p.roughResult;
         } else { // Some packets are dropped. Let's reset.
           socket.close();
           setTimeout(loadSocketIO, 0);
@@ -271,18 +327,18 @@ if (token != null) {
         socket.close();
       });
       socket.emit('join', token, function (data) {
-        console.log("join! " + JSON.stringify(data));
+        console.log("join! ", data);
         if (data && data.ok) {
           if (data.finished) {
             vueApp.roughData.result = data.roughResult;
-            vueApp.detailResult = data.result || {
-              systemMessage: "系统出错，请刷新后重试。"
-            };
+            if (!data.result) location.reload(true);
+            vueApp.detailResult = data.result;
             socket.close();
           } else {
             if (data.running) {
               vueApp.roughData.running = true;
               vueApp.detailResult = data.current.content;
+              vueApp.roughData.result = data.roughResult;
               currentVersion = data.current.version;
             }
           }

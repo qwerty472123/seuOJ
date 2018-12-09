@@ -1,24 +1,3 @@
-/*
- *  This file is part of SYZOJ.
- *
- *  Copyright (c) 2016 Menci <huanghaorui301@gmail.com>
- *
- *  SYZOJ is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU Affero General Public License as
- *  published by the Free Software Foundation, either version 3 of the
- *  License, or (at your option) any later version.
- *
- *  SYZOJ is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Affero General Public License for more details.
- *
- *  You should have received a copy of the GNU Affero General Public
- *  License along with SYZOJ. If not, see <http://www.gnu.org/licenses/>.
- */
-
-'use strict';
-
 Array.prototype.forEachAsync = Array.prototype.mapAsync = async function (fn) {
   return Promise.all(this.map(fn));
 };
@@ -40,40 +19,13 @@ let Promise = require('bluebird');
 let path = require('path');
 let fs = Promise.promisifyAll(require('fs-extra'));
 let util = require('util');
-let renderer = require('moemark-renderer');
+let markdownRenderer = require('./libs/markdown');
 let moment = require('moment');
 let url = require('url');
 let querystring = require('querystring');
-let pygmentize = require('pygmentize-bundled-cached');
 let gravatar = require('gravatar');
 let filesize = require('file-size');
 let AsyncLock = require('async-lock');
-
-function escapeHTML(s) {
-  // Code from http://stackoverflow.com/questions/5251520/how-do-i-escape-some-html-in-javascript/5251551
-  return s.replace(/[^0-9A-Za-z ]/g, (c) => {
-    return "&#" + c.charCodeAt(0) + ";";
-  });
-}
-
-function highlightPygmentize(code, lang, cb) {
-  pygmentize({
-    lang: lang,
-    format: 'html',
-    options: {
-      nowrap: true,
-      classprefix: 'pl-'
-    }
-  }, code, (err, res) => {
-    if (err || res.toString() === 'undefined') {
-      cb(escapeHTML(code));
-    } else {
-      cb(res);
-    }
-  });
-}
-
-renderer.config.highlight = highlightPygmentize;
 
 module.exports = {
   resolvePath(s) {
@@ -82,37 +34,6 @@ module.exports = {
     return path.resolve.apply(null, a);
   },
   markdown(obj, keys, noReplaceUI) {
-    let XSS = require('xss');
-    let CSSFilter = require('cssfilter');
-    let whiteList = Object.assign({}, require('xss/lib/default').whiteList);
-    delete whiteList.audio;
-    delete whiteList.video;
-    for (let tag in whiteList) whiteList[tag] = whiteList[tag].concat(['style', 'class']);
-    let xss = new XSS.FilterXSS({
-      css: {
-        whiteList: Object.assign({}, require('cssfilter/lib/default').whiteList, {
-          'vertical-align': true,
-          top: true,
-          bottom: true,
-          left: true,
-          right: true,
-          "white-space": true,
-		  "line-height": true
-        })
-      },
-      whiteList: whiteList,
-      stripIgnoreTag: true,
-      onTagAttr: (tag, name, value, isWhiteAttr) => {
-        if (tag.toLowerCase() === 'img' && name.toLowerCase() === 'src' && value.startsWith('data:image/')) return name + '="' + XSS.escapeAttrValue(value) + '"';
-      }
-    });
-    let replaceXSS = s => {
-      s = xss.process(s);
-      if (s) {
-        s = `<div style="position: relative; overflow: hidden; ">${s}</div>`;
-      }
-      return s;
-    };
     let replaceUI = s => {
       if (noReplaceUI) return s;
 
@@ -138,14 +59,14 @@ module.exports = {
     return new Promise((resolve, reject) => {
       if (!keys) {
         if (!obj || !obj.trim()) resolve("");
-        else renderer(obj, { mathjaxUseHtml: true }, s => {
-            resolve(replaceUI((s)));
+        else markdownRenderer(obj, s => {
+            resolve(replaceUI(s));
         });
       } else {
         let res = obj, cnt = keys.length;
         for (let key of keys) {
-          renderer(res[key], { mathjaxUseHtml: true }, (s) => {
-            res[key] = replaceUI((s));
+          markdownRenderer(res[key], (s) => {
+            res[key] = replaceUI(s);
             if (!--cnt) resolve(res);
           });
         }
@@ -170,12 +91,18 @@ module.exports = {
     }
     return sgn + util.format('%s:%s:%s', toStringWithPad(x / 3600), toStringWithPad(x / 60 % 60), toStringWithPad(x % 60));
   },
-  formatSize(x) {
-    let res = filesize(x, { fixed: 1 }).calculate();
-    if (res.result === parseInt(res.result)) res.fixed = res.result.toString();
-    if (res.suffix.startsWith('Byte')) res.suffix = 'B';
-    else res.suffix = res.suffix.replace('iB', '');
-    return res.fixed + ' ' + res.suffix;
+  formatSize(x, precision) {
+      if (typeof x !== 'number') return '0 B';
+      let unit = 'B', units = ['K', 'M', 'G', 'T'];
+      for (let i in units) if (x > 1024) x /= 1024, unit = units[i];
+      var fixed = x === Math.round(x) ? x.toString() : x.toFixed(precision);
+      return fixed + ' ' + unit;
+  },
+  getFormattedCodeKey(code, lang) {
+    if (syzoj.languages[lang].format) {
+      return syzoj.languages[lang].format + '\n' + syzoj.utils.md5(code);
+    }
+    return null;
   },
   judgeServer(suffix) {
     return JSON.stringify(url.resolve('/'/*syzoj.config.judge_server_addr*/, suffix));
@@ -207,10 +134,9 @@ module.exports = {
     if (encoded) res += '?' + encoded;
     return res;
   },
-  escapeHTML: escapeHTML,
   highlight(code, lang) {
     return new Promise((resolve, reject) => {
-      highlightPygmentize(code, lang, res => {
+      require('./libs/highlight')(code, lang, res => {
         resolve(res);
       });
     });

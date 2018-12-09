@@ -1,25 +1,5 @@
-/*
- *  This file is part of SYZOJ.
- *
- *  Copyright (c) 2016 Menci <huanghaorui301@gmail.com>
- *
- *  SYZOJ is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU Affero General Public License as
- *  published by the Free Software Foundation, either version 3 of the
- *  License, or (at your option) any later version.
- *
- *  SYZOJ is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Affero General Public License for more details.
- *
- *  You should have received a copy of the GNU Affero General Public
- *  License along with SYZOJ. If not, see <http://www.gnu.org/licenses/>.
- */
-
-'use strict';
-
 let JudgeState = syzoj.model('judge_state');
+let FormattedCode = syzoj.model('formatted_code');
 let User = syzoj.model('user');
 let Contest = syzoj.model('contest');
 let Problem = syzoj.model('problem');
@@ -92,9 +72,9 @@ app.get('/submissions', async (req, res) => {
       if (req.query.problem_id) {
         let problem_id = parseInt(req.query.problem_id);
         let problem = await Problem.fromID(problem_id);
-        if(!problem)
+        if (!problem)
           throw new ErrorMessage("无此题目。");
-        if(await problem.isAllowedUseBy(res.locals.user)) {
+        if (await problem.isAllowedUseBy(res.locals.user)) {
           where.problem_id = {
             $and: [
               { $eq: where.problem_id = problem_id }
@@ -112,10 +92,15 @@ app.get('/submissions', async (req, res) => {
       if (req.query.problem_id) where.problem_id = parseInt(req.query.problem_id) || -1;
     }
 
-    let paginate = syzoj.utils.paginate(await JudgeState.count(where), req.query.page, syzoj.config.page.judge_state);
-    let judge_state = await JudgeState.query(paginate, where, [['id', 'desc']]);
+    let isFiltered = !!(where.problem_id || where.user_id || where.score || where.language || where.status);
 
-    await judge_state.forEachAsync(async obj => obj.loadRelationships());
+    let paginate = syzoj.utils.paginate(await JudgeState.count(where), req.query.page, syzoj.config.page.judge_state);
+    let judge_state = await JudgeState.query(paginate, where, [['id', 'desc']], true);
+
+    await judge_state.forEachAsync(async obj => {
+      await obj.loadRelationships();
+      obj.code_length = obj.code.length;
+    })
 
     res.render('submissions', {
       // judge_state: judge_state,
@@ -133,6 +118,7 @@ app.get('/submissions', async (req, res) => {
       pushType: 'rough',
       form: req.query,
       displayConfig: displayConfig,
+      isFiltered: isFiltered
     });
   } catch (e) {
     syzoj.log(e);
@@ -164,8 +150,21 @@ app.get('/submission/:id', async (req, res) => {
     await judge.loadRelationships();
 
     if (judge.problem.type !== 'submit-answer') {
-      judge.codeLength = judge.code.length;
-      judge.code = await syzoj.utils.highlight(judge.code, syzoj.config.languages[judge.language].highlight);
+      judge.code_length = judge.code.length;
+
+      let key = syzoj.utils.getFormattedCodeKey(judge.code, judge.language);
+      if (key) {
+        let formattedCode = await FormattedCode.findOne({
+          where: {
+            key: key
+          }
+        });
+
+        if (formattedCode) {
+          judge.formattedCode = await syzoj.utils.highlight(formattedCode.code, syzoj.languages[judge.language].highlight);
+        }
+      }
+      judge.code = await syzoj.utils.highlight(judge.code, syzoj.languages[judge.language].highlight);
     }
 
     displayConfig.showRejudge = await judge.problem.isAllowedEditBy(res.locals.user);
@@ -173,6 +172,8 @@ app.get('/submission/:id', async (req, res) => {
       info: getSubmissionInfo(judge, displayConfig),
       roughResult: getRoughResult(judge, displayConfig),
       code: (judge.problem.type !== 'submit-answer') ? judge.code.toString("utf8") : '',
+      formattedCode: judge.formattedCode ? judge.formattedCode.toString("utf8") : null,
+      preferFormattedCode: res.locals.user ? res.locals.user.prefer_formatted_code : false,
       detailResult: processOverallResult(judge.result, displayConfig),
       socketToken: (judge.pending && judge.task_id != null) ? jwt.sign({
         taskId: judge.task_id,

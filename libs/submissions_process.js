@@ -5,8 +5,8 @@ const getSubmissionInfo = (s, displayConfig) => ({
     userId: s.user_id,
     problemName: s.problem.title,
     problemId: s.problem_id,
-    language: displayConfig.showCode ? ((s.language != null && s.language !== '') ? syzoj.config.languages[s.language].show : null) : null,
-    codeSize: displayConfig.showCode ? syzoj.utils.formatSize(s.code_length) : null,
+    language: displayConfig.showCode ? ((s.language != null && s.language !== '') ? syzoj.languages[s.language].show : null) : null,
+    codeSize: displayConfig.showCode ? s.code_length : null,
     submitTime: syzoj.utils.formatDate(s.submit_time),
 });
 

@@ -1,24 +1,3 @@
-/*
- *  This file is part of SYZOJ.
- *
- *  Copyright (c) 2016 Menci <huanghaorui301@gmail.com>
- *
- *  SYZOJ is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU Affero General Public License as
- *  published by the Free Software Foundation, either version 3 of the
- *  License, or (at your option) any later version.
- *
- *  SYZOJ is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Affero General Public License for more details.
- *
- *  You should have received a copy of the GNU Affero General Public
- *  License along with SYZOJ. If not, see <http://www.gnu.org/licenses/>.
- */
-
-'use strict';
-
 let Sequelize = require('sequelize');
 const Crypto = require('crypto');
 let db = syzoj.db;
@@ -39,6 +18,7 @@ let model = db.define('user', {
   is_admin: { type: Sequelize.BOOLEAN },
   is_show: { type: Sequelize.BOOLEAN },
   public_email: { type: Sequelize.BOOLEAN },
+  prefer_formatted_code: { type: Sequelize.BOOLEAN },
 
   sex: { type: Sequelize.INTEGER },
   rating: { type: Sequelize.INTEGER },
@@ -87,7 +67,7 @@ class User extends Model {
       }
     }));
   }
-  
+
   static async fromName(name) {
     return User.fromRecord(User.model.findOne({
       where: {

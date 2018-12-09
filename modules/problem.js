@@ -1,27 +1,6 @@
-/*
- *  This file is part of SYZOJ.
- *
- *  Copyright (c) 2016 Menci <huanghaorui301@gmail.com>
- *
- *  SYZOJ is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU Affero General Public License as
- *  published by the Free Software Foundation, either version 3 of the
- *  License, or (at your option) any later version.
- *
- *  SYZOJ is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Affero General Public License for more details.
- *
- *  You should have received a copy of the GNU Affero General Public
- *  License along with SYZOJ. If not, see <http://www.gnu.org/licenses/>.
- */
-
-'use strict';
-
 let Problem = syzoj.model('problem');
 let JudgeState = syzoj.model('judge_state');
-let WaitingJudge = syzoj.model('waiting_judge');
+let FormattedCode = syzoj.model('formatted_code');let WaitingJudge = syzoj.model('waiting_judge');
 let Contest = syzoj.model('contest');
 let ProblemTag = syzoj.model('problem_tag');
 let ProblemTagMap = syzoj.model('problem_tag_map');
@@ -29,12 +8,13 @@ let Article = syzoj.model('article');
 const Sequelize = require('sequelize');
 
 let Judger = syzoj.lib('judger');
+let CodeFormatter = syzoj.lib('code_formatter');
 
 app.get('/problems', async (req, res) => {
   try {
     const sort = req.query.sort || syzoj.config.sorting.problem.field;
     const order = req.query.order || syzoj.config.sorting.problem.order;
-    if (!['id', 'title', 'rating', 'ac_num', 'submit_num', 'ac_rate'].includes(sort) || !['asc', 'desc'].includes(order)) {
+    if (!['id', 'title', 'rating', 'ac_num', 'submit_num', 'ac_rate', 'publicize_time'].includes(sort) || !['asc', 'desc'].includes(order)) {
       throw new ErrorMessage('错误的排序参数。');
     }
 
@@ -93,7 +73,7 @@ app.get('/problems/search', async (req, res) => {
 
     let where = {
       $or: {
-        title: { like: `%${req.query.keyword}%` },
+        title: { $like: `%${req.query.keyword}%` },
         id: id
       }
     };
@@ -580,6 +560,7 @@ async function setPublic(req, res, is_public) {
 
     problem.is_public = is_public;
     problem.publicizer_id = res.locals.user.id;
+    problem.publicize_time = new Date();
     await problem.save();
 
     JudgeState.model.update(
@@ -611,7 +592,7 @@ app.post('/problem/:id/submit', app.multer.fields([{ name: 'answer', maxCount: 1
     const curUser = res.locals.user;
 
     if (!problem) throw new ErrorMessage('无此题目。');
-    if (problem.type !== 'submit-answer' && !syzoj.config.languages[req.body.language]) throw new ErrorMessage('不支持该语言。');
+    if (problem.type !== 'submit-answer' && !syzoj.config.enabled_languages.includes(req.body.language)) throw new ErrorMessage('不支持该语言。');
     if (!curUser) throw new ErrorMessage('请登录后继续。', { '登录': syzoj.utils.makeUrl(['login'], { 'url': syzoj.utils.makeUrl(['problem', id]) }) });
 
     let judge_state;
@@ -684,6 +665,27 @@ app.post('/problem/:id/submit', app.multer.fields([{ name: 'answer', maxCount: 1
       await judge_state.save();
     }
     await judge_state.updateRelatedInfo(true);
+
+    if (problem.type !== 'submit-answer' && syzoj.languages[req.body.language].format) {
+      let key = syzoj.utils.getFormattedCodeKey(judge_state.code, req.body.language);
+      let formattedCode = await FormattedCode.findOne({
+        where: {
+          key: key
+        }
+      });
+
+      if (!formattedCode) {
+        let formatted = await CodeFormatter(judge_state.code, syzoj.languages[req.body.language].format);
+        if (formatted) {
+          formattedCode = await FormattedCode.create({
+            key: key,
+            code: formatted
+          });
+
+          await formattedCode.save();
+        }
+      }
+    }
 
     try {
       await Judger.judge(judge_state, problem, contest_id ? 3 : 2);

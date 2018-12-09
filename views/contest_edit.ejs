@@ -43,7 +43,7 @@
               <div class="field">
                 <div class="ui radio checkbox">
                   <input <% if (contest.id) { %>disabled <% } %>type="radio" name="type" id="type-acm" value="acm"<% if (contest.type === 'acm') { %> checked="checked"<% } %>>
-                  <label for="type-acm">ACM</label>
+                  <label for="type-acm">ICPC</label>
                 </div>
               </div>
             </div>
@@ -84,7 +84,7 @@
                 <label><span style="visibility: hidden; ">　</span></label>
               </div>
             </div>
-            <button type="submit" class="ui button">提交</button>
+            <div style="text-align: center; "><button type="submit" class="ui labeled icon blue button"><i class="ui edit icon"></i>提交</button></div>
         </form>
 <script>
 $(function () {

@@ -1,22 +1,3 @@
-/*
- *  This file is part of SYZOJ.
- *
- *  Copyright (c) 2016 Menci <huanghaorui301@gmail.com>
- *
- *  SYZOJ is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU Affero General Public License as
- *  published by the Free Software Foundation, either version 3 of the
- *  License, or (at your option) any later version.
- *
- *  SYZOJ is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Affero General Public License for more details.
- *
- *  You should have received a copy of the GNU Affero General Public
- *  License along with SYZOJ. If not, see <http://www.gnu.org/licenses/>.
- */
-
 let Problem = syzoj.model('problem');
 let JudgeState = syzoj.model('judge_state');
 let Article = syzoj.model('article');
@@ -78,24 +59,7 @@ let configItems = {
   'page.ranklist': { name: '排行榜', type: Number },
   'page.discussion': { name: '讨论', type: Number },
   'page.article_comment': { name: '评论', type: Number },
-  'page.contest': { name: '比赛', type: Number },
-  '编译器版本': null,
-  'languages.cpp.version': { name: 'C++', type: String },
-  'languages.cpp11.version': { name: 'C++11', type: String },
-  'languages.csharp.version': { name: 'C#', type: String },
-  'languages.c.version': { name: 'C', type: String },
-  'languages.vala.version': { name: 'Vala', type: String },
-  'languages.java.version': { name: 'Java', type: String },
-  'languages.pascal.version': { name: 'Pascal', type: String },
-  'languages.lua.version': { name: 'Lua', type: String },
-  'languages.luajit.version': { name: 'LuaJIT', type: String },
-  'languages.python2.version': { name: 'Python 2', type: String },
-  'languages.python3.version': { name: 'Python 3', type: String },
-  'languages.nodejs.version': { name: 'Node.js', type: String },
-  'languages.ruby.version': { name: 'Ruby', type: String },
-  'languages.haskell.version': { name: 'Haskell', type: String },
-  'languages.ocaml.version': { name: 'OCaml', type: String },
-  'languages.vbnet.version': { name: 'Visual Basic', type: String }
+  'page.contest': { name: '比赛', type: Number }
 };
 
 app.get('/admin/config', async (req, res) => {
