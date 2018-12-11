@@ -63,7 +63,8 @@ app.get('/submissions', async (req, res) => {
     }
 
     if (req.query.language) {
-      if (req.query.language === 'submit-answer') where.language = '';
+      if (req.query.language === 'submit-answer') where.language = { $or: [{ $eq: '',  }, { $eq: null }] };
+      else if (req.query.language === 'non-submit-answer') where.language = { $not: '' };
       else where.language = req.query.language;
     }
     if (req.query.status) where.status = { $like: req.query.status + '%' };
@@ -111,7 +112,7 @@ app.get('/submissions', async (req, res) => {
           type: 'rough',
           displayConfig: displayConfig
         }, syzoj.config.session_secret) : null,
-        result: getRoughResult(x, displayConfig),
+        result: getRoughResult(x, displayConfig, true),
         running: false,
       })),
       paginate: paginate,
@@ -170,7 +171,7 @@ app.get('/submission/:id', async (req, res) => {
     displayConfig.showRejudge = await judge.problem.isAllowedEditBy(res.locals.user);
     res.render('submission', {
       info: getSubmissionInfo(judge, displayConfig),
-      roughResult: getRoughResult(judge, displayConfig),
+      roughResult: getRoughResult(judge, displayConfig, false),
       code: (judge.problem.type !== 'submit-answer') ? judge.code.toString("utf8") : '',
       formattedCode: judge.formattedCode ? judge.formattedCode.toString("utf8") : null,
       preferFormattedCode: res.locals.user ? res.locals.user.prefer_formatted_code : false,
