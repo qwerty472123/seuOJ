@@ -80,9 +80,13 @@
             <div class="inline field">
               <label class="ui header">需要 Secret</label>
               <div class="ui toggle checkbox">
-                <input type="checkbox"<% if (contest.need_secret) { %> checked<% } %> name="need_secret">
+                <input type="checkbox"<% if (contest.need_secret) { %> checked<% } %> name="need_secret" onchange="$('#ranking_group_info_div').slideToggle();">
                 <label><span style="visibility: hidden; ">　</span></label>
               </div>
+            </div>
+            <div class="field" id="ranking_group_info_div"<% if (!contest.need_secret) { %> style="display: none;"<% } %>>
+                <label>排行方式（格式：<code>[ [ "排行表头", [ "选手分类码（为空代表全部）" ], [ [ 基准线名称, 基准线为百分比, 基准线值, "基准线颜色" ] ] ] ]</code>）</label>
+                <input type="text" name="ranking_group_info" value="<%= (contest.need_secret && contest.ranklist) ? JSON.stringify(contest.ranklist.ranking_group_info) : '' %>">
             </div>
             <div style="text-align: center; "><button type="submit" class="ui labeled icon blue button"><i class="ui edit icon"></i>提交</button></div>
         </form>

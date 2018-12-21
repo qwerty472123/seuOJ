@@ -20,7 +20,8 @@ class ContestRanklist extends Model {
   static async create(val) {
     return ContestRanklist.fromRecord(ContestRanklist.model.build(Object.assign({
       ranking_params: {},
-      ranklist: {}
+      ranklist: {},
+      ranking_group_info: {}
     }, val)));
   }
 

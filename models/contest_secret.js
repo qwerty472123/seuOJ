@@ -54,7 +54,8 @@ class ContestSecret extends Model {
       secret: '',
       contest_id: 0,
       user_id: -1,
-      extra_info: ''
+      extra_info: '',
+      classify_code: 0
     }, val)));
   }
 
