@@ -26,7 +26,8 @@ let model = db.define('contest_secret', {
   secret: { type: Sequelize.STRING(120), primaryKey: true },
   contest_id: { type: Sequelize.INTEGER },
   user_id: { type: Sequelize.INTEGER },
-  extra_info: { type: Sequelize.TEXT }
+  extra_info: { type: Sequelize.TEXT },
+  classify_code: { type: Sequelize.INTEGER }
 }, {
     timestamps: false,
     tableName: 'contest_secret',

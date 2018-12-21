@@ -8,7 +8,8 @@ let ContestPlayer = syzoj.model('contest_player');
 let model = db.define('contest_ranklist', {
   id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
   ranking_params: { type: Sequelize.JSON },
-  ranklist: { type: Sequelize.JSON }
+  ranklist: { type: Sequelize.JSON },
+  ranking_group_info: { type: Sequelize.JSON }
 }, {
   timestamps: false,
   tableName: 'contest_ranklist'
