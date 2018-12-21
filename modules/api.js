@@ -1,7 +1,7 @@
 let User = syzoj.model('user');
 let Problem = syzoj.model('problem');
 let File = syzoj.model('file');
-let ContestToken = syzoj.model('contest_token');
+let ContestSecret = syzoj.model('contest_secret');
 const Email = require('../libs/email');
 const jwt = require('jsonwebtoken');
 
@@ -275,21 +275,21 @@ app.get('/static/uploads/answer/:md5', async (req, res) => {
   }
 });
 
-app.post('/api/token_submit', async (req, res) => {
+app.post('/api/secret_submit', async (req, res) => {
   try {
     res.setHeader('Content-Type', 'application/json');console.log("")
-    let token = await ContestToken.find({ token: req.body.token });
-    if (!token) throw 1001;
-    if (req.body.contest_id != token.contest_id.toString()) throw 1002;
-    if (token.user_id > -1) {
-      if (token.user_id != res.locals.user.id) throw 1003;
+    let secret = await ContestSecret.find({ secret: req.body.secret });
+    if (!secret) throw 1001;
+    if (req.body.contest_id != secret.contest_id.toString()) throw 1002;
+    if (secret.user_id > -1) {
+      if (secret.user_id != res.locals.user.id) throw 1003;
     } else {
-      token.user_id = res.locals.user.id;
-      await token.save();
+      secret.user_id = res.locals.user.id;
+      await secret.save();
     }
-    let json = req.session.contest_token ? JSON.parse(req.session.contest_token) : {};
-    json[req.body.contest_id] = req.body.token;
-    req.session.contest_token = JSON.stringify(json);
+    let json = req.session.contest_secret ? JSON.parse(req.session.contest_secret) : {};
+    json[req.body.contest_id] = req.body.secret;
+    req.session.contest_secret = JSON.stringify(json);
     res.send({ error_code: 1 });
   } catch (e) {
     syzoj.log(e);

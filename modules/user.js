@@ -68,7 +68,7 @@ app.get('/sign_up', async (req, res) => {
 // Logout
 app.post('/logout', async (req, res) => {
   req.session.user_id = null;
-  req.session.contest_token = null;
+  req.session.contest_secret = null;
   res.clearCookie('login');
   res.redirect(req.query.url || '/');
 });

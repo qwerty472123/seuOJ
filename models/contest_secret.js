@@ -22,14 +22,14 @@
 let Sequelize = require('sequelize');
 let db = syzoj.db;
 
-let model = db.define('contest_token', {
-  token: { type: Sequelize.STRING(120), primaryKey: true },
+let model = db.define('contest_secret', {
+  secret: { type: Sequelize.STRING(120), primaryKey: true },
   contest_id: { type: Sequelize.INTEGER },
   user_id: { type: Sequelize.INTEGER },
   extra_info: { type: Sequelize.TEXT }
 }, {
     timestamps: false,
-    tableName: 'contest_token',
+    tableName: 'contest_secret',
     indexes: [
       {
         fields: ['contest_id'],
@@ -38,7 +38,7 @@ let model = db.define('contest_token', {
         fields: ['user_id'],
       },
       {
-          fields: ['token'],
+          fields: ['secret'],
       },
       {
         fields: ['user_id', 'contest_id']
@@ -47,10 +47,10 @@ let model = db.define('contest_token', {
   });
 
 let Model = require('./common');
-class ContestToken extends Model {
+class ContestSecret extends Model {
   static async create(val) {
-    return ContestToken.fromRecord(ContestToken.model.build(Object.assign({
-      token: '',
+    return ContestSecret.fromRecord(ContestSecret.model.build(Object.assign({
+      secret: '',
       contest_id: 0,
       user_id: -1,
       extra_info: ''
@@ -58,12 +58,12 @@ class ContestToken extends Model {
   }
 
   static async find(where) {
-    return ContestToken.findOne({ where: where });
+    return ContestSecret.findOne({ where: where });
   }
 
   getModel() { return model; }
 }
 
-ContestToken.model = model;
+ContestSecret.model = model;
 
-module.exports = ContestToken;
+module.exports = ContestSecret;
