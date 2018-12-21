@@ -1,7 +1,7 @@
 <% this.title = '提交记录' %>
 <% include header %>
 <% include util %>
-<script src="/libs/textfit/textFit.min.js"></script>
+<script src="<%- lib('textfit/2.3.1/textFit.min.js') %>"></script>
 <div class="padding">
   <% if (displayConfig.inContest) { %>
     <div class="ui large info message">
@@ -120,8 +120,8 @@
   <% } %>
 </div>
 
-<script src="/libs/vue/vue.min.js"></script>
-<script src="/libs/socket.io/socket.io.js"></script>
+<script src="<%- lib('vue/2.5.21/vue.min.js') %>"></script>
+<script src="<%- lib('socket.io/2.2.0/socket.io.js') %>"></script>
 
 <% include submissions_item %>
 <script>
