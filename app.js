@@ -169,8 +169,22 @@ global.syzoj = {
     }
     app.use(Session(sessionConfig));
 
+    app.use(require('express-minify-html')({
+      override: true,
+      htmlMinifier: {
+        removeComments: true,
+        collapseWhitespace: true,
+        collapseBooleanAttributes: true,
+        removeAttributeQuotes: true,
+        removeEmptyAttributes: true,
+        minifyJS: true,
+        minifyCSS: true
+      }
+    }));
+
     app.use((req, res, next) => {
-      // req.session.user_id = 1;
+      res.locals.useLocalLibs = !!parseInt(req.headers['syzoj-no-cdn']);
+
       let User = syzoj.model('user');
       if (req.session.user_id) {
         User.fromID(req.session.user_id).then((user) => {
@@ -181,7 +195,7 @@ global.syzoj = {
           res.locals.user = null;
           req.session.user_id = null;
           next();
-        })
+        });
       } else {
         if (req.cookies.login) {
           let obj;

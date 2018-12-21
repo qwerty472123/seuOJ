@@ -40,7 +40,7 @@ app.get('/admin/info', async (req, res) => {
 
 let configItems = {
   'title': { name: '站点标题', type: String },
-  'gravatar_host': { name: 'Gravatar 代理地址', type: String },
+  'gravatar_url': { name: 'Gravatar 代理地址', type: String },
   '默认参数': null,
   'default.problem.time_limit': { name: '时间限制（单位：ms）', type: Number },
   'default.problem.memory_limit': { name: '空间限制（单位：MiB）', type: Number },

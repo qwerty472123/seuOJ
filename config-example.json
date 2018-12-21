@@ -113,5 +113,11 @@
   "rabbitMQ": "amqp://localhost/",
   "email_jwt_secret": "@EMAIL_JWT_SECRET@",
   "password_secret": "",
-  "gravatar_host": "gravatar.loli.net"
+  "gravatar_url": "https://cdn.v2ex.com/gravatar",
+  "cdnjs_url": "https://cdnjs.loli.net/ajax/libs",
+  "self_cdn_url": "",
+  "google_fonts": {
+    "type": "like-google-fonts",
+    "url": "https://fonts.loli.net"
+  }
 }
