@@ -73,7 +73,7 @@ class Contest extends Model {
   }
 
   async allowedContestSecret(req, res) {
-    if (res.locals.user && res.locals.user.is_admin) return true;
+    if (res.locals.user && await this.isSupervisior(res.locals.user)) return true;
     if (this.isEnded()) return true;
     if (this.need_secret) {
       if (req.session.contest_secret) {console.log(req.session.contest_secret);
