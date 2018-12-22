@@ -96,7 +96,7 @@ app.post('/contest/:id/edit', async (req, res) => {
         let json = JSON.parse(req.body.ranking_group_info);
         if (json instanceof Array && json.length == 2 && json[0] instanceof Object && json[1] instanceof Array) {
           for (let code in json[0]) {
-            if ( typeof code != 'number' || !(json[0][code] instanceof Array) || json[0][code].length != 2
+            if ( /^[1-9]\d*$/.test(code) || !(json[0][code] instanceof Array) || json[0][code].length != 2
               || typeof json[0][code][0] != 'string' || typeof json[0][code][1] != 'string') {
                 valid = false;
                 console.log('err1');
