@@ -90,11 +90,11 @@ app.post('/contest/:id/edit', async (req, res) => {
       ranklist.ranking_params = {};
     }
     ranklist.ranking_group_info = [];
-    try {
-      if (req.body.need_secret) {
+    if (req.body.need_secret) {
+      let valid = true;
+      try {
         let json = JSON.parse(req.body.ranking_group_info);
         if (json instanceof Array && json.length == 2 && json[0] instanceof Object && json[1] instanceof Array) {
-          let valid = true;
           for (let code in json[0]) {
             if ( typeof code != 'number' || !(json[0][code] instanceof Array) || json[0][code].length != 2
               || typeof json[0][code][0] != 'string' || typeof json[0][code][1] != 'string') {
@@ -125,11 +125,13 @@ app.post('/contest/:id/edit', async (req, res) => {
                if (!valid) break;
             }
           }
-          if (!valid) throw new ErrorMessage('排行方式非法。');
-          ranklist.ranking_group_info = json;
+          if (valid) ranklist.ranking_group_info = json;
         }
+      } catch (e) {
+        valid = false;
       }
-    } catch (e) {}
+      if (!valid) throw new ErrorMessage('排行方式非法。');
+    }
     await ranklist.save();
     contest.ranklist_id = ranklist.id;
 
