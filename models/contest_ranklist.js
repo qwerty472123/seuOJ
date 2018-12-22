@@ -21,7 +21,7 @@ class ContestRanklist extends Model {
     return ContestRanklist.fromRecord(ContestRanklist.model.build(Object.assign({
       ranking_params: {},
       ranklist: {},
-      ranking_group_info: {}
+      ranking_group_info: []
     }, val)));
   }
 

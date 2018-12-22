@@ -65,20 +65,20 @@ app.get('/contest/:id/edit', async (req, res) => {
 app.post('/contest/:id/edit', async (req, res) => {
   try {
     if (!res.locals.user || !res.locals.user.is_admin) throw new ErrorMessage('您没有权限进行此操作。');
-
+    if (!req.body.title.trim()) throw new ErrorMessage('比赛名不能为空。');
     let contest_id = parseInt(req.params.id);
     let contest = await Contest.fromID(contest_id);
     let ranklist = null;
     if (!contest) {
+      // Only new contest can be set type
+      if (!['noi', 'ioi', 'acm'].includes(req.body.type)) throw new ErrorMessage('无效的赛制。');
+
       contest = await Contest.create();
 
       contest.holder_id = res.locals.user.id;
+      contest.type = req.body.type;
 
       ranklist = await ContestRanklist.create();
-
-      // Only new contest can be set type
-      if (!['noi', 'ioi', 'acm'].includes(req.body.type)) throw new ErrorMessage('无效的赛制。');
-      contest.type = req.body.type;
     } else {
       await contest.loadRelationships();
       ranklist = contest.ranklist;
@@ -89,10 +89,49 @@ app.post('/contest/:id/edit', async (req, res) => {
     } catch (e) {
       ranklist.ranking_params = {};
     }
+    ranklist.ranking_group_info = [];
+    try {
+      if (req.body.need_secret) {
+        let json = JSON.parse(req.body.ranking_group_info);
+        if (json instanceof Array && json.length == 2 && json[0] instanceof Object && json[1] instanceof Array) {
+          let valid = true;
+          for (let code in json[0]) {
+            if ( typeof code != 'number' || !(json[0][code] instanceof Array) || json[0][code].length != 2
+              || typeof json[0][code][0] != 'string' || typeof json[0][code][1] != 'string') {
+                valid = false;
+                break;
+              }
+          }
+          if (valid) {
+            for (let rank_cfg of json[1]) {
+              if (!(rank_cfg instanceof Array) || rank_cfg.length != 3 || typeof rank_cfg[0] != 'string'
+               || !(rank_cfg[1] instanceof Array) || !(rank_cfg[2] instanceof Array)) {
+                valid = false;
+                break;
+               }
+               for (let code of rank_cfg[1]) if (typeof code != 'number') {
+                 valid = false;
+                 break;
+               }
+               if (valid) {
+                 for (let line_cfg of rank_cfg[2]) if (!(line_cfg instanceof Array) || line_cfg.length != 4
+                  || typeof line_cfg[0] != 'string' || typeof line_cfg[1] != 'boolean' || typeof line_cfg[2] != 'number'
+                  || typeof line_cfg[3] != 'string') {
+                    valid = false;
+                    break;
+                  }
+               }
+               if (!valid) break;
+            }
+          }
+          if (!valid) json = [];
+          ranklist.ranking_group_info = json;
+        }
+      }
+    } catch (e) {}
     await ranklist.save();
     contest.ranklist_id = ranklist.id;
 
-    if (!req.body.title.trim()) throw new ErrorMessage('比赛名不能为空。');
     contest.title = req.body.title;
     contest.subtitle = req.body.subtitle;
     if (!Array.isArray(req.body.problems)) req.body.problems = [req.body.problems];
@@ -263,7 +302,10 @@ app.get('/contest/:id/ranklist', async (req, res) => {
       let user = await User.fromID(player.user_id);
       if (contest.need_secret) {
         let secret = await ContestSecret.find({ contest_id, user_id: player.user_id });
-        if (secret) user.extra_info = secret.extra_info;
+        if (secret) {
+          user.extra_info = secret.extra_info;
+          user.classify_code = secret.classify_code;
+        }
       }
 
       return {

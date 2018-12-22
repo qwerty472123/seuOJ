@@ -85,8 +85,8 @@
               </div>
             </div>
             <div class="field" id="ranking_group_info_div"<% if (!contest.need_secret) { %> style="display: none;"<% } %>>
-                <label>排行方式（格式：<code>[ [ "排行表头", [ "选手分类码（为空代表全部）" ], [ [ 基准线名称, 基准线为百分比, 基准线值, "基准线颜色" ] ] ] ]</code>）</label>
-                <input type="text" name="ranking_group_info" value="<%= (contest.need_secret && contest.ranklist) ? JSON.stringify(contest.ranklist.ranking_group_info) : '' %>">
+                <label>排行方式（格式：<code>[ { 选手分类码: [ "分类名称", "分类颜色" ] }, [ [ "排行表头", [ 选手分类码（为空代表全部） ], [ [ "基准线名称（前面的覆盖后面的）", 基准线为百分比取下整, 基准线值, "基准线颜色" ] ] ] ] ]</code>）</label>
+                <input type="text" name="ranking_group_info" value="<%= (contest.need_secret && contest.ranklist) ? JSON.stringify(contest.ranklist.ranking_group_info) : '[]' %>">
             </div>
             <div style="text-align: center; "><button type="submit" class="ui labeled icon blue button"><i class="ui edit icon"></i>提交</button></div>
         </form>

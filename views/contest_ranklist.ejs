@@ -1,5 +1,22 @@
 <% this.title = '排名 - ' + contest.title %>
 <% include header %>
+<%
+let special_ranklist = contest.need_secret && contest.ranklist.ranking_group_info instanceof Array && contest.ranklist.ranking_group_info.length > 0;
+let ranklists_cfg = null;
+let classify_cfg = null;
+if (special_ranklist) {
+  classify_cfg = contest.ranklist.ranking_group_info[0];
+  ranklists_cfg = contest.ranklist.ranking_group_info[1];
+  for (let ranklist_cfg of ranklists_cfg) {
+    ranklist_cfg.push(0);
+    ranklist_cfg.push(0);
+    for (let line_cfg of ranklist_cfg[2]) {
+      line_cfg.push( line_cfg[1] ? Math.floor(ranklist.length * line_cfg[1] / 100) : line_cfg[2] );
+    }
+    ranklist_cfg[2].push( ["", false, ranklist.length, "", ranklist.length] );
+  }
+}
+%>
 <style>
 .submit_time {
   font-size: 0.8em;
@@ -11,7 +28,13 @@
         <table class="ui very basic center aligned table">
             <thead>
             <tr>
+                <% if (special_ranklist) { 
+                  for (let ranklist_cfg of ranklists_cfg) { %>
+                    <th><%= ranklist_cfg[0] %></th>
+                  <% }
+                } else { %>
                 <th>#</th>
+                <% } %>
                 <th>用户名</th>
                 <% if (contest.type === 'acm') { %>
                   <th>通过数量</th>
@@ -73,20 +96,43 @@
                     if (i === 1 || item.player.score !== lastItem.player.score || item.player.timeSum !== lastItem.player.timeSum) rank = i;
                   }
                 %>
-                <td>
-                  <% if (rank == 1) { %>
-                    <div class="ui yellow ribbon label">
-                  <% } else if (rank == 2) { %>
-                    <div class="ui ribbon label">
-                  <% } else if (rank == 3) { %>
-                    <div class="ui brown ribbon label" style="background-color: #C47222 !important;">
-                  <% } else { %>
-                    <div>
-                  <% } %>
-                  <%= rank %>
-                  </div>
-                </td>
-                <td><a href="<%= syzoj.utils.makeUrl(['user', item.user.id]) %>"><%= item.user.username %></a><% if (item.user.nameplate) { %><%- item.user.nameplate %><% } %><% if (item.user.extra_info) { %><br><span style="color:#999"><%- item.user.extra_info %></span><% } %></td>
+                <% if (special_ranklist) {
+                  let is_first = true;
+                  for(let ranklist_cfg of ranklists_cfg) if (ranklist_cfg[1].includes(item.user.classify_code)) {
+                    ranklist_cfg[4] ++;
+                    while (ranklist_cfg[4] > ranklist_cfg[2][ranklist_cfg[5]][4]) ranklist_cfg[5] ++;
+                    let cur_cfg = ranklist_cfg[2][ranklist_cfg[5]];
+                    let color_info_1 = '', color_info_2 = '';
+                    if (cur_cfg[3] == '1') color_info_1 = 'yellow';
+                    else if (cur_cfg[3] == '2') color_info_1 = '';
+                    else if (cur_cfg[3] == '3') color_info_1 = 'brown', color_info_2 = 'background-color: #C47222 !important;';
+                    else color_info_2 = 'background-color: ' + cur_cfg[3].replace(/[^0-9a-zA-Z\,\#\ \(\)]+/g,'') + ' !important;';
+                    if (is_first) {
+                      is_first = false;
+                      color_info_1 += ' ribbon';
+                    }
+                     %>
+                    <td>
+                    <div class="ui <%= color_info_1%> label" style="<%= color_info_2%>" <% if (cur_cfg[0]) { %>title="<%= cur_cfg[0] %>" <% } %> >
+                    <%= ranklist_cfg[4] %>
+                    </div>
+                  <% }
+                } else {%>
+                  <td>
+                    <% if (rank == 1) { %>
+                      <div class="ui yellow ribbon label">
+                    <% } else if (rank == 2) { %>
+                      <div class="ui ribbon label">
+                    <% } else if (rank == 3) { %>
+                      <div class="ui brown ribbon label" style="background-color: #C47222 !important;">
+                    <% } else { %>
+                      <div>
+                    <% } %>
+                    <%= rank %>
+                    </div>
+                  </td>
+                <% } %>
+                <td <% if (special_ranklist && classify_cfg[item.user.classify_code]) { %> title="<%= classify_cfg[item.user.classify_code][0] %>" style="background-color: <%= classify_cfg[item.user.classify_code][1].replace(/[^0-9a-zA-Z\,\#\ \(\)]+/g,'') %>" <% } %> ><a href="<%= syzoj.utils.makeUrl(['user', item.user.id]) %>"><%= item.user.username %></a><% if (item.user.nameplate) { %><%- item.user.nameplate %><% } %><% if (item.user.extra_info) { %><br><span style="color:#999"><%- item.user.extra_info %></span><% } %></td>
                 <% if (contest.type === 'acm') { %>
                   <td>
                     <span class="score score_<%= parseInt((item.player.score / ranklist[0].player.score * 10) || 0) %>">
