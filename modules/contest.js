@@ -99,6 +99,7 @@ app.post('/contest/:id/edit', async (req, res) => {
             if ( typeof code != 'number' || !(json[0][code] instanceof Array) || json[0][code].length != 2
               || typeof json[0][code][0] != 'string' || typeof json[0][code][1] != 'string') {
                 valid = false;
+                console.log('err1');
                 break;
               }
           }
@@ -106,25 +107,25 @@ app.post('/contest/:id/edit', async (req, res) => {
             for (let rank_cfg of json[1]) {
               if (!(rank_cfg instanceof Array) || rank_cfg.length != 3 || typeof rank_cfg[0] != 'string'
                || !(rank_cfg[1] instanceof Array) || !(rank_cfg[2] instanceof Array)) {
-                valid = false;
+                valid = false;console.log('err2');
                 break;
                }
                for (let code of rank_cfg[1]) if (typeof code != 'number') {
-                 valid = false;
+                 valid = false;console.log('err3');
                  break;
                }
                if (valid) {
                  for (let line_cfg of rank_cfg[2]) if (!(line_cfg instanceof Array) || line_cfg.length != 4
                   || typeof line_cfg[0] != 'string' || typeof line_cfg[1] != 'boolean' || typeof line_cfg[2] != 'number'
                   || typeof line_cfg[3] != 'string') {
-                    valid = false;
+                    valid = false;console.log('err4');
                     break;
                   }
                }
                if (!valid) break;
             }
           }
-          if (!valid) json = [];
+          if (!valid) throw new ErrorMessage('排行方式非法。');
           ranklist.ranking_group_info = json;
         }
       }
