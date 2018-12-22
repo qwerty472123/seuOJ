@@ -100,12 +100,13 @@ if (special_ranklist) {
                   let is_first = true;
                   for(let ranklist_cfg of ranklists_cfg) if (ranklist_cfg[1].includes(item.user.classify_code)) {
                     ranklist_cfg[3] ++;
-                    while (ranklist_cfg[3] > ranklist_cfg[2][ranklist_cfg[4]][3]) ranklist_cfg[4] ++;
+                    while (ranklist_cfg[3] > ranklist_cfg[2][ranklist_cfg[4]][4]) ranklist_cfg[4] ++;
                     let cur_cfg = ranklist_cfg[2][ranklist_cfg[4]];
                     let color_info_1 = '', color_info_2 = '';
                     if (cur_cfg[3] == '1') color_info_1 = 'yellow';
                     else if (cur_cfg[3] == '2') color_info_1 = '';
                     else if (cur_cfg[3] == '3') color_info_1 = 'brown', color_info_2 = 'background-color: #C47222 !important;';
+                    else if (cur_cfg[3] == '4') color_info_1 = 'unset', color_info_2 = '';
                     else color_info_2 = 'background-color: ' + cur_cfg[3].replace(/[^0-9a-zA-Z\,\#\ \(\)]+/g,'') + ' !important;';
                     if (is_first) {
                       is_first = false;
@@ -113,7 +114,7 @@ if (special_ranklist) {
                     }
                      %>
                     <td>
-                    <div class="ui <%= color_info_1%> label" style="<%= color_info_2%>" <% if (cur_cfg[0]) { %>title="<%= cur_cfg[0] %>" <% } %> >
+                    <div <% if (color_info_1 != 'unset') { %> class="ui <%= color_info_1%> label" <% } %> <% if (color_info_2) { %> style="<%= color_info_2%>" <% } %> <% if (cur_cfg[0]) { %>title="<%= cur_cfg[0] %>" <% } %> >
                     <%= ranklist_cfg[3] %>
                     </div>
                   <% }
