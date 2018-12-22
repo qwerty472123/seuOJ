@@ -11,7 +11,7 @@ if (special_ranklist) {
     ranklist_cfg.push(0);
     ranklist_cfg.push(0);
     for (let line_cfg of ranklist_cfg[2]) {
-      line_cfg.push( line_cfg[1] ? Math.floor(ranklist.length * line_cfg[1] / 100) : line_cfg[2] );
+      line_cfg.push( line_cfg[1] ? Math.floor(ranklist.length * line_cfg[2] / 100) : line_cfg[2] );
     }
     ranklist_cfg[2].push( ["", false, ranklist.length, "", ranklist.length] );
   }
@@ -102,7 +102,7 @@ if (special_ranklist) {
                     ranklist_cfg[3] ++;
                     while (ranklist_cfg[3] > ranklist_cfg[2][ranklist_cfg[4]][4]) ranklist_cfg[4] ++;
                     let cur_cfg = ranklist_cfg[2][ranklist_cfg[4]];
-                    let color_info_1 = '', color_info_2 = '';
+                    let color_info_1 = 'unset', color_info_2 = '';
                     if (cur_cfg[3] == '1') color_info_1 = 'yellow';
                     else if (cur_cfg[3] == '2') color_info_1 = '';
                     else if (cur_cfg[3] == '3') color_info_1 = 'brown', color_info_2 = 'background-color: #C47222 !important;';
@@ -110,13 +110,16 @@ if (special_ranklist) {
                     else color_info_2 = 'background-color: ' + cur_cfg[3].replace(/[^0-9a-zA-Z\,\#\ \(\)]+/g,'') + ' !important;';
                     if (is_first) {
                       is_first = false;
-                      color_info_1 += ' ribbon';
+                      if (color_info_1 != 'unset') color_info_1 += ' ribbon';
                     }
                      %>
                     <td>
                     <div <% if (color_info_1 != 'unset') { %> class="ui <%= color_info_1%> label" <% } %> <% if (color_info_2) { %> style="<%= color_info_2%>" <% } %> <% if (cur_cfg[0]) { %>title="<%= cur_cfg[0] %>" <% } %> >
                     <%= ranklist_cfg[3] %>
                     </div>
+                  <% } else {
+                    is_first = false; %>
+                  <td></td>
                   <% }
                 } else {%>
                   <td>
