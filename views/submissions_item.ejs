@@ -44,6 +44,9 @@ Vue.component('submission-item', {
     },
     scoreClass() {
       return "score_" + (parseInt(this.data.result.score / 10) || 0).toString();
+    },
+    curUser() {
+      return <%= user ? user.id : 0%>;
     }
   },
   methods: {
@@ -62,7 +65,7 @@ Vue.component('submission-item', {
   <% if (active === 'submissions') { %>
   <td><a :href="submissionLink"><b>#{{ data.info.submissionId }}</b></a></td>
   <% } else { %>
-  <td><b>#{{ data.info.submissionId }}</b></td>
+  <td><a v-if="(curUser == data.info.userId)" :href="submissionLink"><b>#{{ data.info.submissionId }}</b></a><b v-else>#{{ data.info.submissionId }}</b></td>
   <% } %>
   <td ref="problemLabel"><a ref="problemLabelTextFit" style="width: 230px; height: 22px; display: block; margin: 0 auto; line-height: 22px;" :href="problemLink"><b>#{{ config.inContest ? alpha(data.info.problemId) : data.info.problemId }}.</b> {{ data.info.problemName }}</a></td>
   <% if (active === 'submissions') { %>

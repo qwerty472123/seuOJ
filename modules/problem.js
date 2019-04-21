@@ -3,6 +3,7 @@ let JudgeState = syzoj.model('judge_state');
 let FormattedCode = syzoj.model('formatted_code');
 let WaitingJudge = syzoj.model('waiting_judge');
 let Contest = syzoj.model('contest');
+let ContestPlayer = syzoj.model('contest_player');
 let ProblemTag = syzoj.model('problem_tag');
 let ProblemTagMap = syzoj.model('problem_tag_map');
 let Article = syzoj.model('article');
@@ -231,7 +232,8 @@ app.get('/problem/:id', async (req, res) => {
       state: state,
       lastLanguage: res.locals.user ? await res.locals.user.getLastSubmitLanguage() : null,
       testcases: testcases,
-      discussionCount: discussionCount
+      discussionCount: discussionCount,
+      language_limit: false
     });
   } catch (e) {
     syzoj.log(e);
@@ -655,6 +657,23 @@ app.post('/problem/:id/submit', app.multer.fields([{ name: 'answer', maxCount: 1
       if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
       let problems_id = await contest.getProblems();
       if (!problems_id.includes(id)) throw new ErrorMessage('无此题目。');
+      if (problem.type !== 'submit-answer' && contest.allow_languages && !contest.allow_languages.split('|').includes(req.body.language)) throw new ErrorMessage('本次比赛禁止使用该语言！');
+      if (contest.one_language && problem.type !== 'submit-answer') {
+        let player = await ContestPlayer.findInContest({
+          contest_id: contest.id,
+          user_id: curUser.id
+        });
+        if (!player) {
+          player = await ContestPlayer.create({
+            contest_id: contest.id,
+            user_id: curUser.id
+          });
+        }
+        if (player.language_limit === '') {
+          player.language_limit = req.body.language;
+          await player.save();
+        } else if (player.language_limit !== req.body.language) throw new ErrorMessage('本场比赛您只能使用 ' + player.language_limit + ' 语言。');
+      }
 
       judge_state.type = 1;
       judge_state.type_info = contest_id;

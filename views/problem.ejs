@@ -145,6 +145,29 @@ div[class*=ace_br] {
           <% } %>
         </div>
       <% } %>
+      <% if (language_limit && language_limit === 'Undetermined') { %>
+      <div class="ui basic modal" id="modal-submit-lang">
+        <div class="ui icon header">
+          <i class="trash icon"></i>
+          <p style="margin-top: 15px; ">确定提交语言</p>
+        </div>
+        <div class="content" style="text-align: center; ">
+          <p>确认使用当前的提交语言 <span id="tip_language_name">language-name</span> 吗？<br>
+          本次比赛的其他题目也将一并仅能使用这一语言。</p>
+          <b>警告：该选项一经确认无法更改，请谨慎操作。</b>
+        </div>
+        <div class="actions">
+          <div class="ui red basic cancel inverted button">
+            <i class="remove icon"></i>
+            否
+          </div>
+          <a class="ui green ok inverted button" onclick="$('#submit_code').get(0).onsubmit=function(){return submit_code(true);};$('#submit_code').submit();">
+            <i class="checkmark icon"></i>
+            是
+          </a>
+        </div>
+      </div>
+      <% } %>
     </div>
   </div>
   <% if (problem.description) { %>
@@ -314,8 +337,14 @@ div[class*=ace_br] {
                     if (state) {
                       language = state.language;
                     } else if (lastLanguage) language = lastLanguage;
+                    let languagesList = syzoj.config.enabled_languages;
+                    if (contest && contest.allow_languages) languagesList = contest.allow_languages.split('|');
+                    if (language_limit && language_limit !== 'Undetermined') {
+                      language = language_limit;
+                      languagesList = [language_limit];
+                    }
                     %>
-                    <% for (lang of syzoj.config.enabled_languages) { %>
+                    <% for (lang of languagesList) { %>
                       <a class="item<%= lang === language ? ' active' : '' %>" data-value="<%= lang %>" data-mode="<%= syzoj.languages[lang].editor %>">
                         <%= syzoj.languages[lang].show %>
                         <div class="ui right floated" style="opacity: 0.4; margin-top: 8px; font-size: 0.7em; "><%= syzoj.languages[lang].version %></div>
@@ -359,8 +388,15 @@ div[class*=ace_br] {
   editor.setShowPrintMargin(false);
   editor.renderer.updateFontSize();
 
-  function submit_code() {
+  function submit_code(lang_checked) {
     if (!$('#submit_code input[name=answer]').val().trim() && !editor.getValue().trim()) return false;
+    <% if (language_limit && language_limit === 'Undetermined') { %>
+      if (!lang_checked) {
+        $('#tip_language_name').text($('#languages-menu .item.active').data('value'));
+        $('#modal-submit-lang').modal('show')
+        return false;
+      }
+    <% } %>
     $('#submit_code input[name=language]').val($('#languages-menu .item.active').data('value'));
     lastSubmitted = editor.getValue();
     $('#submit_code input[name=code]').val(editor.getValue());

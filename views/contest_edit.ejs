@@ -46,6 +46,12 @@
                   <label for="type-acm">ICPC</label>
                 </div>
               </div>
+              <div class="field">
+                <div class="ui radio checkbox">
+                  <input <% if (contest.id) { %>disabled <% } %>type="radio" name="type" id="type-scc" value="scc"<% if (contest.type === 'scc') { %> checked="checked"<% } %>>
+                  <label for="type-scc">SCC</label>
+                </div>
+              </div>
             </div>
             <div class="field">
                 <label>排行参数（格式：<code>{ "题目 ID": 分值倍数 }</code>）</label>
@@ -78,6 +84,13 @@
               </div>
             </div>
             <div class="inline field">
+              <label class="ui header">仅可使用单个语言</label>
+              <div class="ui toggle checkbox">
+                <input type="checkbox" <% if (contest.id) { %>disabled <% } %> <% if (contest.one_language) { %> checked<% } %> name="one_language">
+                <label><span style="visibility: hidden; ">　</span></label>
+              </div>
+            </div>
+            <div class="inline field">
               <label class="ui header">需要 Secret</label>
               <div class="ui toggle checkbox">
                 <input type="checkbox"<% if (contest.need_secret) { %> checked<% } %> name="need_secret" onchange="$('#ranking_group_info_div').slideToggle();">
@@ -88,6 +101,14 @@
                 <label>排行方式（格式：<code>[ { 选手分类码: [ "分类名称", "分类颜色" ] }, [ [ "排行表头", [ 选手分类码（为空代表全部） ], [ [ "基准线名称（前面的覆盖后面的）", 基准线为百分比取下整, 基准线值, "基准线颜色" ] ] ] ] ]</code>）</label>
                 <input type="text" name="ranking_group_info" value="<%= (contest.need_secret && contest.ranklist) ? JSON.stringify(contest.ranklist.ranking_group_info) : '[]' %>">
             </div>
+            <div class="field">
+              <label>允许使用的语言（不填表示可以使用任意语言）</label>
+              <select class="ui fluid search dropdown" <% if (contest.id) { %>disabled <% } %> multiple="" id="search_languages" name="allow_languages">
+              <% for (let language of contest.allow_languages ? contest.allow_languages.split('|') : []) { %>
+              <option value="<%= language %>" selected><%= language %></option>
+              <% } %>
+              </select>
+          </div>
             <div style="text-align: center; "><button type="submit" class="ui labeled icon blue button"><i class="ui edit icon"></i>提交</button></div>
         </form>
 <script>
@@ -116,6 +137,21 @@ $(function () {
           var a = $('#search_problems').val().map(function (x) { return parseInt(x) });
           if (response.results) {
             response.results = response.results.filter(function(x) {return !a.includes(parseInt(x.value));});
+          }
+          return response;
+        },
+        cache: false
+      }
+    });
+    $('#search_languages')
+    .dropdown({
+      debug: true,
+      apiSettings: {
+        url: '/api/v2/enabled_langs',
+        onResponse: function (response) {
+          var a = $('#search_languages').val();
+          if (response.results) {
+            response.results = response.results.filter(function(x){ return !a.includes(x.value)});
           }
           return response;
         },

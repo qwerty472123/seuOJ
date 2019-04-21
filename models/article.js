@@ -12,6 +12,7 @@ let model = db.define('article', {
 
   user_id: { type: Sequelize.INTEGER },
   problem_id: { type: Sequelize.INTEGER },
+  contest_id: { type: Sequelize.INTEGER },
 
   public_time: { type: Sequelize.INTEGER },
   update_time: { type: Sequelize.INTEGER },
@@ -29,10 +30,19 @@ let model = db.define('article', {
       fields: ['user_id']
     },
     {
-      fields: ['problem_id']
+      fields: ['contest_id', 'problem_id']
     },
     {
       fields: ['sort_time']
+    },
+    {
+      fields: ['contest_id', 'is_notice']
+    },
+    {
+      fields: ['contest_id']
+    },
+    {
+      fields: ['contest_id', 'user_id']
     }
   ]
 });
@@ -46,6 +56,7 @@ class Article extends Model {
 
       user_id: 0,
       problem_id: 0,
+      contest_id: 0,
 
       public_time: 0,
       update_time: 0,

@@ -24,7 +24,7 @@ if (special_ranklist) {
   color: #000;
 }
 </style>
-<div class="padding">
+<div class="padding" style="overflow-x: auto;">
         <table class="ui very basic center aligned table">
             <thead>
             <tr>
@@ -42,7 +42,7 @@ if (special_ranklist) {
                 <% } %>
                 <% for (let i = 0; i < problems.length; i++) { %>
                 <th>
-                <% if (contest.type === 'acm') { %>
+                <% if (contest.type === 'acm' || contest.type === 'scc') { %>
                   <a href="<%= syzoj.utils.makeUrl(['contest', contest.id, 'problem', i + 1]) %>" title="<%= syzoj.utils.removeTitleTag(problems[i].title) %>">
                     <%= String.fromCharCode('A'.charCodeAt(0) + parseInt(i)) %>
                   </a>
@@ -53,7 +53,7 @@ if (special_ranklist) {
                 <% } %>
                 </th>
                 <% } %>
-                <% if (contest.type === 'noi' || contest.type === 'ioi') { %>
+                <% if (contest.type === 'noi' || contest.type === 'ioi' || contest.type === 'scc') { %>
                   <th>总分</th>
                 <% } %>
             </tr>

@@ -11,7 +11,8 @@ let model = db.define('contest_player', {
 
   score: { type: Sequelize.INTEGER },
   score_details: { type: Sequelize.JSON },
-  time_spent: { type: Sequelize.INTEGER }
+  time_spent: { type: Sequelize.INTEGER },
+  language_limit: { type: Sequelize.STRING(20) }
 }, {
     timestamps: false,
     tableName: 'contest_player',
@@ -33,7 +34,8 @@ class ContestPlayer extends Model {
       user_id: 0,
       score: 0,
       score_details: {},
-      time_spent: 0
+      time_spent: 0,
+      language_limit: ''
     }, val)));
   }
 

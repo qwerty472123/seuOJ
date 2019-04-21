@@ -9,7 +9,11 @@
   <div class="ui breadcrumb">
     <div class="section">讨论</div>
     <i class="right angle icon divider"></i>
-    <% if (problem) { %>
+    <% if (contest) { %>
+      <div class="section"><a href="<%= syzoj.utils.makeUrl(['contests']) %>">比赛</a></div>
+      <i class="right angle icon divider"></i>
+      <a href="<%= syzoj.utils.makeUrl(['contest', contest.id, 'qa']) %>" class="active section"><%= contest.title %></a>
+    <% } else if (problem) { %>
       <div class="section"><a href="<%= syzoj.utils.makeUrl(['discussion', 'problems']) %>">题目</a></div>
       <i class="right angle icon divider"></i>
       <a href="<%= syzoj.utils.makeUrl(['discussion', 'problem', problem.id]) %>" class="active section"><%= problem.title %></a>

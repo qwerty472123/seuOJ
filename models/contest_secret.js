@@ -23,7 +23,7 @@ let Sequelize = require('sequelize');
 let db = syzoj.db;
 
 let model = db.define('contest_secret', {
-  secret: { type: Sequelize.STRING(120), primaryKey: true },
+  secret: { type: Sequelize.STRING(120) },
   contest_id: { type: Sequelize.INTEGER },
   user_id: { type: Sequelize.INTEGER },
   extra_info: { type: Sequelize.TEXT },
@@ -39,7 +39,7 @@ let model = db.define('contest_secret', {
         fields: ['user_id'],
       },
       {
-          fields: ['secret'],
+          fields: ['contest_id', 'secret'],
       },
       {
         fields: ['user_id', 'contest_id']

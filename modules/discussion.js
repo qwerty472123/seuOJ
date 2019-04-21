@@ -1,5 +1,8 @@
+let Sequelize = require('sequelize');
+
 let Problem = syzoj.model('problem');
 let Article = syzoj.model('article');
+let Contest = syzoj.model('contest');
 let ArticleComment = syzoj.model('article-comment');
 let User = syzoj.model('user');
 
@@ -12,9 +15,9 @@ app.get('/discussion/:type?', async (req, res) => {
 
     let where;
     if (in_problems) {
-      where = { problem_id: { $not: null } };
+      where = { contest_id: { $eq: null }, problem_id: { $not: null } };
     } else {
-      where = { problem_id: { $eq: null } };
+      where = { contest_id: { $eq: null }, problem_id: { $eq: null } };
     }
     let paginate = syzoj.utils.paginate(await Article.count(where), req.query.page, syzoj.config.page.discussion);
     let articles = await Article.query(paginate, where, [['sort_time', 'desc']]);
@@ -30,7 +33,8 @@ app.get('/discussion/:type?', async (req, res) => {
       articles: articles,
       paginate: paginate,
       problem: null,
-      in_problems: in_problems
+      in_problems: in_problems,
+      in_contest: null
     });
   } catch (e) {
     syzoj.log(e);
@@ -49,7 +53,7 @@ app.get('/discussion/problem/:pid', async (req, res) => {
       throw new ErrorMessage('您没有权限进行此操作。');
     }
 
-    let where = { problem_id: pid };
+    let where = { contest_id: { $eq: null }, problem_id: pid };
     let paginate = syzoj.utils.paginate(await Article.count(where), req.query.page, syzoj.config.page.discussion);
     let articles = await Article.query(paginate, where, [['sort_time', 'desc']]);
 
@@ -59,7 +63,35 @@ app.get('/discussion/problem/:pid', async (req, res) => {
       articles: articles,
       paginate: paginate,
       problem: problem,
-      in_problems: false
+      in_problems: false,
+      in_contest: null
+    });
+  } catch (e) {
+    syzoj.log(e);
+    res.render('error', {
+      err: e
+    });
+  }
+});
+
+app.get('/contest/:id/qa', async (req, res) => {
+  try {
+    let contest_id = parseInt(req.params.id);
+    let contest = await Contest.fromID(contest_id);
+    if (!contest) throw new ErrorMessage('无此比赛。');
+    if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+    let where = (await contest.isSupervisior(res.locals.user)) ? { contest_id: contest_id } : { contest_id: contest_id, [Sequelize.Op.or]: [{is_notice: true}, {user_id: res.locals.user.id}] };
+    let paginate = syzoj.utils.paginate(await Article.count(where), req.query.page, syzoj.config.page.discussion);
+    let articles = await Article.query(paginate, where, [['is_notice' ,'desc'], ['sort_time', 'desc']]);
+
+    for (let article of articles) await article.loadRelationships();
+
+    res.render('discussion', {
+      articles: articles,
+      paginate: paginate,
+      problem: null,
+      in_problems: false,
+      in_contest: contest
     });
   } catch (e) {
     syzoj.log(e);
@@ -74,7 +106,12 @@ app.get('/article/:id', async (req, res) => {
     let id = parseInt(req.params.id);
     let article = await Article.fromID(id);
     if (!article) throw new ErrorMessage('无此帖子。');
-
+    let contest = null;
+    if (article.contest_id) {
+      contest = await Contest.fromID(article.contest_id);
+      if ((!contest.is_public || !(contest.isRunning() || contest.isEnded())) && !await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('比赛未公开，请耐心等待 (´∀ `)');
+      if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+    }
     await article.loadRelationships();
     article.allowedEdit = await article.isAllowedEditBy(res.locals.user);
     article.allowedComment = await article.isAllowedCommentBy(res.locals.user);
@@ -105,7 +142,8 @@ app.get('/article/:id', async (req, res) => {
       comments: comments,
       paginate: paginate,
       problem: problem,
-      commentsCount: commentsCount
+      commentsCount: commentsCount,
+      contest: contest
     });
   } catch (e) {
     syzoj.log(e);
@@ -123,10 +161,22 @@ app.get('/article/:id/edit', async (req, res) => {
     let article = await Article.fromID(id);
 
     if (!article) {
+      if (req.query.contest_id) {
+        let contest = await Contest.fromID(req.query.contest_id);
+        if (!contest) throw new ErrorMessage('无对应比赛！');
+        if ((!contest.is_public || !(contest.isRunning())) && !await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('比赛不在进行中！');
+        if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+      }
       article = await Article.create();
       article.id = 0;
       article.allowedEdit = true;
     } else {
+      if (article.contest_id) {
+        let contest = await Contest.fromID(article.contest_id);
+        if (!contest) throw new ErrorMessage('无对应比赛！');
+        if ((!contest.is_public || !(contest.isRunning())) && !await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('比赛不在进行中！');
+        if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+      }
       article.allowedEdit = await article.isAllowedEditBy(res.locals.user);
     }
 
@@ -161,7 +211,23 @@ app.post('/article/:id/edit', async (req, res) => {
       } else {
         article.problem_id = null;
       }
+
+      if (req.query.contest_id) {
+        let contest = await Contest.fromID(req.query.contest_id);
+        if (!contest) throw new ErrorMessage('无此比赛。');
+        if ((!contest.is_public || !(contest.isRunning())) && !await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('比赛不在进行中！');
+        if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+        article.contest_id = contest.id;
+      } else {
+        article.contest_id = null;
+      }
     } else {
+      if (article.contest_id) {
+        let contest = await Contest.fromID(article.contest_id);
+        if (!contest) throw new ErrorMessage('无对应比赛！');
+        if ((!contest.is_public || !(contest.isRunning())) && !await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('比赛不在进行中！');
+        if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+      }
       if (!await article.isAllowedEditBy(res.locals.user)) throw new ErrorMessage('您没有权限进行此操作。');
     }
 
@@ -188,16 +254,25 @@ app.post('/article/:id/delete', async (req, res) => {
 
     let id = parseInt(req.params.id);
     let article = await Article.fromID(id);
+    let contest = null;
 
     if (!article) {
       throw new ErrorMessage('无此帖子。');
     } else {
+      if (article.contest_id) {
+        contest = await Contest.fromID(article.contest_id);
+        if (!contest) throw new ErrorMessage('无对应比赛！');
+        if ((!contest.is_public || !(contest.isRunning())) && !await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('比赛不在进行中！');
+        if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+        if (!await contest.isSupervisior(res.locals.user) && article.is_notice) throw new ErrorMessage('当前内容为公告，请额外发帖！');
+      }
       if (!await article.isAllowedEditBy(res.locals.user)) throw new ErrorMessage('您没有权限进行此操作。');
     }
 
     await article.destroy();
-
-    res.redirect(syzoj.utils.makeUrl(['discussion', 'global']));
+    
+    if(contest) res.redirect(syzoj.utils.makeUrl(['contest', contest.id, 'qa']));
+    else res.redirect(syzoj.utils.makeUrl(['discussion', 'global']));
   } catch (e) {
     syzoj.log(e);
     res.render('error', {
@@ -216,6 +291,13 @@ app.post('/article/:id/comment', async (req, res) => {
     if (!article) {
       throw new ErrorMessage('无此帖子。');
     } else {
+      if (article.contest_id) {
+        let contest = await Contest.fromID(article.contest_id);
+        if (!contest) throw new ErrorMessage('无对应比赛！');
+        if ((!contest.is_public || !(contest.isRunning())) && !await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('比赛不在进行中！');
+        if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+        if (!await contest.isSupervisior(res.locals.user) && article.is_notice) throw new ErrorMessage('当前内容为公告，请额外发帖！');
+      }
       if (!await article.isAllowedCommentBy(res.locals.user)) throw new ErrorMessage('您没有权限进行此操作。');
     }
 
@@ -251,6 +333,15 @@ app.post('/article/:article_id/comment/:id/delete', async (req, res) => {
     if (!comment) {
       throw new ErrorMessage('无此评论。');
     } else {
+      await comment.loadRelationships();
+      let article = comment.article;
+      if (article.contest_id) {
+        let contest = await Contest.fromID(article.contest_id);
+        if (!contest) throw new ErrorMessage('无对应比赛！');
+        if ((!contest.is_public || !(contest.isRunning())) && !await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('比赛不在进行中！');
+        if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+        if (!await contest.isSupervisior(res.locals.user) && article.is_notice) throw new ErrorMessage('当前内容为公告，请额外发帖！');
+      }
       if (!await comment.isAllowedEditBy(res.locals.user)) throw new ErrorMessage('您没有权限进行此操作。');
     }
 

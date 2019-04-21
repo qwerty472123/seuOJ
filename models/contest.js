@@ -21,7 +21,7 @@ let model = db.define('contest', {
       key: 'id'
     }
   },
-  // type: noi, ioi, acm
+  // type: noi, ioi, acm, scc
   type: { type: Sequelize.STRING(10) },
 
   information: { type: Sequelize.TEXT },
@@ -38,7 +38,9 @@ let model = db.define('contest', {
 
   is_public: { type: Sequelize.BOOLEAN },
   hide_statistics: { type: Sequelize.BOOLEAN },
-  need_secret: { type: Sequelize.BOOLEAN }
+  need_secret: { type: Sequelize.BOOLEAN },
+  one_language: { type: Sequelize.BOOLEAN },
+  allow_languages: { type: Sequelize.TEXT }
 }, {
     timestamps: false,
     tableName: 'contest',
@@ -68,7 +70,9 @@ class Contest extends Model {
       ranklist_id: 0,
       is_public: false,
       hide_statistics: false,
-      need_secret: false
+      need_secret: false,
+      one_language: false,
+      allow_languages: ''
     }, val)));
   }
 
@@ -78,8 +82,8 @@ class Contest extends Model {
     if (this.need_secret) {
       if (req.session.contest_secret) {console.log(req.session.contest_secret);
         let secret = JSON.parse(req.session.contest_secret)[this.id];
-        let secretInfo = await ContestSecret.find({ secret });
-        if (secretInfo && this.id == secretInfo.contest_id && secretInfo.user_id == res.locals.user.id)
+        let secretInfo = await ContestSecret.find({ contest_id: this.id, secret });
+        if (secretInfo && secretInfo.user_id == res.locals.user.id)
           return true;
       }
       return false;
@@ -97,17 +101,17 @@ class Contest extends Model {
   }
 
   allowedSeeingOthers() {
-    if (this.type === 'acm') return true;
+    if (this.type === 'acm' || this.type === 'scc') return true;
     else return false;
   }
 
   allowedSeeingScore() { // If not, then the user can only see status
-    if (this.type === 'ioi') return true;
+    if (this.type === 'ioi' || this.type === 'scc') return true;
     else return false;
   }
 
   allowedSeeingResult() { // If not, then the user can only see compile progress
-    if (this.type === 'ioi' || this.type === 'acm') return true;
+    if (this.type === 'ioi' || this.type === 'acm' || this.type === 'scc') return true;
     else return false;
   }
 

@@ -7,7 +7,11 @@
         <div class="ui breadcrumb">
           <div class="section">讨论</div>
           <i class="right angle icon divider"></i>
-          <% if (problem) { %>
+          <% if (in_contest) { %>
+            <div class="section"><a href="<%= syzoj.utils.makeUrl(['contests']) %>">比赛</a></div>
+            <i class="right angle icon divider"></i>
+            <div class="active section"><%= in_contest.title %></div>
+          <% } else if (problem) { %>
             <div class="section"><a href="<%= syzoj.utils.makeUrl(['discussion', 'problems']) %>">题目</a></div>
             <i class="right angle icon divider"></i>
             <div class="active section"><%= problem.title %></div>
@@ -25,7 +29,12 @@
             全局板块
           </a>
         <% } else { %>
-          <% if (problem) { %>
+          <% if (in_contest) { %>
+            <a style="margin-left: 10px; " href="<%= syzoj.utils.makeUrl(['contest', in_contest.id]) %>" class="ui labeled icon mini blue button">
+              <i class="arrow left icon"></i>
+              返回比赛
+            </a>
+          <% } else if (problem) { %>
             <a style="margin-left: 10px; " href="<%= syzoj.utils.makeUrl(['problem', problem.id]) %>" class="ui labeled icon mini blue button">
               <i class="arrow left icon"></i>
               返回题目
@@ -37,7 +46,7 @@
             </a>
           <% } %>
           <% if (articles.length && user) { %>
-          <a style="margin-left: 10px; " href="<%= syzoj.utils.makeUrl(['article', 0, 'edit'], problem ? { problem_id: problem.id } : null) %>" class="ui labeled icon mini button">
+          <a style="margin-left: 10px; " href="<%= syzoj.utils.makeUrl(['article', 0, 'edit'], in_contest? { contest_id: in_contest.id } : (problem ? { problem_id: problem.id } : null)) %>" class="ui labeled icon mini button">
               <i class="write icon"></i>
               发帖
           </a>
@@ -82,7 +91,7 @@
       暂无讨论
     </div>
     <% if (!in_problems && user) { %>
-    <a href="<%= syzoj.utils.makeUrl(['article', 0, 'edit'], problem ? { problem_id: problem.id } : null) %>" class="ui primary labeled icon button">
+    <a href="<%= syzoj.utils.makeUrl(['article', 0, 'edit'], in_contest? { contest_id: in_contest.id } : (problem ? { problem_id: problem.id } : null)) %>" class="ui primary labeled icon button">
       <i class="write icon"></i>
       发帖
     </a>

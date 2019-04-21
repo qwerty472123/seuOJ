@@ -29,6 +29,11 @@ app.get('/api/v2/search/users/:keyword*?', async (req, res) => {
   }
 });
 
+app.get('/api/v2/enabled_langs', async (req, res) => {
+  let result = syzoj.config.enabled_languages.map(x => ({ name: x, value: x, text: x }));
+  res.send({ success: true, results: result });
+});
+
 app.get('/api/v2/search/problems/:keyword*?', async (req, res) => {
   try {
     let Problem = syzoj.model('problem');

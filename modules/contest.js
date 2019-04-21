@@ -71,12 +71,15 @@ app.post('/contest/:id/edit', async (req, res) => {
     let ranklist = null;
     if (!contest) {
       // Only new contest can be set type
-      if (!['noi', 'ioi', 'acm'].includes(req.body.type)) throw new ErrorMessage('无效的赛制。');
+      if (!['noi', 'ioi', 'acm', 'scc'].includes(req.body.type)) throw new ErrorMessage('无效的赛制。');
 
       contest = await Contest.create();
 
       contest.holder_id = res.locals.user.id;
       contest.type = req.body.type;
+      contest.one_language = req.body.one_language === 'on';
+      if (!Array.isArray(req.body.allow_languages)) req.body.allow_languages = [req.body.allow_languages];
+      contest.allow_languages = req.body.allow_languages.join('|');
 
       ranklist = await ContestRanklist.create();
     } else {
@@ -434,7 +437,8 @@ app.get('/contest/:id/submissions', async (req, res) => {
       paginate: paginate,
       form: req.query,
       displayConfig: displayConfig,
-      pushType: pushType
+      pushType: pushType,
+      isFiltered: !!(where.user_id || where.language || where.status)
     });
   } catch (e) {
     syzoj.log(e);
@@ -478,6 +482,8 @@ app.get('/contest/submission/:id', async (req, res) => {
       info: getSubmissionInfo(judge, displayConfig),
       roughResult: getRoughResult(judge, displayConfig),
       code: (displayConfig.showCode && judge.problem.type !== 'submit-answer') ? judge.code.toString("utf8") : '',
+      formattedCode: judge.formattedCode ? judge.formattedCode.toString("utf8") : null,
+      preferFormattedCode: res.locals.user ? res.locals.user.prefer_formatted_code : false,
       detailResult: processOverallResult(judge.result, displayConfig),
       socketToken: (displayConfig.showDetailResult && judge.pending && x.task_id != null) ? jwt.sign({
         taskId: judge.task_id,
@@ -529,13 +535,23 @@ app.get('/contest/:id/problem/:pid', async (req, res) => {
 
     await problem.loadRelationships();
 
+    let language_limit = null;
+    if (contest.one_language) {
+      let player = await ContestPlayer.findInContest({
+        contest_id: contest.id,
+        user_id: curUser.id
+      });
+      language_limit = !player || player.language_limit === '' ? 'Undetermined' : player.language_limit;
+    }
+
     res.render('problem', {
       pid: pid,
       contest: contest,
       problem: problem,
       state: state,
       lastLanguage: res.locals.user ? await res.locals.user.getLastSubmitLanguage() : null,
-      testcases: testcases
+      testcases: testcases,
+      language_limit: language_limit
     });
   } catch (e) {
     syzoj.log(e);

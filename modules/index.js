@@ -12,7 +12,7 @@ app.get('/', async (req, res) => {
     let ranklist = await User.query([1, syzoj.config.page.ranklist_index], { is_show: true }, [[syzoj.config.sorting.ranklist.field, syzoj.config.sorting.ranklist.order]]);
     await ranklist.forEachAsync(async x => x.renderInformation());
 
-    let notices = (await Article.query(null, { is_notice: true }, [['public_time', 'desc']])).map(article => ({
+    let notices = (await Article.query(null, { contest_id: { $eq: null }, is_notice: true }, [['public_time', 'desc']])).map(article => ({
       title: article.title,
       url: syzoj.utils.makeUrl(['article', article.id]),
       date: syzoj.utils.formatDate(article.public_time, 'L')

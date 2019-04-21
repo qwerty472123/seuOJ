@@ -3,6 +3,7 @@ const RatingCalculation = syzoj.model('rating_calculation');
 const RatingHistory = syzoj.model('rating_history');
 const Contest = syzoj.model('contest');
 const ContestPlayer = syzoj.model('contest_player');
+const ContestSecret = syzoj.model('contest_secret');
 
 // Ranklist
 app.get('/ranklist', async (req, res) => {
@@ -106,6 +107,10 @@ app.get('/user/:id', async (req, res) => {
       });
     }
     ratingHistories.reverse();
+
+    //Special code for special contest
+    let secret = await ContestSecret.find({user_id: user.id, contest_id: 21});
+    if (secret) user.spec = secret.extra_info;
 
     res.render('user', {
       show_user: user,
