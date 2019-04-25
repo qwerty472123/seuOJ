@@ -106,7 +106,9 @@
                 </td>
                 <td><a href="<%= syzoj.utils.makeUrl(['contest', contest.id, 'problem', i]) %>"><%= (contest.type === 'acm' || contest.type === 'scc' ? String.fromCharCode('A'.charCodeAt(0) + parseInt(i) - 1) + ". " : "") + syzoj.utils.removeTitleTag(problem.problem.title) %></a>
                 <% if (needBan) { %>
-                  <div class="show_tag_controled" style="float:right"><span class="ui header"><a onclick="ban_problem(<%= i %>)" id="ban_btn_<%= i %>" class="ui tiny blue label">放弃本题</a></span></div><!--aa wait-->
+                  <div style="float:right"><span class="ui header"><a onclick="ban_problem(<%= i %>)" id="ban_btn_<%= i %>" class="ui tiny blue label">放弃本题</a></span></div>
+                <% } else if(banIds && banIds.includes(problem.problem.id)) { %>
+                  <div style="float:right"><span class="ui header"><a class="ui tiny gray label">已放弃</a></span></div>
                 <% } %>
                 </td>
                 <% if (hasStatistics) { %>
@@ -195,7 +197,7 @@ function submit_ban_problem() {
   $.ajax({
     url: "/contest/<%= contest.id %>/submit_ban_problems_id",
     type: 'POST',
-    data: 'ban_ids='+banids.join('&ban_ids='),
+    data: 'ban_ids='+ban_ids.join('&ban_ids='),
     async: true,
     success: function(data) {
       if(!data.success) alert('出现如下错误：' + data.reason);

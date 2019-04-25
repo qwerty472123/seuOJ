@@ -259,7 +259,9 @@ app.get('/contest/:id', async (req, res) => {
       isSupervisior: isSupervisior,
       needSecret: !await contest.allowedContestSecret(req, res),
       isLogin: !!curUser,
-      needBan: contest.ban_count && !!curUser && (!player || !player.ban_problems_id || player.ban_problems_id.split('|').length < contest.ban_count)
+      needBan: contest.ban_count && !!curUser && (!player || !player.ban_problems_id || player.ban_problems_id.split('|').length < contest.ban_count),
+      banIds: (contest.ban_count && !!curUser && !!player && !!player.ban_problems_id && player.ban_problems_id.split('|').length == contest.ban_count) 
+              ? player.ban_problems_id.split('|') : null
     });
   } catch (e) {
     syzoj.log(e);
@@ -363,6 +365,9 @@ app.get('/contest/:id/submissions', async (req, res) => {
       return;
     }
 
+    let allowLangs = null;
+    if (contest.allow_languages) allowLangs = contest.allow_languages.split('|'); 
+
     const displayConfig = getDisplayConfig(contest);
     let problems_id = await contest.getProblems();
     const curUser = res.locals.user;
@@ -440,7 +445,8 @@ app.get('/contest/:id/submissions', async (req, res) => {
       form: req.query,
       displayConfig: displayConfig,
       pushType: pushType,
-      isFiltered: !!(where.user_id || where.language || where.status)
+      isFiltered: !!(where.user_id || where.language || where.status),
+      allowLangs: allowLangs
     });
   } catch (e) {
     syzoj.log(e);
@@ -605,6 +611,9 @@ app.post('/contest/:id/submit_ban_problems_id', async (req, res) => {
     let id = parseInt(req.params.id);
     let contest = await Contest.fromID(id);
     if (!contest) throw new ErrorMessage('无此比赛。');
+    if (!contest.is_public && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛未公开，请耐心等待 (´∀ `)');
+    if (!res.locals.user) throw new ErrorMessage('请先登陆。');
+    if (!contest.isRunning()) throw new ErrorMessage('比赛不在进行中！');
     if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
     if (!contest.ban_count) throw new ErrorMessage('本次比赛不需要声明。');
 

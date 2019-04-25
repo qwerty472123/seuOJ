@@ -26,6 +26,7 @@ app.get('/submissions', async (req, res) => {
     let user = await User.fromName(req.query.submitter || '');
     let where = {};
     let inContest = false;
+    let allowLangs = null;
     if (user) where.user_id = user.id;
     else if (req.query.submitter) where.user_id = -1;
 
@@ -41,6 +42,7 @@ app.get('/submissions', async (req, res) => {
         where.type = { $eq: 1 };
         where.type_info = { $eq: contestId };
         inContest = true;
+        if (contest.allow_languages) allowLangs = contest.allow_languages.split('|');
       } else {
         throw new Error("您暂时无权查看此比赛的详细评测信息。");
       }
@@ -119,7 +121,8 @@ app.get('/submissions', async (req, res) => {
       pushType: 'rough',
       form: req.query,
       displayConfig: displayConfig,
-      isFiltered: isFiltered
+      isFiltered: isFiltered,
+      allowLangs: allowLangs
     });
   } catch (e) {
     syzoj.log(e);
