@@ -79,7 +79,7 @@ div[class*=ace_br] {
   <div class="row">
     <div class="column">
       <div class="ui buttons">
-        <% if (typeof contest !== 'undefined' && contest) { %>
+        <% if (typeof contest !== 'undefined' && contest && !forceNoSubmit) { %>
           <% if (!contest.ended) { %>
             <a class="small ui primary button" href="#submit_code">提交</a>
           <% } else { %>
@@ -235,7 +235,7 @@ div[class*=ace_br] {
     });
     </script>
   <% } %>
-    <% let noSubmit = typeof forceNoSubmit !== 'undefined' ? forceNoSubmit : false; %>
+    <% let noSubmit = forceNoSubmit; %>
     <%
     if (typeof contest !== 'undefined' && contest && contest.ended || (!testcases || testcases.error)) {
       noSubmit = true;
