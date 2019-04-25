@@ -251,7 +251,8 @@ app.get('/contest/:id', async (req, res) => {
         }
       }
     }
-
+console.log((contest.ban_count && !!curUser && !!player && !!player.ban_problems_id && player.ban_problems_id.split('|').length === contest.ban_count) 
+? player.ban_problems_id.split('|') : null);
     res.render('contest', {
       contest: contest,
       problems: problems,
@@ -260,7 +261,7 @@ app.get('/contest/:id', async (req, res) => {
       needSecret: !await contest.allowedContestSecret(req, res),
       isLogin: !!curUser,
       needBan: contest.ban_count && !!curUser && (!player || !player.ban_problems_id || player.ban_problems_id.split('|').length < contest.ban_count),
-      banIds: (contest.ban_count && !!curUser && !!player && !!player.ban_problems_id && player.ban_problems_id.split('|').length == contest.ban_count) 
+      banIds: (contest.ban_count && !!curUser && !!player && !!player.ban_problems_id && player.ban_problems_id.split('|').length === contest.ban_count) 
               ? player.ban_problems_id.split('|') : null
     });
   } catch (e) {
