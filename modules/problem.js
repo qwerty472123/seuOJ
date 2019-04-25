@@ -658,16 +658,27 @@ app.post('/problem/:id/submit', app.multer.fields([{ name: 'answer', maxCount: 1
       let problems_id = await contest.getProblems();
       if (!problems_id.includes(id)) throw new ErrorMessage('无此题目。');
       if (problem.type !== 'submit-answer' && contest.allow_languages && !contest.allow_languages.split('|').includes(req.body.language)) throw new ErrorMessage('本次比赛禁止使用该语言！');
-      if (contest.one_language && problem.type !== 'submit-answer') {
-        let player = await ContestPlayer.findInContest({
+      let player;
+      if (contest.ban_count) {
+        player = await ContestPlayer.findInContest({
           contest_id: contest.id,
           user_id: curUser.id
         });
+        if (!player || !player.ban_problems_id || player.ban_problems_id.split('|').length < contest.ban_count) throw new ErrorMessage('请先在比赛页面声明放弃足够的题目。');
+        if (player.ban_problems_id.split('|').includes(problem.id)) throw new ErrorMessage('该题您已声明放弃，禁止提交。');
+      }
+      if (contest.one_language && problem.type !== 'submit-answer') {
         if (!player) {
-          player = await ContestPlayer.create({
+          player = await ContestPlayer.findInContest({
             contest_id: contest.id,
             user_id: curUser.id
           });
+          if (!player) {
+            player = await ContestPlayer.create({
+              contest_id: contest.id,
+              user_id: curUser.id
+            });
+          }
         }
         if (player.language_limit === '') {
           player.language_limit = req.body.language;

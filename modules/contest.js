@@ -78,6 +78,7 @@ app.post('/contest/:id/edit', async (req, res) => {
       contest.holder_id = res.locals.user.id;
       contest.type = req.body.type;
       contest.one_language = req.body.one_language === 'on';
+      contest.ban_count = parseInt(req.body.ban_count);
       if (!Array.isArray(req.body.allow_languages)) req.body.allow_languages = [req.body.allow_languages];
       contest.allow_languages = req.body.allow_languages.join('|');
 
@@ -257,7 +258,8 @@ app.get('/contest/:id', async (req, res) => {
       hasStatistics: hasStatistics,
       isSupervisior: isSupervisior,
       needSecret: !await contest.allowedContestSecret(req, res),
-      isLogin: !!curUser
+      isLogin: !!curUser,
+      needBan: contest.ban_count && !!curUser && (!player || !player.ban_problems_id || player.ban_problems_id.split('|').length < contest.ban_count)
     });
   } catch (e) {
     syzoj.log(e);
@@ -536,7 +538,7 @@ app.get('/contest/:id/problem/:pid', async (req, res) => {
     await problem.loadRelationships();
 
     let language_limit = null;
-    if (contest.one_language) {
+    if (curUser && contest.one_language) {
       let player = await ContestPlayer.findInContest({
         contest_id: contest.id,
         user_id: curUser.id
@@ -595,5 +597,42 @@ app.get('/contest/:id/:pid/download/additional_file', async (req, res) => {
     res.render('error', {
       err: e
     });
+  }
+});
+
+app.post('/contest/:id/submit_ban_problems_id', async (req, res) => {
+  try {
+    let id = parseInt(req.params.id);
+    let contest = await Contest.fromID(id);
+    if (!contest) throw new ErrorMessage('无此比赛。');
+    if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+    if (!contest.ban_count) throw new ErrorMessage('本次比赛不需要声明。');
+
+    let problems_id = await contest.getProblems(), real_problem_ids = [], visited_ids = {};
+    if (!Array.isArray(req.body.ban_ids)) req.body.ban_ids = [req.body.ban_ids];
+    for(let pid of req.body.ban_ids) {
+      if (!pid || pid < 1 || pid > problems_id.length) throw new ErrorMessage('您声明的部分题目不存在。');
+      if (visited_ids[pid]) throw new ErrorMessage('您声明的部分题目重复。');
+      visited_ids[pid] = true;
+      real_problem_ids.push(problems_id[pid]);
+    }
+    if (real_problem_ids.length !== contest.ban_count) throw new ErrorMessage('声明题目数目不符合要求。');
+
+    let player = await ContestPlayer.findInContest({
+      contest_id: contest.id,
+      user_id: curUser.id
+    });
+    if (!player) {
+      player = await ContestPlayer.create({
+        contest_id: contest.id,
+        user_id: curUser.id
+      });
+    }
+    player.ban_problems_id = real_problem_ids.join('|');
+    await player.save();
+    res.send({ success: true });
+  } catch (e) {
+    syzoj.log(e);
+    res.send({ success: false, reason: e.details });
   }
 });

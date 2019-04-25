@@ -149,7 +149,7 @@ div[class*=ace_br] {
       <div class="ui basic modal" id="modal-submit-lang">
         <div class="ui icon header">
           <i class="trash icon"></i>
-          <p style="margin-top: 15px; ">确定提交语言</p>
+          <p style="margin-top: 15px; ">确认提交语言</p>
         </div>
         <div class="content" style="text-align: center; ">
           <p>确认使用当前的提交语言 <span id="tip_language_name">language-name</span> 吗？<br>
@@ -393,7 +393,7 @@ div[class*=ace_br] {
     <% if (language_limit && language_limit === 'Undetermined') { %>
       if (!lang_checked) {
         $('#tip_language_name').text($('#languages-menu .item.active').data('value'));
-        $('#modal-submit-lang').modal('show')
+        $('#modal-submit-lang').modal('show');
         return false;
       }
     <% } %>

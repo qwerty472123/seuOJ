@@ -40,7 +40,8 @@ let model = db.define('contest', {
   hide_statistics: { type: Sequelize.BOOLEAN },
   need_secret: { type: Sequelize.BOOLEAN },
   one_language: { type: Sequelize.BOOLEAN },
-  allow_languages: { type: Sequelize.TEXT }
+  allow_languages: { type: Sequelize.TEXT },
+  ban_count: { type: Sequelize.INTEGER }
 }, {
     timestamps: false,
     tableName: 'contest',
@@ -72,7 +73,8 @@ class Contest extends Model {
       hide_statistics: false,
       need_secret: false,
       one_language: false,
-      allow_languages: ''
+      allow_languages: '',
+      ban_count: 0
     }, val)));
   }
 
