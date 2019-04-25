@@ -629,12 +629,12 @@ app.post('/contest/:id/submit_ban_problems_id', async (req, res) => {
 
     let player = await ContestPlayer.findInContest({
       contest_id: contest.id,
-      user_id: curUser.id
+      user_id: res.locals.user.id
     });
     if (!player) {
       player = await ContestPlayer.create({
         contest_id: contest.id,
-        user_id: curUser.id
+        user_id: res.locals.user.id
       });
     }
     player.ban_problems_id = real_problem_ids.join('|');
