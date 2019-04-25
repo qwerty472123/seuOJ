@@ -555,7 +555,7 @@ app.get('/contest/:id/problem/:pid', async (req, res) => {
         contest_id: contest.id,
         user_id: curUser.id
       });
-      forceNoSubmit = player && player.ban_problems_id && player.ban_problems_id.split('|').length === contest.ban_count && player.ban_problems_id.split('|').map(x => parseInt(x)).includes(problem_id);
+      forceNoSubmit = !player || !player.ban_problems_id || player.ban_problems_id.split('|').length < contest.ban_count || player.ban_problems_id.split('|').map(x => parseInt(x)).includes(problem_id);
     }
 
     res.render('problem', {
