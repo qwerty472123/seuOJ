@@ -542,13 +542,20 @@ app.get('/contest/:id/problem/:pid', async (req, res) => {
 
     await problem.loadRelationships();
 
-    let language_limit = null;
+    let language_limit = null, player = null, forceNoSubmit = !curUser;
     if (curUser && contest.one_language) {
-      let player = await ContestPlayer.findInContest({
+      if (!player) player = await ContestPlayer.findInContest({
         contest_id: contest.id,
         user_id: curUser.id
       });
       language_limit = !player || player.language_limit === '' ? 'Undetermined' : player.language_limit;
+    }
+    if (curUser && contest.ban_count) {
+      if (!player) player = await ContestPlayer.findInContest({
+        contest_id: contest.id,
+        user_id: curUser.id
+      });
+      forceNoSubmit = player && player.ban_problems_id && player.ban_problems_id.split('|').length === contest.ban_count && player.ban_problems_id.split('|').map(x => parseInt(x)).includes(problem_id);
     }
 
     res.render('problem', {
@@ -558,7 +565,8 @@ app.get('/contest/:id/problem/:pid', async (req, res) => {
       state: state,
       lastLanguage: res.locals.user ? await res.locals.user.getLastSubmitLanguage() : null,
       testcases: testcases,
-      language_limit: language_limit
+      language_limit: language_limit,
+      forceNoSubmit: forceNoSubmit
     });
   } catch (e) {
     syzoj.log(e);
@@ -620,6 +628,7 @@ app.post('/contest/:id/submit_ban_problems_id', async (req, res) => {
     if (!Array.isArray(req.body.ban_ids)) req.body.ban_ids = [req.body.ban_ids];
     for(let pid of req.body.ban_ids) {
       if (!pid || pid < 1 || pid > problems_id.length) throw new ErrorMessage('您声明的部分题目不存在。');
+      pid --;
       if (visited_ids[pid]) throw new ErrorMessage('您声明的部分题目重复。');
       visited_ids[pid] = true;
       real_problem_ids.push(problems_id[pid]);

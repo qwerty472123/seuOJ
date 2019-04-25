@@ -235,7 +235,7 @@ div[class*=ace_br] {
     });
     </script>
   <% } %>
-    <% let noSubmit = false; %>
+    <% let noSubmit = typeof forceNoSubmit !== 'undefined' ? forceNoSubmit : false; %>
     <%
     if (typeof contest !== 'undefined' && contest && contest.ended || (!testcases || testcases.error)) {
       noSubmit = true;

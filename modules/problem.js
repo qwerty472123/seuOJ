@@ -233,7 +233,8 @@ app.get('/problem/:id', async (req, res) => {
       lastLanguage: res.locals.user ? await res.locals.user.getLastSubmitLanguage() : null,
       testcases: testcases,
       discussionCount: discussionCount,
-      language_limit: false
+      language_limit: false,
+      forceNoSubmit: !res.locals.user
     });
   } catch (e) {
     syzoj.log(e);
