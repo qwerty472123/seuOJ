@@ -642,6 +642,6 @@ app.post('/contest/:id/submit_ban_problems_id', async (req, res) => {
     res.send({ success: true });
   } catch (e) {
     syzoj.log(e);
-    res.send({ success: false, reason: e.details });
+    res.send({ success: false, reason: e.message });
   }
 });
