@@ -251,8 +251,6 @@ app.get('/contest/:id', async (req, res) => {
         }
       }
     }
-console.log((contest.ban_count && !!curUser && !!player && !!player.ban_problems_id && player.ban_problems_id.split('|').length === contest.ban_count) 
-? player.ban_problems_id.split('|') : null);
     res.render('contest', {
       contest: contest,
       problems: problems,
@@ -262,7 +260,7 @@ console.log((contest.ban_count && !!curUser && !!player && !!player.ban_problems
       isLogin: !!curUser,
       needBan: contest.ban_count && !!curUser && (!player || !player.ban_problems_id || player.ban_problems_id.split('|').length < contest.ban_count),
       banIds: (contest.ban_count && !!curUser && !!player && !!player.ban_problems_id && player.ban_problems_id.split('|').length === contest.ban_count) 
-              ? player.ban_problems_id.split('|') : null
+              ? player.ban_problems_id.split('|').map(x => parseInt(x)) : null
     });
   } catch (e) {
     syzoj.log(e);

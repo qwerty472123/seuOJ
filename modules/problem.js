@@ -665,7 +665,7 @@ app.post('/problem/:id/submit', app.multer.fields([{ name: 'answer', maxCount: 1
           user_id: curUser.id
         });
         if (!player || !player.ban_problems_id || player.ban_problems_id.split('|').length < contest.ban_count) throw new ErrorMessage('请先在比赛页面声明放弃足够的题目。');
-        if (player.ban_problems_id.split('|').includes(problem.id)) throw new ErrorMessage('该题您已声明放弃，禁止提交。');
+        if (player.ban_problems_id.split('|').map(x => parseInt(x)).includes(problem.id)) throw new ErrorMessage('该题您已声明放弃，禁止提交。');
       }
       if (contest.one_language && problem.type !== 'submit-answer') {
         if (!player) {
