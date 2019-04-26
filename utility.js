@@ -294,5 +294,19 @@ module.exports = {
   async saveConfig() {
     let fs = require('fs-extra');
     fs.writeFileAsync(syzoj.configDir, JSON.stringify(syzoj.config, null, 2));
+  },
+  calcCodeLength(code, lang) { // Only support Java/C/Python
+    lang = lang.toLowerCase();
+    let isC = lang.startsWith('c');
+    let isJava = lang.startsWith('j');
+    code = code.replace(/\r\n/g,'\n');
+    if (isC) {
+      return code.split('\n').map(x => {
+        let y = x.trim();
+        if (y.startsWith('#')) y += '\n';
+        return y;
+      }).join('').length; 
+    } else if (isJava) return code.split('\n').map(x => x.trim()).join('').length; 
+    else return code.length; // Like Python
   }
 };

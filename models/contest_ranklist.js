@@ -72,6 +72,32 @@ class ContestRanklist extends Model {
         if (a.latest > b.latest) return 1;
         return 0;
       });
+    } else if (contest.type === 'scc') {
+      let minLength = {};
+      for (let player of players) {
+        for (let i in player.score_details) {
+          if (player.score_details[i].accepted) {
+            if (!minLength[i] || minLength[i] > player.score_details[i].minLength) minLength[i] = player.score_details[i].minLength;
+          }
+        }
+      }
+      for (let player of players) {
+        let score = 0;
+        for (let i in player.score_details) {
+          if (player.score_details[i].accepted) {
+            player.score_details[i].score = Math.pow(100,Math.sqrt(minLength[i] / player.score_details[i].minLength));
+            score += player.score_details[i].score;
+          }
+        }
+        player.score = score;
+        await player.save();
+      }
+
+      players.sort((a, b) => {
+        if (a.score > b.score) return -1;
+        if (b.score > a.score) return 1;
+        return 0;
+      });
     } else {
       for (let player of players) {
         player.timeSum = 0;

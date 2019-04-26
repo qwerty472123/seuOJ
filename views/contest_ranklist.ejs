@@ -193,6 +193,22 @@ if (special_ranklist) {
                         <% latest = Math.max(latest, item.player.score_details[problem.id].judge_state.submit_time)  %>
                       </div>
                     </td>
+                  <% } else if (contest.type === 'scc') { %>
+                      <a href="<%= syzoj.utils.makeUrl(['submission', item.player.score_details[problem.id].judge_id]) %>">
+                        <% if (item.player.score_details[problem.id].score != null) { %>
+                          <span class="score score_<%= parseInt((item.player.score_details[problem.id].score / 10) || 0) %>">
+                            <%= Math.round(item.player.score_details[problem.id].score * 100) / 100 %>
+                          </span>
+                        <% } else { %>
+                          <span class="status score_0">
+                            0
+                          </span>
+                        <% } %>
+                      </a>
+                      <div class="submit_time">
+                        <%= item.player.score_details[problem.id].minLength %>
+                      </div>
+                    </td>
                   <% } %>
                 <% } %>
                 <% if (contest.type === 'noi' || contest.type === 'ioi') { %>
@@ -202,6 +218,15 @@ if (special_ranklist) {
                     </span>
                     <div class="submit_time">
                       <%= syzoj.utils.formatTime(latest - contest.start_time) %>
+                    </div>
+                  </td>
+                <% } else if (contest.type === 'scc') { %>
+                  <td>
+                    <span class="score score_<%= parseInt((item.player.score / ranklist[0].player.score * 10) || 0) %>">
+                      <%= Math.round(item.player.score * 100) / 100 %>
+                    </span>
+                    <div class="submit_time">
+                      <%= item.player.totalLength %>
                     </div>
                   </td>
                 <% } %>

@@ -304,6 +304,8 @@ app.get('/contest/:id/ranklist', async (req, res) => {
           let multiplier = contest.ranklist.ranking_params[i] || 1.0;
           player.score_details[i].weighted_score = player.score_details[i].score == null ? null : Math.round(player.score_details[i].score * multiplier);
           player.score += player.score_details[i].weighted_score;
+        } else if (contest.type === 'scc') {
+          if (player.score_details[i].accepted) player.totalLength += player.score_details[i].minLength;
         }
       }
 

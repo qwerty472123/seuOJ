@@ -147,6 +147,43 @@ class ContestPlayer extends Model {
           if (this.score_details[x].accepted) this.score++;
         }
       }
+    } else if (this.contest.type === 'scc') {
+      if (!judge_state.pending) {
+        if (!this.score_details[judge_state.problem_id]) {
+          this.score_details[judge_state.problem_id] = {
+            accepted: false,
+            minLength: 0,
+            judge_id: 0,
+            submissions: {}
+          };
+        }
+
+        this.score_details[judge_state.problem_id].submissions[judge_state.id] = {
+          judge_id: judge_state.id,
+          accepted: judge_state.status === 'Accepted',
+          length: s.type !== 'submit-answer' ? syzoj.utils.calcCodeLength(judge_state.code, judge_state.language) : judge_state.code_length
+        };
+
+        let arr = Object.values(this.score_details[judge_state.problem_id].submissions);
+
+        this.score_details[judge_state.problem_id].minLength = Infinity;
+        this.score_details[judge_state.problem_id].judge_id = 0;
+        this.score_details[judge_state.problem_id].accepted = false;
+        for (let x of arr) if (x.accepted) {
+            this.score_details[judge_state.problem_id].accepted = true;
+            if (x.length < this.score_details[judge_state.problem_id].minLength) {
+              this.score_details[judge_state.problem_id].minLength = x.length;
+              this.score_details[judge_state.problem_id].judge_id = x.judge_id;
+            }
+        }
+
+        if (this.score_details[judge_state.problem_id].minLength === Infinity) this.score_details[judge_state.problem_id].minLength = 0;
+        if (!this.score_details[judge_state.problem_id].accepted) {
+          this.score_details[judge_state.problem_id].judge_id = arr[arr.length - 1].judge_id;
+        }
+
+        this.score = 0; // Can't calc here
+      }
     }
   }
 
