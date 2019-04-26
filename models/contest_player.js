@@ -158,10 +158,11 @@ class ContestPlayer extends Model {
           };
         }
 
+        await judge_state.loadRelationships();
         this.score_details[judge_state.problem_id].submissions[judge_state.id] = {
           judge_id: judge_state.id,
           accepted: judge_state.status === 'Accepted',
-          length: s.type !== 'submit-answer' ? syzoj.utils.calcCodeLength(judge_state.code, judge_state.language) : judge_state.code_length
+          length: judge_state.problem.type !== 'submit-answer' ? syzoj.utils.calcCodeLength(judge_state.code, judge_state.language) : judge_state.code_length
         };
 
         let arr = Object.values(this.score_details[judge_state.problem_id].submissions);
