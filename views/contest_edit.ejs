@@ -14,7 +14,7 @@
                 <label>试题列表</label>
                 <select class="ui fluid search dropdown" multiple="" id="search_problems" name="problems">
                 <% for (let problem of problems) { %>
-                <option value="<%= problem.id %>" selected>#<%= problem.id %>. <%= problem.title %></option>
+                <option value="P<%= problem.id %>" selected>#<%= problem.id %>. <%= problem.title %></option>
                 <% } %>
                 </select>
             </div>
@@ -138,9 +138,9 @@ $(function () {
       apiSettings: {
         url: '/api/v2/search/problems/{query}',
         onResponse: function (response) {
-          var a = $('#search_problems').val().map(function (x) { return parseInt(x) });
+          var a = $('#search_problems').val().map(function (x) { x = x.toString(); return x.indexOf('P') === 0 ? x.substr(1) : x });
           if (response.results) {
-            response.results = response.results.filter(function(x) {return !a.includes(parseInt(x.value));});
+            response.results = response.results.filter(function(x) {return !a.includes(x.value.toString());});
           }
           return response;
         },

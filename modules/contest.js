@@ -142,7 +142,9 @@ app.post('/contest/:id/edit', async (req, res) => {
     contest.subtitle = req.body.subtitle;
     if (!Array.isArray(req.body.problems)) req.body.problems = [req.body.problems];
     if (!Array.isArray(req.body.admins)) req.body.admins = [req.body.admins];
-    contest.problems = req.body.problems.join('|');
+    let fixedPids = [];
+    for (let pid of req.body.problems) fixedPids.push(pid.startsWith('P') ? pid.slice(1) : pid);
+    contest.problems = fixedPids.join('|');
     contest.admins = req.body.admins.join('|');
     contest.information = req.body.information;
     contest.start_time = syzoj.utils.parseDate(req.body.start_time);
@@ -295,6 +297,8 @@ app.get('/contest/:id/ranklist', async (req, res) => {
       if (contest.type === 'noi' || contest.type === 'ioi') {
         player.score = 0;
       }
+
+      if (contest.type === 'scc') player.totalLength = 0;
 
       for (let i in player.score_details) {
         player.score_details[i].judge_state = await JudgeState.fromID(player.score_details[i].judge_id);

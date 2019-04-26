@@ -82,8 +82,9 @@ if (special_ranklist) {
             %>
             <tr>
                 <%
-                  if (contest.type === 'noi' || contest.type === 'ioi') {
-                    if (i === 1 || item.player.score !== lastItem.player.score) rank = i;
+                  let rankDelta = 0;
+                  if (contest.type === 'noi' || contest.type === 'ioi' || contest.type === 'scc') {
+                    if (i === 1 || item.player.score !== lastItem.player.score) rankDelta = i - rank, rank = i;
                   } else if (contest.type === 'acm') {
                     for (let problem of problems) {
                       if (item.player.score_details[problem.id] && item.player.score_details[problem.id].accepted) {
@@ -93,13 +94,13 @@ if (special_ranklist) {
                     }
                     item.player.timeSum = timeSum;
 
-                    if (i === 1 || item.player.score !== lastItem.player.score || item.player.timeSum !== lastItem.player.timeSum) rank = i;
+                    if (i === 1 || item.player.score !== lastItem.player.score || item.player.timeSum !== lastItem.player.timeSum) rankDelta = i - rank, rank = i;
                   }
                 %>
                 <% if (special_ranklist) {
                   let is_first = true;
                   for(let ranklist_cfg of ranklists_cfg) if (ranklist_cfg[1].includes(item.user.classify_code)) {
-                    ranklist_cfg[3] ++;
+                    ranklist_cfg[3] += rankDelta;
                     while (ranklist_cfg[3] > ranklist_cfg[2][ranklist_cfg[4]][4]) ranklist_cfg[4] ++;
                     let cur_cfg = ranklist_cfg[2][ranklist_cfg[4]];
                     let color_info_1 = 'unset', color_info_2 = '';
