@@ -260,7 +260,7 @@ app.get('/contest/:id', async (req, res) => {
       isSupervisior: isSupervisior,
       needSecret: !await contest.allowedContestSecret(req, res),
       isLogin: !!curUser,
-      needBan: contest.ban_count && !!curUser && (!player || !player.ban_problems_id || player.ban_problems_id.split('|').length < contest.ban_count),
+      needBan: contest.ban_count && !!curUser && contest.isRunning() && (!player || !player.ban_problems_id || player.ban_problems_id.split('|').length < contest.ban_count),
       banIds: (contest.ban_count && !!curUser && !!player && !!player.ban_problems_id && player.ban_problems_id.split('|').length === contest.ban_count) 
               ? player.ban_problems_id.split('|').map(x => parseInt(x)) : null
     });

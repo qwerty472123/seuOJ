@@ -87,7 +87,7 @@ class ContestRanklist extends Model {
           if (player.score_details[i].accepted) {
             player.score_details[i].score = Math.pow(100,Math.sqrt(minLength[i] / player.score_details[i].minLength));
             score += player.score_details[i].score;
-          }
+          } else player.score_details[i].score = 0;
         }
         player.score = score;
         await player.save();
