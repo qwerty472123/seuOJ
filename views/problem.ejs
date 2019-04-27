@@ -345,6 +345,7 @@ div[class*=ace_br] {
                     }
                     if (!languagesList.includes(language)) language = languagesList[0];
                     %>
+                    <!--<%= language %>-->
                     <% for (lang of languagesList) { %>
                       <a class="item<%= lang === language ? ' active' : '' %>" data-value="<%= lang %>" data-mode="<%= syzoj.languages[lang].editor %>">
                         <%= syzoj.languages[lang].show %>
