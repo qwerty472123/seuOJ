@@ -108,9 +108,10 @@ app.get('/user/:id', async (req, res) => {
     }
     ratingHistories.reverse();
 
-    //Special code for special contest
-    let secret = await ContestSecret.find({user_id: user.id, contest_id: 21});
-    if (secret) user.spec = secret.extra_info;
+    if (syzoj.config.cur_vip_contest) {
+      let secret = await ContestSecret.find({user_id: user.id, contest_id: syzoj.config.cur_vip_contest});
+      if (secret) user.spec = secret.extra_info;
+    }
 
     res.render('user', {
       show_user: user,

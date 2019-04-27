@@ -120,5 +120,6 @@
   "google_fonts": {
     "type": "like-google-fonts",
     "url": "https://fonts.loli.net"
-  }
+  },
+  "cur_vip_contest": 0
 }
