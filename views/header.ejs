@@ -12,7 +12,7 @@
     <% if (useLocalLibs || !syzoj.config.cdnjs_url) { %>
     <link href="<%- lib('semantic-ui/2.4.1/semantic.min.css') %>" rel="stylesheet">
     <% } else { %>
-    <script>
+    <script type="text/javascript">
     (function(){
       var xml=new (XMLHttpRequest || ActiveXObject)();
       xml.open('GET',"<%- lib('semantic-ui/2.4.1/semantic.min.css') %>",true);
