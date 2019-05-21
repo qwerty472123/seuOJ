@@ -168,7 +168,7 @@ if (special_ranklist) {
                             <% } %>
                           </span>
 
-                          <%= pendingInfo %>
+                          <%- pendingInfo %>
 
                           <div class="submit_time">
                             <%= syzoj.utils.formatTime(item.player.score_details[problem.id].acceptedTime - contest.start_time) %>
@@ -178,9 +178,9 @@ if (special_ranklist) {
                             -<%= item.player.score_details[problem.id].unacceptedCount %>
                           </span>
 
-                          <%= pendingInfo %>
+                          <%- pendingInfo %>
                         <% } else { %>
-                          <%= pendingInfo %>
+                          <%- pendingInfo %>
                         <% } %>
                       </a>
                     </td>
