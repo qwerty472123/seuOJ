@@ -224,7 +224,7 @@ if (special_ranklist) {
                 <% } else if (contest.type === 'scc') { %>
                   <td>
                     <span class="score score_<%= parseInt((item.player.score / ranklist[0].player.score * 10) || 0) %>">
-                      <%= Math.round(item.player.score * 100) / 100 %>
+                      <%= item.player.score / 100 %>
                     </span>
                     <div class="submit_time">
                       <%= item.player.totalLength %>

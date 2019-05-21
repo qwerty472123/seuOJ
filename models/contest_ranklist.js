@@ -90,7 +90,6 @@ class ContestRanklist extends Model {
           } else player.score_details[i].score = 0;
         }
         player.score = score;
-        await player.save();
       }
 
       players.sort((a, b) => {
@@ -98,6 +97,11 @@ class ContestRanklist extends Model {
         if (b.score > a.score) return 1;
         return 0;
       });
+
+      for(let player of players) {
+        player.score = Math.round(player.score * 100);
+        await player.save();
+      }
     } else {
       for (let player of players) {
         player.timeSum = 0;
