@@ -66,22 +66,25 @@ class ContestPlayer extends Model {
         this.score_details[judge_state.problem_id].submissions[judge_state.id] = {
           judge_id: judge_state.id,
           score: judge_state.score,
-          time: judge_state.submit_time
+          time: judge_state.submit_time,
+          is_waiting: judge_state.status === 'Unknown'
         };
 
         let arr = Object.values(this.score_details[judge_state.problem_id].submissions);
         arr.sort((a, b) => a.time - b.time);
 
-        let maxScoreSubmission = null;
+        let maxScoreSubmission = null, hasWaiting = false;
         for (let x of arr) {
           if (!maxScoreSubmission || x.score >= maxScoreSubmission.score && maxScoreSubmission.score < 100) {
             maxScoreSubmission = x;
           }
+          hasWaiting |= x.is_waiting;
         }
 
         this.score_details[judge_state.problem_id].judge_id = maxScoreSubmission.judge_id;
         this.score_details[judge_state.problem_id].score = maxScoreSubmission.score;
         this.score_details[judge_state.problem_id].time = maxScoreSubmission.time;
+        this.score_details[judge_state.problem_id].has_waiting = hasWaiting;
 
         this.score = 0;
         for (let x in this.score_details) {
@@ -110,7 +113,8 @@ class ContestPlayer extends Model {
             unacceptedCount: 0,
             acceptedTime: 0,
             judge_id: 0,
-            submissions: {}
+            submissions: {},
+            waitingCount: 0
           };
         }
 
@@ -118,7 +122,8 @@ class ContestPlayer extends Model {
           judge_id: judge_state.id,
           accepted: judge_state.status === 'Accepted',
           compiled: judge_state.score != null,
-          time: judge_state.submit_time
+          time: judge_state.submit_time,
+          is_waiting: judge_state.status === 'Unknown'
         };
 
         let arr = Object.values(this.score_details[judge_state.problem_id].submissions);
@@ -127,6 +132,7 @@ class ContestPlayer extends Model {
         this.score_details[judge_state.problem_id].unacceptedCount = 0;
         this.score_details[judge_state.problem_id].judge_id = 0;
         this.score_details[judge_state.problem_id].accepted = 0;
+        this.score_details[judge_state.problem_id].waitingCount = 0;
         for (let x of arr) {
           if (x.accepted) {
             this.score_details[judge_state.problem_id].accepted = true;
@@ -135,6 +141,8 @@ class ContestPlayer extends Model {
             break;
           } else if (x.compiled) {
             this.score_details[judge_state.problem_id].unacceptedCount++;
+          } else if (x.is_waiting) {
+            this.score_details[judge_state.problem_id].waitingCount++;
           }
         }
 
@@ -154,7 +162,8 @@ class ContestPlayer extends Model {
             accepted: false,
             minLength: 0,
             judge_id: 0,
-            submissions: {}
+            submissions: {},
+            has_waiting: false
           };
         }
 
@@ -162,7 +171,8 @@ class ContestPlayer extends Model {
         this.score_details[judge_state.problem_id].submissions[judge_state.id] = {
           judge_id: judge_state.id,
           accepted: judge_state.status === 'Accepted',
-          length: judge_state.problem.type !== 'submit-answer' ? syzoj.utils.calcCodeLength(judge_state.code, judge_state.language) : judge_state.code_length
+          length: judge_state.problem.type !== 'submit-answer' ? syzoj.utils.calcCodeLength(judge_state.code, judge_state.language) : judge_state.code_length,
+          is_waiting: judge_state.status === 'Unknown'
         };
 
         let arr = Object.values(this.score_details[judge_state.problem_id].submissions);
@@ -170,12 +180,15 @@ class ContestPlayer extends Model {
         this.score_details[judge_state.problem_id].minLength = Infinity;
         this.score_details[judge_state.problem_id].judge_id = 0;
         this.score_details[judge_state.problem_id].accepted = false;
+        this.score_details[judge_state.problem_id].has_waiting = false;
         for (let x of arr) if (x.accepted) {
             this.score_details[judge_state.problem_id].accepted = true;
             if (x.length < this.score_details[judge_state.problem_id].minLength) {
               this.score_details[judge_state.problem_id].minLength = x.length;
               this.score_details[judge_state.problem_id].judge_id = x.judge_id;
             }
+        } else if (x.is_waiting) {
+          this.score_details[judge_state.problem_id].has_waiting = true;
         }
 
         if (this.score_details[judge_state.problem_id].minLength === Infinity) this.score_details[judge_state.problem_id].minLength = 0;

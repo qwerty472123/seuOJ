@@ -157,6 +157,7 @@ if (special_ranklist) {
                   <% if (!item.player.score_details[problem.id]) { %>
                     </td>
                   <% } else if (contest.type === 'acm') { %>
+                      <% let pendingInfo = item.player.score_details[problem.id].waitingCount > 0 ?  ('<span class="status pending"> +' + item.player.score_details[problem.id].waitingCount + '</span>') : ''; %>
                       <a href="<%= syzoj.utils.makeUrl(['submission', item.player.score_details[problem.id].judge_id]) %>">
                         <% if (item.player.score_details[problem.id].accepted) { %>
                           <span class="score score_10">
@@ -167,6 +168,8 @@ if (special_ranklist) {
                             <% } %>
                           </span>
 
+                          <%= pendingInfo %>
+
                           <div class="submit_time">
                             <%= syzoj.utils.formatTime(item.player.score_details[problem.id].acceptedTime - contest.start_time) %>
                           </div>
@@ -174,17 +177,21 @@ if (special_ranklist) {
                           <span class="score score_0">
                             -<%= item.player.score_details[problem.id].unacceptedCount %>
                           </span>
+
+                          <%= pendingInfo %>
+                        <% } else { %>
+                          <%= pendingInfo %>
                         <% } %>
                       </a>
                     </td>
                   <% } else if (contest.type === 'noi' || contest.type === 'ioi') { %>
                       <a href="<%= syzoj.utils.makeUrl(['submission', item.player.score_details[problem.id].judge_id]) %>">
                         <% if (item.player.score_details[problem.id].weighted_score != null) { %>
-                          <span class="score score_<%= parseInt((item.player.score_details[problem.id].score / 10) || 0) %>">
+                          <span class="<%= (contest.type === 'ioi' && item.player.score_details[problem.id].has_waiting) ? 'status pending' : ('score score_' + parseInt((item.player.score_details[problem.id].score / 10) || 0)) %>">
                             <%= Math.round(item.player.score_details[problem.id].weighted_score) %>
                           </span>
                         <% } else { %>
-                          <span class="status compile_error">
+                          <span class="status <%= (contest.type === 'ioi' && item.player.score_details[problem.id].has_waiting) ? 'pending' : 'compile_error' %>">
                             0
                           </span>
                         <% } %>
@@ -197,11 +204,11 @@ if (special_ranklist) {
                   <% } else if (contest.type === 'scc') { %>
                       <a href="<%= syzoj.utils.makeUrl(['submission', item.player.score_details[problem.id].judge_id]) %>">
                         <% if (item.player.score_details[problem.id].score != null) { %>
-                          <span class="score score_<%= parseInt((item.player.score_details[problem.id].score / 10) || 0) %>">
+                          <span class="<%= item.player.score_details[problem.id].has_waiting ? 'status pending' : ('score score_' + parseInt((item.player.score_details[problem.id].score / 10) || 0)) %>">
                             <%= Math.round(item.player.score_details[problem.id].score * 100) / 100 %>
                           </span>
                         <% } else { %>
-                          <span class="status score_0">
+                          <span class="<%= item.player.score_details[problem.id].has_waiting ? 'status pending' : 'score score_0' %>">
                             0
                           </span>
                         <% } %>
