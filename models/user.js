@@ -136,6 +136,7 @@ class User extends Model {
     let all = await Article.model.findAll({
       attributes: ['id', 'title', 'public_time'],
       where: {
+        contest_id: { $eq: null },
         user_id: this.id
       }
     });

@@ -80,7 +80,10 @@ app.get('/contest/:id/qa', async (req, res) => {
     let contest = await Contest.fromID(contest_id);
     if (!contest) throw new ErrorMessage('无此比赛。');
     if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
-    let where = (await contest.isSupervisior(res.locals.user)) ? { contest_id: contest_id } : { contest_id: contest_id, [Sequelize.Op.or]: [{is_notice: true}, {user_id: res.locals.user.id}] };
+    let where;
+    if (res.locals.user) where = (await contest.isSupervisior(res.locals.user)) ? { contest_id: contest_id } : { contest_id: contest_id, [Sequelize.Op.or]: [{is_notice: true}, {user_id: res.locals.user.id}] };
+    else where = { contest_id: contest_id, is_notice: true};
+    if (contest.isEnded()) where = { contest_id: contest_id };
     let paginate = syzoj.utils.paginate(await Article.count(where), req.query.page, syzoj.config.page.discussion);
     let articles = await Article.query(paginate, where, [['is_notice' ,'desc'], ['sort_time', 'desc']]);
 
