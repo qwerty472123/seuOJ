@@ -152,6 +152,14 @@ app.post('/contest/:id/edit', async (req, res) => {
     contest.is_public = req.body.is_public === 'on';
     contest.hide_statistics = req.body.hide_statistics === 'on';
     contest.need_secret = req.body.need_secret === 'on';
+    if (['acm', 'scc'].includes(contest.type) && req.body.enable_freeze) {
+      let now = syzoj.utils.getCurrentDate(), freeze_time = syzoj.utils.parseDate(req.body.freeze_time);
+      if (now >= freeze_time) throw new ErrorMessage('新设定封榜时间不能小于当前时间！');
+      if (contest.start_time > freeze_time || contest.end_time <= freeze_time) throw new ErrorMessage('封榜时间应在比赛时间内！');
+      if (contest.freeze_time && now >= contest.freeze_time) await ranklist.updatePlayer(contest, null, null);
+      contest.freeze_time = freeze_time;
+    } else if (req.body.enable_freeze) throw new ErrorMessage('该比赛的赛制无法进行封榜！');
+    else contest.freeze_time = 0;
 
     await contest.save();
 
@@ -253,6 +261,10 @@ app.get('/contest/:id', async (req, res) => {
         }
       }
     }
+    let allowReleaseRank = false;
+    if (isSupervisior && contest.ended && contest.freeze_time) {
+      if (contest.ranklist.freeze_ranking && contest.ranklist.freeze_ranking.length == 1) allowReleaseRank = true;
+    }
     res.render('contest', {
       contest: contest,
       problems: problems,
@@ -262,7 +274,8 @@ app.get('/contest/:id', async (req, res) => {
       isLogin: !!curUser,
       needBan: contest.ban_count && !!curUser && contest.isRunning() && (!player || !player.ban_problems_id || player.ban_problems_id.split('|').length < contest.ban_count),
       banIds: (contest.ban_count && !!curUser && !!player && !!player.ban_problems_id && player.ban_problems_id.split('|').length === contest.ban_count) 
-              ? player.ban_problems_id.split('|').map(x => parseInt(x)) : null
+              ? player.ban_problems_id.split('|').map(x => parseInt(x)) : null,
+      allowReleaseRank: allowReleaseRank
     });
   } catch (e) {
     syzoj.log(e);
@@ -288,6 +301,45 @@ app.get('/contest/:id/ranklist', async (req, res) => {
 
     await contest.loadRelationships();
 
+    let problems_id = await contest.getProblems();
+    let problems = await problems_id.mapAsync(async id => await Problem.fromID(id));
+
+    let now = syzoj.utils.getCurrentDate();
+    if (!(await contest.isSupervisior(curUser)) && contest.freeze_time && contest.freeze_time >= now 
+    && (contest.isRunning() || (contest.isEnded() && contest.ranklist.freeze_ranking && contest.ranklist.freeze_ranking.length == 1))) {
+      let ranklist = [];
+      if (contest.ranklist.freeze_ranking && contest.ranklist.freeze_ranking.length == 1) {
+        for(let info of contest.ranklist.freeze_ranking) {
+          if (contest.type === 'scc') info.totalLength = 0;
+          for (let i in info.score_details) {
+            info.score_details[i].judge_state = await JudgeState.fromID(info.score_details[i].judge_id);
+            if (contest.type === 'scc') {
+              if (info.score_details[i].accepted) info.totalLength += info.score_details[i].minLength;
+            }
+          }
+
+          let user = await User.fromID(info.user_id);
+          if (contest.need_secret) {
+            let secret = await ContestSecret.find({ contest_id, user_id: info.user_id });
+            if (secret) {
+              user.extra_info = secret.extra_info;
+              user.classify_code = secret.classify_code;
+            }
+          }
+          ranklist.push({
+            user: user,
+            player: info
+          });
+        }
+      }
+      res.render('contest_ranklist', {
+        contest: contest,
+        ranklist: ranklist,
+        problems: problems
+      });
+      return;
+    }
+
     let players_id = [];
     for (let i = 1; i <= contest.ranklist.ranklist.player_num; i++) players_id.push(contest.ranklist.ranklist[i]);
 
@@ -301,7 +353,7 @@ app.get('/contest/:id/ranklist', async (req, res) => {
       if (contest.type === 'scc') player.totalLength = 0;
 
       for (let i in player.score_details) {
-        player.score_details[i].judge_state = await JudgeState.fromID(player.score_details[i].judge_id);
+        player.score_details[i].judge_state = player.score_details[i].judge_id ? await JudgeState.fromID(player.score_details[i].judge_id) : { submit_time: contest.start_time };
 
         /*** XXX: Clumsy duplication, see ContestRanklist::updatePlayer() ***/
         if (contest.type === 'noi' || contest.type === 'ioi') {
@@ -327,9 +379,6 @@ app.get('/contest/:id/ranklist', async (req, res) => {
         player: player
       };
     });
-
-    let problems_id = await contest.getProblems();
-    let problems = await problems_id.mapAsync(async id => await Problem.fromID(id));
 
     res.render('contest_ranklist', {
       contest: contest,
@@ -653,6 +702,26 @@ app.post('/contest/:id/submit_ban_problems_id', async (req, res) => {
     }
     player.ban_problems_id = real_problem_ids.join('|');
     await player.save();
+    res.send({ success: true });
+  } catch (e) {
+    syzoj.log(e);
+    res.send({ success: false, reason: e.message });
+  }
+});
+
+app.post('/contest/:id/release_ranklist', async (req, res) => {
+  try {
+    let id = parseInt(req.params.id);
+    let contest = await Contest.fromID(id);
+    if (!contest) throw new ErrorMessage('无此比赛。');
+    if (!await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('权限不足！');
+    if (!contest.isEnded()) throw new ErrorMessage('比赛未结束！');
+    if (!contest.freeze_time) throw new ErrorMessage('比赛无封榜！');
+
+    await contest.loadRelationships();
+    contest.ranklist.freeze_ranking = [];
+    await contest.ranklist.save();
+
     res.send({ success: true });
   } catch (e) {
     syzoj.log(e);

@@ -101,9 +101,20 @@
                 <label><span style="visibility: hidden; ">　</span></label>
               </div>
             </div>
-            <div class="field" id="ranking_group_info_div"<% if (!contest.need_secret) { %> style="display: none;"<% } %>>
+            <div class="field" id="ranking_group_info_div"<% if (!contest.need_secret) { %> style="display: none;"<% } %> >
                 <label>排行方式（格式：<code>[ { 选手分类码: [ "分类名称", "分类颜色" ] }, [ [ "排行表头", [ 选手分类码（为空代表全部） ], [ [ "基准线名称（前面的覆盖后面的）", 基准线为百分比取下整, 基准线值, "基准线颜色" ] ] ] ] ]</code>）</label>
                 <input type="text" name="ranking_group_info" value="<%= (contest.need_secret && contest.ranklist) ? JSON.stringify(contest.ranklist.ranking_group_info) : '[]' %>">
+            </div>
+            <div class="inline field">
+              <label class="ui header">进行封榜（仅 ICPC/SCC）</label>
+              <div class="ui toggle checkbox">
+                <input type="checkbox"<% if (contest.freeze_time) { %> checked<% } %> name="enable_freeze" onchange="$('#freeze_time_div').slideToggle();">
+                <label><span style="visibility: hidden; ">　</span></label>
+              </div>
+            </div>
+            <div class="field" id="freeze_time_div"<% if (!contest.freeze_time) { %> style="display: none;"<% } %> >
+                <label>封榜时间：</label>
+                <input type="text" name="freeze_time" value="<%= syzoj.utils.formatDate((contest.freeze_time ? contest.freeze_time : contest.end_time) || syzoj.utils.getCurrentDate()) %>">
             </div>
             <div class="field">
               <label>允许使用的语言（不填表示可以使用任意语言）</label>

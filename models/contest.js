@@ -41,7 +41,8 @@ let model = db.define('contest', {
   need_secret: { type: Sequelize.BOOLEAN },
   one_language: { type: Sequelize.BOOLEAN },
   allow_languages: { type: Sequelize.TEXT },
-  ban_count: { type: Sequelize.INTEGER }
+  ban_count: { type: Sequelize.INTEGER },
+  freeze_time: { type: Sequelize.INTEGER }
 }, {
     timestamps: false,
     tableName: 'contest',
@@ -74,7 +75,8 @@ class Contest extends Model {
       need_secret: false,
       one_language: false,
       allow_languages: '',
-      ban_count: 0
+      ban_count: 0,
+      freeze_time: 0
     }, val)));
   }
 
@@ -165,7 +167,7 @@ class Contest extends Model {
       await player.save();
 
       await this.loadRelationships();
-      await this.ranklist.updatePlayer(this, player);
+      await this.ranklist.updatePlayer(this, player, judge_state);
       await this.ranklist.save();
     });
   }
