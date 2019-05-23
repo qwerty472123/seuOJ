@@ -139,10 +139,10 @@ class ContestRanklist extends Model {
       for (let x of this.freeze_ranking[0]) if(judge_state.user_id === x.user_id) {
         newPlayer = false;
         if (contest.type === 'scc') {
-          x.score_details[judge_state.problem_id].has_waiting = true;
+          x.score_details[judge_state.problem_id].has_waiting = !x.score_details[judge_state.problem_id].accepted;
         } else if (contest.type === 'acm') {
           let problem_info = x.score_details[judge_state.problem_id];
-          problem_info.waitingCount = Object.keys(player.score_details[judge_state.problem_id].submissions).length - problem_info.curCount;
+          if(!problem_info.accepted) problem_info.waitingCount = Object.keys(player.score_details[judge_state.problem_id].submissions).length - problem_info.curCount;
         }
         break;
       }
