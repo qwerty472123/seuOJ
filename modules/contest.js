@@ -312,7 +312,7 @@ app.get('/contest/:id/ranklist', async (req, res) => {
     && (contest.isRunning() || (contest.isEnded() && contest.ranklist.freeze_ranking && contest.ranklist.freeze_ranking.length == 1))) {
       let ranklist = [];
       if (contest.ranklist.freeze_ranking && contest.ranklist.freeze_ranking.length == 1) {
-        for(let info of contest.ranklist.freeze_ranking) {
+        for(let info of contest.ranklist.freeze_ranking[0]) {
           if (contest.type === 'scc') info.totalLength = 0;
           for (let i in info.score_details) {
             info.score_details[i].judge_state = await JudgeState.fromID(info.score_details[i].judge_id);
