@@ -139,8 +139,28 @@ class ContestRanklist extends Model {
       for (let x of this.freeze_ranking[0]) if(judge_state.user_id === x.user_id) {
         newPlayer = false;
         if (contest.type === 'scc') {
+          if (!x.score_details[judge_state.problem_id]) {
+            x.score_details[judge_state.problem_id] = {
+              accepted: false,
+              minLength: 0,
+              judge_id: 0,
+              submissions: {},
+              has_waiting: false
+            };
+          }
           x.score_details[judge_state.problem_id].has_waiting = !x.score_details[judge_state.problem_id].accepted;
         } else if (contest.type === 'acm') {
+          if (!x.score_details[judge_state.problem_id]) {
+            x.score_details[judge_state.problem_id] = {
+              accepted: false,
+              unacceptedCount: 0,
+              acceptedTime: 0,
+              judge_id: 0,
+              submissions: {},
+              waitingCount: 0,
+              curCount: 0
+            };
+          }
           let problem_info = x.score_details[judge_state.problem_id];
           if(!problem_info.accepted) problem_info.waitingCount = Object.keys(player.score_details[judge_state.problem_id].submissions).length - problem_info.curCount;
         }
