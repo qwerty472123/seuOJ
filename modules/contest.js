@@ -158,8 +158,8 @@ app.post('/contest/:id/edit', async (req, res) => {
         let now = syzoj.utils.getCurrentDate();
         if (now >= freeze_time) throw new ErrorMessage('新设定封榜时间不能小于当前时间！');
         if (contest.start_time > freeze_time || contest.end_time <= freeze_time) throw new ErrorMessage('封榜时间应在比赛时间内！');
-        if (contest.freeze_time && now >= contest.freeze_time) await ranklist.updatePlayer(contest, null, null);
         contest.freeze_time = freeze_time;
+        if (contest.freeze_time && now >= contest.freeze_time) await ranklist.updatePlayer(contest, null, null);
       }
     } else if (req.body.enable_freeze) throw new ErrorMessage('该比赛的赛制无法进行封榜！');
     else contest.freeze_time = 0;
@@ -243,6 +243,7 @@ app.get('/contest/:id', async (req, res) => {
 
       await contest.loadRelationships();
       let players = await contest.ranklist.getPlayers();
+      let isFrozen = (!isSupervisior) && contest.freeze_time && contest.freeze_time <= syzoj.utils.getCurrentDate();
       for (let problem of problems) {
         problem.statistics = { attempt: 0, accepted: 0 };
 
@@ -253,15 +254,24 @@ app.get('/contest/:id', async (req, res) => {
         for (let player of players) {
           if (player.score_details[problem.problem.id]) {
             problem.statistics.attempt++;
-            if (((contest.type === 'acm' || contest.type === 'scc') && player.score_details[problem.problem.id].accepted) || ((contest.type === 'noi' || contest.type === 'ioi') && player.score_details[problem.problem.id].score === 100)) {
-              problem.statistics.accepted++;
-            }
-
-            if ((contest.type === 'noi' || contest.type === 'ioi') && player.score_details[problem.problem.id].score > 0) {
-              problem.statistics.partially++;
+            if (!isFrozen) {
+              if (((contest.type === 'acm' || contest.type === 'scc') && player.score_details[problem.problem.id].accepted) || ((contest.type === 'noi' || contest.type === 'ioi') && player.score_details[problem.problem.id].score === 100)) {
+                problem.statistics.accepted++;
+              }
+  
+              if ((contest.type === 'noi' || contest.type === 'ioi') && player.score_details[problem.problem.id].score > 0) {
+                problem.statistics.partially++;
+              }
             }
           }
         }
+        
+        if (isFrozen && contest.ranklist.freeze_ranking && contest.ranklist.freeze_ranking.length == 1) 
+          for (let player of contest.ranklist.freeze_ranking[0]) if (player.score_details[problem.problem.id]) {
+            if ((contest.type === 'acm' || contest.type === 'scc') && player.score_details[problem.problem.id].accepted) {
+              problem.statistics.accepted++;
+            }
+          }
       }
     }
     let allowReleaseRank = false;
@@ -339,7 +349,8 @@ app.get('/contest/:id/ranklist', async (req, res) => {
       res.render('contest_ranklist', {
         contest: contest,
         ranklist: ranklist,
-        problems: problems
+        problems: problems,
+        is_freeze: true
       });
       return;
     }
@@ -387,7 +398,8 @@ app.get('/contest/:id/ranklist', async (req, res) => {
     res.render('contest_ranklist', {
       contest: contest,
       ranklist: ranklist,
-      problems: problems
+      problems: problems,
+      is_freeze: false
     });
   } catch (e) {
     syzoj.log(e);
@@ -429,6 +441,8 @@ app.get('/contest/:id/submissions', async (req, res) => {
     const displayConfig = getDisplayConfig(contest);
     let problems_id = await contest.getProblems();
     const curUser = res.locals.user;
+
+    if (contest.freeze_time) displayConfig.showOthers = false;
 
     let user = req.query.submitter && await User.fromName(req.query.submitter);
     let where = {
