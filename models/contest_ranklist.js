@@ -37,15 +37,16 @@ class ContestRanklist extends Model {
 
   async updatePlayer(contest, player, judge_state) {
     let players = await this.getPlayers(), newPlayer = true;
-    for (let x of players) {
-      if (x.user_id === player.user_id) {
-        newPlayer = false;
-        break;
+    if (player) {
+      for (let x of players) {
+        if (x.user_id === player.user_id) {
+          newPlayer = false;
+          break;
+        }
       }
-    }
-
-    if (newPlayer && player) {
-      players.push(player);
+      if (newPlayer) {
+        players.push(player);
+      }
     }
 
     let JudgeState = syzoj.model('judge_state');
