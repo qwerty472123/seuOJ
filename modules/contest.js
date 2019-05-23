@@ -153,11 +153,14 @@ app.post('/contest/:id/edit', async (req, res) => {
     contest.hide_statistics = req.body.hide_statistics === 'on';
     contest.need_secret = req.body.need_secret === 'on';
     if (['acm', 'scc'].includes(contest.type) && req.body.enable_freeze) {
-      let now = syzoj.utils.getCurrentDate(), freeze_time = syzoj.utils.parseDate(req.body.freeze_time);
-      if (now >= freeze_time) throw new ErrorMessage('新设定封榜时间不能小于当前时间！');
-      if (contest.start_time > freeze_time || contest.end_time <= freeze_time) throw new ErrorMessage('封榜时间应在比赛时间内！');
-      if (contest.freeze_time && now >= contest.freeze_time) await ranklist.updatePlayer(contest, null, null);
-      contest.freeze_time = freeze_time;
+      let freeze_time = syzoj.utils.parseDate(req.body.freeze_time);
+      if (freeze_time !== contest.freeze_time) {
+        let now = syzoj.utils.getCurrentDate();
+        if (now >= freeze_time) throw new ErrorMessage('新设定封榜时间不能小于当前时间！');
+        if (contest.start_time > freeze_time || contest.end_time <= freeze_time) throw new ErrorMessage('封榜时间应在比赛时间内！');
+        if (contest.freeze_time && now >= contest.freeze_time) await ranklist.updatePlayer(contest, null, null);
+        contest.freeze_time = freeze_time;
+      }
     } else if (req.body.enable_freeze) throw new ErrorMessage('该比赛的赛制无法进行封榜！');
     else contest.freeze_time = 0;
 
@@ -305,7 +308,7 @@ app.get('/contest/:id/ranklist', async (req, res) => {
     let problems = await problems_id.mapAsync(async id => await Problem.fromID(id));
 
     let now = syzoj.utils.getCurrentDate();
-    if (!(await contest.isSupervisior(curUser)) && contest.freeze_time && contest.freeze_time >= now 
+    if (!(await contest.isSupervisior(curUser)) && contest.freeze_time && contest.freeze_time <= now 
     && (contest.isRunning() || (contest.isEnded() && contest.ranklist.freeze_ranking && contest.ranklist.freeze_ranking.length == 1))) {
       let ranklist = [];
       if (contest.ranklist.freeze_ranking && contest.ranklist.freeze_ranking.length == 1) {
@@ -332,6 +335,7 @@ app.get('/contest/:id/ranklist', async (req, res) => {
           });
         }
       }
+      console.log('new',ranklist);
       res.render('contest_ranklist', {
         contest: contest,
         ranklist: ranklist,
@@ -379,7 +383,7 @@ app.get('/contest/:id/ranklist', async (req, res) => {
         player: player
       };
     });
-
+console.log('origin',ranklist);
     res.render('contest_ranklist', {
       contest: contest,
       ranklist: ranklist,
