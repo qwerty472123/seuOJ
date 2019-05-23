@@ -129,7 +129,7 @@ class ContestRanklist extends Model {
     let now = syzoj.utils.getCurrentDate();
     if(contest.freeze_time && now < contest.freeze_time) {
       let freeze_ranking = [];
-      for(let player of players) freeze_ranking.push(player.getExportable());
+      for(let player of players) freeze_ranking.push(player.getExportable(contest.type));
       this.freeze_ranking = [freeze_ranking];
     } else if (judge_state) {
       if (!this.freeze_ranking || this.freeze_ranking.length != 1) {

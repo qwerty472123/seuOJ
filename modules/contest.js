@@ -491,7 +491,7 @@ app.get('/contest/:id/submissions', async (req, res) => {
       contest: contest,
       items: judge_state.map(x => ({
         info: getSubmissionInfo(x, displayConfig),
-        token: (getRoughResult(x, displayConfig) == null && x.task_id != null) ? jwt.sign({
+        token: (x.pending && x.task_id != null) ? jwt.sign({
           taskId: x.task_id,
           type: pushType,
           displayConfig: displayConfig
@@ -551,7 +551,7 @@ app.get('/contest/submission/:id', async (req, res) => {
       formattedCode: judge.formattedCode ? judge.formattedCode.toString("utf8") : null,
       preferFormattedCode: res.locals.user ? res.locals.user.prefer_formatted_code : false,
       detailResult: processOverallResult(judge.result, displayConfig),
-      socketToken: (displayConfig.showDetailResult && judge.pending && x.task_id != null) ? jwt.sign({
+      socketToken: (judge.pending && x.task_id != null) ? jwt.sign({
         taskId: judge.task_id,
         displayConfig: displayConfig,
         type: 'detail'
