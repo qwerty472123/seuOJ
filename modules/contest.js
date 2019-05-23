@@ -335,7 +335,7 @@ app.get('/contest/:id/ranklist', async (req, res) => {
           });
         }
       }
-      console.log('new',ranklist);
+
       res.render('contest_ranklist', {
         contest: contest,
         ranklist: ranklist,
@@ -383,7 +383,7 @@ app.get('/contest/:id/ranklist', async (req, res) => {
         player: player
       };
     });
-console.log('origin',ranklist);
+
     res.render('contest_ranklist', {
       contest: contest,
       ranklist: ranklist,
@@ -726,9 +726,11 @@ app.post('/contest/:id/release_ranklist', async (req, res) => {
     contest.ranklist.freeze_ranking = [];
     await contest.ranklist.save();
 
-    res.send({ success: true });
+    res.redirect(syzoj.utils.makeUrl(['contest', id]));
   } catch (e) {
     syzoj.log(e);
-    res.send({ success: false, reason: e.message });
+    res.render('error', {
+      err: e
+    });
   }
 });
