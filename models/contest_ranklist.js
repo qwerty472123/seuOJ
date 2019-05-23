@@ -148,7 +148,7 @@ class ContestRanklist extends Model {
               has_waiting: false
             };
           }
-          x.score_details[judge_state.problem_id].has_waiting = !x.score_details[judge_state.problem_id].accepted;
+          x.score_details[judge_state.problem_id].has_waiting = true;
         } else if (contest.type === 'acm') {
           if (!x.score_details[judge_state.problem_id]) {
             x.score_details[judge_state.problem_id] = {
