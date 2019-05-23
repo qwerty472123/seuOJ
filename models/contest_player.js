@@ -60,9 +60,10 @@ class ContestPlayer extends Model {
       time_spent: this.time_spent
     };
     if (contest_type === 'acm') {
-      let new_details = [];
-      for(let problem of this.score_details) {
-        let new_problem = {
+      let new_details = {};
+      for(let pid in this.score_details) {
+        let problem = this.score_details[pid];
+        new_details[pid] = {
           accepted: problem.accepted,
           unacceptedCount: problem.unacceptedCount,
           acceptedTime: problem.acceptedTime,
@@ -71,7 +72,6 @@ class ContestPlayer extends Model {
           waitingCount: problem.waitingCount,
           curCount: Object.keys(problem.submissions).length - problem.waitingCount
         };
-        new_details.push(new_problem);
       }
       ret.score_details = new_details;
     }
