@@ -114,7 +114,7 @@ app.get('/user/:id', async (req, res) => {
     if (syzoj.config.cur_vip_contest) {
       let secret = await ContestSecret.find({user_id: user.id, contest_id: syzoj.config.cur_vip_contest});
       if (secret) user.spec = secret.extra_info;
-      if ((!res.locals.user || !res.locals.user.is_admin) && res.locals.user && user.id !== res.locals.user.id) throw new ErrorMessage('比赛中！');
+      if ((!res.locals.user || !res.locals.user.is_admin) && (!res.locals.user || user.id !== res.locals.user.id)) throw new ErrorMessage('比赛中！');
       if ((!res.locals.user || !res.locals.user.is_admin)) {
         user.ac_problems = [];
         user.articles = [];
