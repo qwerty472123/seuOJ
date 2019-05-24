@@ -819,7 +819,8 @@ app.get('/contest/:id/generate_resolve_xml', async (req, res) => {
 
     for (let type in status){
       let penalty = status[type] !== 'CE' && status[type] !== 'AC';
-      result.push('<judgement><acronym>' + status[type] + '</acronym><name>' + type + '</name><penalty>' + penalty.toString() + '</penalty></judgement>');
+      result.push('<judgement><acronym>' + status[type] + '</acronym><name>' + type + '</name><penalty>' + penalty.toString() + '</penalty>' +
+      '<solved>' + (status[type] === 'AC') + '</solved></judgement>');
     }
 
     let problems_id = await contest.getProblems(), revProblem = {};
@@ -853,58 +854,15 @@ app.get('/contest/:id/generate_resolve_xml', async (req, res) => {
     }
 
     let judge_states = await JudgeState.query(null, { type: 1, type_info: contest.id }, [['submit_time', 'asc']]);
-    let fakeInfo = {}, maxPow = 1 + Math.ceil((contest.end_time - contest.start_time) / 60) * problems_id.length;
     i = 0;
     for (let state of judge_states) if (status.hasOwnProperty(state.status)) {
       i++;
-      /*result.push('<submission><id>' + i + '</id><team-number>' + revUser[state.user_id] + '</team-number>' +
-      '<problem-label>' + revProblem[state.problem_id] + '</problem-label><language>' + state.language + '</language>' +
-      '<contest-time>' + (state.submit_time - contest.start_time) + '.01</contest-time><timestamp>' + state.submit_time + '.01</timestamp></submission>');*/
       result.push('<run><id>' + i + '</id><language>' + state.language + '</language>' +
       '<problem>' + revProblem[state.problem_id] + '</problem><team>' + revUser[state.user_id] + '</team>' +
       '<judged>true</judged><result>' + status[state.status] + '</result>' +
       '<solved>' + (status[state.status] === 'AC') + '</solved>' +
       '<penalty>' + (status[state.status] !== 'AC' && status[state.status] !== 'CE') + '</penalty>' +
       '<time>' + (state.submit_time - contest.start_time) + '.02</time><timestamp>' + state.submit_time + '.02</timestamp></run>');
-      /*result.push('<submission-judgement><submission-id>' + i + '</submission-id><judgement>' + status[state.status] + '</judgement>' +
-      '<contest-time>' + (state.submit_time - contest.start_time) + '.03</contest-time><timestamp>' + state.submit_time + '.03</timestamp>');*/
-
-      if (!fakeInfo.hasOwnProperty(state.user_id)) fakeInfo[state.user_id] = {
-        sortKey: 0,
-        solved: 0,
-        time: 0,
-        every: {}
-      };
-      if (!fakeInfo[state.user_id].every.hasOwnProperty(state.problem_id)) {
-        fakeInfo[state.user_id].every[state.problem_id] = { solved: false, subs: 0, time: 0, cnt: 0 };
-      }
-      if (!fakeInfo[state.user_id].every[state.problem_id].solved) {
-        fakeInfo[state.user_id].every[state.problem_id].subs++;
-        if(state.status === "Accepted") {
-          fakeInfo[state.user_id].every[state.problem_id].solved = true;
-          fakeInfo[state.user_id].solved++;
-          fakeInfo[state.user_id].every[state.problem_id].time = Math.floor((state.submit_time - contest.start_time) / 60) +
-          fakeInfo[state.user_id].every[state.problem_id].cnt * singlePenalty;
-          fakeInfo[state.user_id].time += fakeInfo[state.user_id].every[state.problem_id].time;
-          fakeInfo[state.user_id].sortKey = maxPow * fakeInfo[state.user_id].solved - fakeInfo[state.user_id].time;
-        } else if (state.status !== "Compile Error") {
-          fakeInfo[state.user_id].every[state.problem_id].cnt++;
-        }
-      }
-
-      /*result.push('<scoreboard-update><sort-key>' + fakeInfo[state.user_id].sortKey + '</sort-key><team>' + revUser[state.user_id] + '</team>' +
-      '<solved-count>' + fakeInfo[state.user_id].solved + '</solved-count><time>' + fakeInfo[state.user_id].time + '</time>');
-      
-      let j = 0;
-      for (let problem of problems) {
-        let info = fakeInfo[state.user_id].every[problem.id];
-        if (!info) info = { solved: false, subs: 0, time: 0 };
-        result.push('<problem><label>' + String.fromCharCode('A'.charCodeAt(0) + parseInt(j)) + '</label><solved>'
-        + info.solved.toString() + '</solved><subs>' + info.subs + '</subs><time>' + info.time + '</time></problem>');
-        j++;
-      }
-      
-      result.push('</scoreboard-update></submission-judgement>');*/
     }
 
     result.push('<finalized><timestamp>' + contest.end_time + '.01</timestamp><last-gold>3</last-gold><last-silver>6</last-silver><last-bronze>9</last-bronze><comment>Finalized by seuOJ</comment></finalized>');
