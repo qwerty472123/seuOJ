@@ -31,7 +31,9 @@ app.get('/submissions', async (req, res) => {
     else if (req.query.submitter) where.user_id = -1;
 
     if (!req.query.contest) {
-      if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
+      if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) {
+        res.redirect(syzoj.utils.makeUrl(['contest', syzoj.config.cur_vip_contest, 'submissions']));
+      }
       where.type = { $eq: 0 };
     } else {
       const contestId = Number(req.query.contest);

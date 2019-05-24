@@ -8,7 +8,9 @@ const ContestSecret = syzoj.model('contest_secret');
 // Ranklist
 app.get('/ranklist', async (req, res) => {
   try {
-    if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
+    if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) {
+      res.redirect(syzoj.utils.makeUrl(['contest', syzoj.config.cur_vip_contest, 'ranklist']));
+    }
     const sort = req.query.sort || syzoj.config.sorting.ranklist.field;
     const order = req.query.order || syzoj.config.sorting.ranklist.order;
     if (!['ac_num', 'rating', 'id', 'username'].includes(sort) || !['asc', 'desc'].includes(order)) {

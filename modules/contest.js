@@ -183,7 +183,9 @@ app.get('/contest/:id', async (req, res) => {
   try {
     const curUser = res.locals.user;
     let contest_id = parseInt(req.params.id);
-    if (syzoj.config.cur_vip_contest && contest_id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
+    if (syzoj.config.cur_vip_contest && contest_id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) {
+      res.redirect(syzoj.utils.makeUrl(['contest', syzoj.config.cur_vip_contest]));
+    }
 
     let contest = await Contest.fromID(contest_id);
     if (!contest) throw new ErrorMessage('无此比赛。');

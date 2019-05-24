@@ -14,7 +14,9 @@ let CodeFormatter = syzoj.lib('code_formatter');
 
 app.get('/problems', async (req, res) => {
   try {
-    if (syzoj.config.cur_vip_contest && (!res.locals.user || !await res.locals.user.hasPrivilege('manage_problem'))) throw new ErrorMessage('比赛中！');
+    if (syzoj.config.cur_vip_contest && (!res.locals.user || !await res.locals.user.hasPrivilege('manage_problem'))) {
+      res.redirect(syzoj.utils.makeUrl(['contest', syzoj.config.cur_vip_contest]));
+    }
     const sort = req.query.sort || syzoj.config.sorting.problem.field;
     const order = req.query.order || syzoj.config.sorting.problem.order;
     if (!['id', 'title', 'rating', 'ac_num', 'submit_num', 'ac_rate', 'publicize_time'].includes(sort) || !['asc', 'desc'].includes(order)) {

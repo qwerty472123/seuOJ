@@ -8,7 +8,9 @@ let User = syzoj.model('user');
 
 app.get('/discussion/:type?', async (req, res) => {
   try {
-    if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
+    if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) {
+      res.redirect(syzoj.utils.makeUrl(['contest', syzoj.config.cur_vip_contest, 'qa']));
+    }
     if (!['global', 'problems'].includes(req.params.type)) {
       res.redirect(syzoj.utils.makeUrl(['discussion', 'global']));
     }
