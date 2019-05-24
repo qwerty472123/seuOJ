@@ -764,7 +764,7 @@ app.post('/contest/:id/release_ranklist', async (req, res) => {
   }
 });
 
-app.post('/contest/:id/generate_resolve_xml', async (req, res) => {
+app.get('/contest/:id/generate_resolve_xml', async (req, res) => {
   try {
     let id = parseInt(req.params.id);
     if (syzoj.config.cur_vip_contest && id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
@@ -788,7 +788,7 @@ app.post('/contest/:id/generate_resolve_xml', async (req, res) => {
     let languagesList = syzoj.config.enabled_languages;
     if (contest && contest.allow_languages) languagesList = contest.allow_languages.split('|');
     for (let lang of languagesList){
-      result.push('<language><name>' + name + '</name></language>')
+      result.push('<language><name>' + lang + '</name></language>')
     }
 
     let specialRanking = contest.need_secret && contest.ranklist.ranking_group_info instanceof Array && contest.ranklist.ranking_group_info.length > 0;

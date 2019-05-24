@@ -71,7 +71,12 @@
     <tbody>
     <% for (let article of articles) { %>
         <tr>
-            <td class="left aligned"><a href="<%= syzoj.utils.makeUrl(['article', article.id]) %>"><%= article.title %></a></td>
+            <td class="left aligned">
+              <a href="<%= syzoj.utils.makeUrl(['article', article.id]) %>"><%= article.title %></a>
+              <% if (in_contest && article.is_notice) { %>
+              <div style="float:right"><span class="ui tiny blue label">公告</span></div>
+              <% } %>
+            </td>
             <% if (in_problems) { %>
               <td><a href="<%= syzoj.utils.makeUrl(['discussion', 'problem', article.problem_id]) %>"><%= article.problem.title %></a></td>
             <% } %>
