@@ -763,3 +763,153 @@ app.post('/contest/:id/release_ranklist', async (req, res) => {
     });
   }
 });
+
+app.post('/contest/:id/generate_resolve_xml', async (req, res) => {
+  try {
+    let id = parseInt(req.params.id);
+    if (syzoj.config.cur_vip_contest && id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
+    let contest = await Contest.fromID(id);
+    if (!contest) throw new ErrorMessage('无此比赛。');
+    if (!await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('权限不足！');
+    if (!contest.isEnded()) throw new ErrorMessage('比赛未结束！');
+    contest.freeze_time = contest.end_time - 3600;//fake
+    if (!contest.freeze_time) throw new ErrorMessage('比赛无封榜！');
+
+    await contest.loadRelationships();
+
+    const singlePenalty = 20;
+
+    let result = ['<?xml version=\'1.0\' encoding=\'UTF-8\'?>','<contest>'];
+
+    result.push('<info><title>' + contest.title + '</title><length>' + syzoj.utils.formatTime(contest.end_time - contest.start_time)
+    + '</length><scoreboard-freeze-length>' + syzoj.utils.formatTime(contest.end_time - contest.freeze_time) + '</scoreboard-freeze-length>' +
+    '<penalty-amount>' + singlePenalty + '</penalty><start-time>' + contest.start_time + '</start-time></info>');
+
+    let languagesList = syzoj.config.enabled_languages;
+    if (contest && contest.allow_languages) languagesList = contest.allow_languages.split('|');
+    for (let lang of languagesList){
+      result.push('<language><name>' + name + '</name></language>')
+    }
+
+    let specialRanking = contest.need_secret && contest.ranklist.ranking_group_info instanceof Array && contest.ranklist.ranking_group_info.length > 0;
+    if (specialRanking) {
+      for (let type in contest.ranklist.ranking_group_info[0]) {
+        result.push('<group><name>' + contest.ranklist.ranking_group_info[0][type][0] + '</name></group>');
+      }
+    } else {
+      result.push('<group><name>参与者</name></group>');
+    }
+
+    let status = {
+      'Accepted': 'AC',
+      'Wrong Answer': 'WA',
+      'Runtime Error': 'RE',
+      'Invalid Interaction': 'II',
+      'Time Limit Exceeded': 'TLE',
+      'Memory Limit Exceeded': 'MLE',
+      'Output Limit Exceeded': 'OLE',
+      'File Error': 'FE',
+      'Compile Error': 'CE',
+      'System Error': 'SE',
+      'No Testdata': 'NT',
+      'Partially Correct': 'PE',
+      'Judgement Failed': 'JF'
+    };
+
+    for (let type in status){
+      let penalty = status[type] !== 'CE' && status[type] !== 'AC';
+      result.push('<judgement><acronym>' + status[type] + '</acronym><name>' + type + '</name><penalty>' + penalty.toString() + '</penalty></judgement>');
+    }
+
+    let problems_id = await contest.getProblems(), revProblem = {};
+    let problems = await problems_id.mapAsync(async id => await Problem.fromID(id)), i = 0;
+    for (let problem of problems) {
+      revProblem[problem.id] = String.fromCharCode('A'.charCodeAt(0) + parseInt(i));
+      result.push('<problem><label>' + String.fromCharCode('A'.charCodeAt(0) + parseInt(i)) + '</label><name>'
+      + problem.title + '</name></problem>');
+      i++;
+    }
+    
+    let players = await contest.ranklist.getPlayers(), revUser = {};
+    i = 0;
+    for (let player of players) {
+      i++;
+      revUser[player.user_id] = i;
+      if (contest.need_secret) {
+        player.secret = await ContestSecret.find({ contest_id: contest.id, user_id: player.user_id });
+        result.push('<team><n>' + i + '</n><icpc-id>' + i + '</icpc-id><name>' + player.secret.extra_info + '</name>' +
+        '<nationality>CN</nationality><university>Southeast university, China</university>');
+      } else {
+        player.user = await User.fromID(player.user_id);
+        result.push('<team><n>' + i + '</n><icpc-id>' + i + '</icpc-id><name>' + player.user.name + '</name>' +
+      '<nationality>CN</nationality><university>Southeast university, China</university>');
+      }
+
+      if (specialRanking) {
+        result.push('<group>' + contest.ranklist.ranking_group_info[0][player.secret.classify_code][0] + '</group></team>');
+      } else result.push('<group>参与者</group></team>');
+    }
+
+    let judge_states = await JudgeState.query(null, { type: 1, type_info: contest.id }, [['submit_time', 'asc']]);
+    let fakeInfo = {}, maxPow = 1 + Math.ceil((contest.end_time - contest.start_time) / 60) * problems_id.length;
+    i = 0;
+    for (let state of judge_states) if (status.hasOwnProperty(state.status)) {
+      i++;
+      result.push('<submission><id>' + i + '</id><team-number>' + revUser[state.user_id] + '</team-number>' +
+      '<problem-label>' + revProblem[state.problem_id] + '</problem-label><language>' + state.language + '</language>' +
+      '<contest-time>' + (state.submit_time - contest.start_time) + '.01</contest-time><timestamp>' + state.submit_time + '.01</timestamp></submission>');
+      result.push('<run><submission-id>' + i + '</run-id><idx>' + state.problem_id + '</idx><judgement>' + status[state.status] + '</judgement>' +
+      '<count>1</count>' +
+      '<contest-time>' + (state.submit_time - contest.start_time) + '.02</contest-time><timestamp>' + state.submit_time + '.02</timestamp></run>');
+      result.push('<submission-judgement><submission-id>' + i + '</submission-id><judgement>' + status[state.status] + '</judgement>' +
+      '<contest-time>' + (state.submit_time - contest.start_time) + '.03</contest-time><timestamp>' + state.submit_time + '.03</timestamp>');
+
+      if (!fakeInfo.hasOwnProperty(state.user_id)) fakeInfo[state.user_id] = {
+        sortKey: 0,
+        solved: 0,
+        time: 0,
+        every: {}
+      };
+      if (!fakeInfo[state.user_id].every.hasOwnProperty(state.problem_id)) {
+        fakeInfo[state.user_id].every[state.problem_id] = { solved: false, subs: 0, time: 0, cnt: 0 };
+      }
+      if (!fakeInfo[state.user_id].every[state.problem_id].solved) {
+        fakeInfo[state.user_id].every[state.problem_id].subs++;
+        if(state.status === "Accepted") {
+          fakeInfo[state.user_id].every[state.problem_id].solved = true;
+          fakeInfo[state.user_id].solved++;
+          fakeInfo[state.user_id].every[state.problem_id].time = Math.floor((state.submit_time - contest.start_time) / 60) +
+          fakeInfo[state.user_id].every[state.problem_id].cnt * singlePenalty;
+          fakeInfo[state.user_id].time += fakeInfo[state.user_id].every[state.problem_id].time;
+          fakeInfo[state.user_id].sortKey = maxPow * fakeInfo[state.user_id].solved - fakeInfo[state.user_id].time;
+        } else if (state.status !== "Compile Error") {
+          fakeInfo[state.user_id].every[state.problem_id].cnt++;
+        }
+      }
+
+      result.push('<scoreboard-update><sort-key>' + fakeInfo[state.user_id].sortKey + '</sort-key><team>' + revUser[state.user_id] + '</team>' +
+      '<solved-count>' + fakeInfo[state.user_id].solved + '</solved-count><time>' + fakeInfo[state.user_id].time + '</time>');
+      
+      let j = 0;
+      for (let problem of problems) {
+        let info = fakeInfo[state.user_id].every[problem.id];
+        if (!info) info = { solved: false, subs: 0, time: 0 };
+        result.push('<problem><label>' + String.fromCharCode('A'.charCodeAt(0) + parseInt(j)) + '</label><solved>'
+        + info.solved.toString() + '</solved><subs>' + info.subs + '</subs><time>' + info.time + '</time></problem>');
+        i++;
+      }
+      
+      result.push('</scoreboard-update></submission-judgement>');
+    }
+
+    result.push('<finalized><timestamp>' + contest.end_time + '.01</timestamp><last-gold>3</last-gold><last-silver>6</last-silver><last-bronze>9</last-bronze><comment>Finalized by seuOJ</comment></finalized>');
+
+    result.push('</contest>');
+    res.send({ xml: result.join('') });
+  } catch (e) {
+    syzoj.log(e);
+    res.render('error', {
+      err: e
+    });
+  }
+});
