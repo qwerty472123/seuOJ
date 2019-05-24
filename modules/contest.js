@@ -783,7 +783,7 @@ app.get('/contest/:id/generate_resolve_xml', async (req, res) => {
 
     result.push('<info><title>' + contest.title + '</title><length>' + syzoj.utils.formatTime(contest.end_time - contest.start_time)
     + '</length><scoreboard-freeze-length>' + syzoj.utils.formatTime(contest.end_time - contest.freeze_time) + '</scoreboard-freeze-length>' +
-    '<penalty-amount>' + singlePenalty + '</penalty-amount><start-time>' + contest.start_time + '</start-time></info>');
+    '<penalty-amount>' + singlePenalty + '</penalty-amount><start-time>' + contest.start_time + '.00</start-time></info>');
 
     let languagesList = syzoj.config.enabled_languages, i = 0;
     if (contest && contest.allow_languages) languagesList = contest.allow_languages.split('|');
@@ -843,7 +843,7 @@ app.get('/contest/:id/generate_resolve_xml', async (req, res) => {
         '<nationality>CN</nationality><university>Southeast university, China</university>');
       } else {
         player.user = await User.fromID(player.user_id);
-        result.push('<team><n>' + i + '</n><icpc-id>' + i + '</icpc-id><name>' + player.user.name + '</name>' +
+        result.push('<team><id>' + i + '</id><icpc-id>' + i + '</icpc-id><name>' + player.user.name + '</name>' +
       '<nationality>CN</nationality><university>Southeast university, China</university>');
       }
 
@@ -857,14 +857,17 @@ app.get('/contest/:id/generate_resolve_xml', async (req, res) => {
     i = 0;
     for (let state of judge_states) if (status.hasOwnProperty(state.status)) {
       i++;
-      result.push('<submission><id>' + i + '</id><team-number>' + revUser[state.user_id] + '</team-number>' +
+      /*result.push('<submission><id>' + i + '</id><team-number>' + revUser[state.user_id] + '</team-number>' +
       '<problem-label>' + revProblem[state.problem_id] + '</problem-label><language>' + state.language + '</language>' +
-      '<contest-time>' + (state.submit_time - contest.start_time) + '.01</contest-time><timestamp>' + state.submit_time + '.01</timestamp></submission>');
-      result.push('<run><submission-id>' + i + '</submission-id><idx>' + state.problem_id + '</idx><judgement>' + status[state.status] + '</judgement>' +
-      '<count>1</count>' +
-      '<contest-time>' + (state.submit_time - contest.start_time) + '.02</contest-time><timestamp>' + state.submit_time + '.02</timestamp></run>');
-      result.push('<submission-judgement><submission-id>' + i + '</submission-id><judgement>' + status[state.status] + '</judgement>' +
-      '<contest-time>' + (state.submit_time - contest.start_time) + '.03</contest-time><timestamp>' + state.submit_time + '.03</timestamp>');
+      '<contest-time>' + (state.submit_time - contest.start_time) + '.01</contest-time><timestamp>' + state.submit_time + '.01</timestamp></submission>');*/
+      result.push('<run><id>' + i + '</id><language>' + state.language + '</language>' +
+      '<problem-label>' + revProblem[state.problem_id] + '</problem-label><team>' + revUser[state.user_id] + '</team>' +
+      '<judged>true</judged><result>' + status[state.status] + '</result>' +
+      '<solved>' + (status[state.status] === 'AC') + '</solved>' +
+      '<penalty>' + (status[state.status] !== 'AC' && status[state.status] !== 'CE') + '</penalty>' +
+      '<time>' + (state.submit_time - contest.start_time) + '.02</time><timestamp>' + state.submit_time + '.02</timestamp></run>');
+      /*result.push('<submission-judgement><submission-id>' + i + '</submission-id><judgement>' + status[state.status] + '</judgement>' +
+      '<contest-time>' + (state.submit_time - contest.start_time) + '.03</contest-time><timestamp>' + state.submit_time + '.03</timestamp>');*/
 
       if (!fakeInfo.hasOwnProperty(state.user_id)) fakeInfo[state.user_id] = {
         sortKey: 0,
@@ -889,7 +892,7 @@ app.get('/contest/:id/generate_resolve_xml', async (req, res) => {
         }
       }
 
-      result.push('<scoreboard-update><sort-key>' + fakeInfo[state.user_id].sortKey + '</sort-key><team>' + revUser[state.user_id] + '</team>' +
+      /*result.push('<scoreboard-update><sort-key>' + fakeInfo[state.user_id].sortKey + '</sort-key><team>' + revUser[state.user_id] + '</team>' +
       '<solved-count>' + fakeInfo[state.user_id].solved + '</solved-count><time>' + fakeInfo[state.user_id].time + '</time>');
       
       let j = 0;
@@ -898,10 +901,10 @@ app.get('/contest/:id/generate_resolve_xml', async (req, res) => {
         if (!info) info = { solved: false, subs: 0, time: 0 };
         result.push('<problem><label>' + String.fromCharCode('A'.charCodeAt(0) + parseInt(j)) + '</label><solved>'
         + info.solved.toString() + '</solved><subs>' + info.subs + '</subs><time>' + info.time + '</time></problem>');
-        i++;
+        j++;
       }
       
-      result.push('</scoreboard-update></submission-judgement>');
+      result.push('</scoreboard-update></submission-judgement>');*/
     }
 
     result.push('<finalized><timestamp>' + contest.end_time + '.01</timestamp><last-gold>3</last-gold><last-silver>6</last-silver><last-bronze>9</last-bronze><comment>Finalized by seuOJ</comment></finalized>');
