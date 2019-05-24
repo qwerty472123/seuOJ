@@ -861,7 +861,7 @@ app.get('/contest/:id/generate_resolve_xml', async (req, res) => {
       '<problem-label>' + revProblem[state.problem_id] + '</problem-label><language>' + state.language + '</language>' +
       '<contest-time>' + (state.submit_time - contest.start_time) + '.01</contest-time><timestamp>' + state.submit_time + '.01</timestamp></submission>');*/
       result.push('<run><id>' + i + '</id><language>' + state.language + '</language>' +
-      '<problem-label>' + revProblem[state.problem_id] + '</problem-label><team>' + revUser[state.user_id] + '</team>' +
+      '<problem>' + revProblem[state.problem_id] + '</problem><team>' + revUser[state.user_id] + '</team>' +
       '<judged>true</judged><result>' + status[state.status] + '</result>' +
       '<solved>' + (status[state.status] === 'AC') + '</solved>' +
       '<penalty>' + (status[state.status] !== 'AC' && status[state.status] !== 'CE') + '</penalty>' +
