@@ -248,7 +248,8 @@ app.get('/contest/:id', async (req, res) => {
 
       await contest.loadRelationships();
       let players = await contest.ranklist.getPlayers();
-      let isFrozen = (!isSupervisior) && contest.freeze_time && contest.freeze_time <= syzoj.utils.getCurrentDate();
+      let isFrozen = (!isSupervisior) && contest.freeze_time && contest.freeze_time <= syzoj.utils.getCurrentDate()
+      && (contest.isRunning() || (contest.isEnded() && contest.ranklist.freeze_ranking && contest.ranklist.freeze_ranking.length == 1));
       for (let problem of problems) {
         problem.statistics = { attempt: 0, accepted: 0 };
 
