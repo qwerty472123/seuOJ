@@ -783,7 +783,7 @@ app.get('/contest/:id/generate_resolve_xml', async (req, res) => {
 
     result.push('<info><title>' + contest.title + '</title><length>' + syzoj.utils.formatTime(contest.end_time - contest.start_time)
     + '</length><scoreboard-freeze-length>' + syzoj.utils.formatTime(contest.end_time - contest.freeze_time) + '</scoreboard-freeze-length>' +
-    '<penalty-amount>' + singlePenalty + '</penalty><start-time>' + contest.start_time + '</start-time></info>');
+    '<penalty-amount>' + singlePenalty + '</penalty-amount><start-time>' + contest.start_time + '</start-time></info>');
 
     let languagesList = syzoj.config.enabled_languages;
     if (contest && contest.allow_languages) languagesList = contest.allow_languages.split('|');
@@ -858,7 +858,7 @@ app.get('/contest/:id/generate_resolve_xml', async (req, res) => {
       result.push('<submission><id>' + i + '</id><team-number>' + revUser[state.user_id] + '</team-number>' +
       '<problem-label>' + revProblem[state.problem_id] + '</problem-label><language>' + state.language + '</language>' +
       '<contest-time>' + (state.submit_time - contest.start_time) + '.01</contest-time><timestamp>' + state.submit_time + '.01</timestamp></submission>');
-      result.push('<run><submission-id>' + i + '</run-id><idx>' + state.problem_id + '</idx><judgement>' + status[state.status] + '</judgement>' +
+      result.push('<run><submission-id>' + i + '</submission-id><idx>' + state.problem_id + '</idx><judgement>' + status[state.status] + '</judgement>' +
       '<count>1</count>' +
       '<contest-time>' + (state.submit_time - contest.start_time) + '.02</contest-time><timestamp>' + state.submit_time + '.02</timestamp></run>');
       result.push('<submission-judgement><submission-id>' + i + '</submission-id><judgement>' + status[state.status] + '</judgement>' +
