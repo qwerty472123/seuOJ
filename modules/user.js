@@ -121,6 +121,7 @@ app.get('/user/:id', async (req, res) => {
         ratingHistories = [];
         user.emailVisible = false;
         statistics = {};
+        user.information = '';
       }
     }
 
@@ -151,6 +152,10 @@ app.get('/user/:id/edit', async (req, res) => {
     user.privileges = await user.getPrivileges();
 
     res.locals.user.allowedManage = await res.locals.user.hasPrivilege('manage_user');
+
+    if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) {
+      user.information = '';
+    }
 
     res.render('user_edit', {
       edited_user: user,
