@@ -782,7 +782,7 @@ app.get('/contest/:id/generate_resolve_xml', async (req, res) => {
 
     result.push('<info><title>' + contest.title + '</title><length>' + syzoj.utils.formatTime(contest.end_time - contest.start_time)
     + '</length><scoreboard-freeze-length>' + syzoj.utils.formatTime(contest.end_time - contest.freeze_time) + '</scoreboard-freeze-length>' +
-    '<penalty-amount>' + singlePenalty + '</penalty-amount><start-time>' + contest.start_time + '.00</start-time></info>');
+    '<penalty-amount>' + singlePenalty + '</penalty-amount><starttime>' + contest.start_time + '.00</starttime></info>');
 
     let languagesList = syzoj.config.enabled_languages, i = 0;
     if (contest && contest.allow_languages) languagesList = contest.allow_languages.split('|');
