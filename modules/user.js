@@ -92,7 +92,7 @@ app.get('/user/:id', async (req, res) => {
     user.emailVisible = user.public_email || user.allowedEdit;
 
     const ratingHistoryValues = await RatingHistory.query(null, { user_id: user.id }, [['rating_calculation_id', 'asc']]);
-    const ratingHistories = [{
+    let ratingHistories = [{
       contestName: "初始积分",
       value: syzoj.config.default.user.rating,
       delta: null,
