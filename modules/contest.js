@@ -772,7 +772,6 @@ app.get('/contest/:id/generate_resolve_xml', async (req, res) => {
     if (!contest) throw new ErrorMessage('无此比赛。');
     if (!await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('权限不足！');
     if (!contest.isEnded()) throw new ErrorMessage('比赛未结束！');
-    contest.freeze_time = contest.end_time - 3600;//fake
     if (!contest.freeze_time) throw new ErrorMessage('比赛无封榜！');
 
     await contest.loadRelationships();
