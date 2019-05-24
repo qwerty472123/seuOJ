@@ -161,6 +161,7 @@ app.post('/contest/:id/edit', async (req, res) => {
         if (contest.freeze_time && now >= contest.freeze_time) {
           contest.freeze_time = freeze_time;
           await ranklist.updatePlayer(contest, null, null);
+          await ranklist.save();
         } else contest.freeze_time = freeze_time;
       }
     } else if (req.body.enable_freeze) throw new ErrorMessage('该比赛的赛制无法进行封榜！');
