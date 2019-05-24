@@ -785,10 +785,11 @@ app.get('/contest/:id/generate_resolve_xml', async (req, res) => {
     + '</length><scoreboard-freeze-length>' + syzoj.utils.formatTime(contest.end_time - contest.freeze_time) + '</scoreboard-freeze-length>' +
     '<penalty-amount>' + singlePenalty + '</penalty-amount><start-time>' + contest.start_time + '</start-time></info>');
 
-    let languagesList = syzoj.config.enabled_languages;
+    let languagesList = syzoj.config.enabled_languages, i = 0;
     if (contest && contest.allow_languages) languagesList = contest.allow_languages.split('|');
     for (let lang of languagesList){
-      result.push('<language><name>' + lang + '</name></language>')
+      i++;
+      result.push('<language><id>' + i + '</id><name>' + lang + '</name></language>');
     }
 
     let specialRanking = contest.need_secret && contest.ranklist.ranking_group_info instanceof Array && contest.ranklist.ranking_group_info.length > 0;
@@ -822,12 +823,13 @@ app.get('/contest/:id/generate_resolve_xml', async (req, res) => {
     }
 
     let problems_id = await contest.getProblems(), revProblem = {};
-    let problems = await problems_id.mapAsync(async id => await Problem.fromID(id)), i = 0;
+    let problems = await problems_id.mapAsync(async id => await Problem.fromID(id));
+    i = 1;
     for (let problem of problems) {
-      revProblem[problem.id] = String.fromCharCode('A'.charCodeAt(0) + parseInt(i));
-      result.push('<problem><label>' + String.fromCharCode('A'.charCodeAt(0) + parseInt(i)) + '</label><name>'
-      + problem.title + '</name></problem>');
       i++;
+      revProblem[problem.id] = String.fromCharCode('A'.charCodeAt(0) + parseInt(i) - 1);
+      result.push('<problem><id>' + i + '</id><label>' + String.fromCharCode('A'.charCodeAt(0) + parseInt(i) - 1) + '</label><name>'
+      + problem.title + '</name><test_data_count>1</test_data_count></problem>');
     }
     
     let players = await contest.ranklist.getPlayers(), revUser = {};
@@ -837,7 +839,7 @@ app.get('/contest/:id/generate_resolve_xml', async (req, res) => {
       revUser[player.user_id] = i;
       if (contest.need_secret) {
         player.secret = await ContestSecret.find({ contest_id: contest.id, user_id: player.user_id });
-        result.push('<team><n>' + i + '</n><icpc-id>' + i + '</icpc-id><name>' + player.secret.extra_info + '</name>' +
+        result.push('<team><id>' + i + '</id><icpc-id>' + i + '</icpc-id><name>' + player.secret.extra_info + '</name>' +
         '<nationality>CN</nationality><university>Southeast university, China</university>');
       } else {
         player.user = await User.fromID(player.user_id);
