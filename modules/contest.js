@@ -158,8 +158,10 @@ app.post('/contest/:id/edit', async (req, res) => {
         let now = syzoj.utils.getCurrentDate();
         if (now >= freeze_time) throw new ErrorMessage('新设定封榜时间不能小于当前时间！');
         if (contest.start_time > freeze_time || contest.end_time <= freeze_time) throw new ErrorMessage('封榜时间应在比赛时间内！');
-        contest.freeze_time = freeze_time;
-        if (contest.freeze_time && now >= contest.freeze_time) await ranklist.updatePlayer(contest, null, null);
+        if (contest.freeze_time && now >= contest.freeze_time) {
+          contest.freeze_time = freeze_time;
+          await ranklist.updatePlayer(contest, null, null);
+        } else contest.freeze_time = freeze_time;
       }
     } else if (req.body.enable_freeze) throw new ErrorMessage('该比赛的赛制无法进行封榜！');
     else contest.freeze_time = 0;
