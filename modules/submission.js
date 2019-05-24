@@ -31,9 +31,11 @@ app.get('/submissions', async (req, res) => {
     else if (req.query.submitter) where.user_id = -1;
 
     if (!req.query.contest) {
+      if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
       where.type = { $eq: 0 };
     } else {
       const contestId = Number(req.query.contest);
+      if (syzoj.config.cur_vip_contest && contestId !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
       const contest = await Contest.fromID(contestId);
       contest.ended = contest.isEnded();
       if ((contest.ended && contest.is_public) || // If the contest is ended and is not hidden
@@ -143,12 +145,15 @@ app.get('/submission/:id', async (req, res) => {
     let contest;
     if (judge.type === 1) {
       contest = await Contest.fromID(judge.type_info);
+      if (syzoj.config.cur_vip_contest && judge.type_info !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
       contest.ended = contest.isEnded();
 
       if ((!contest.ended || !contest.is_public) &&
         !(await judge.problem.isAllowedEditBy(res.locals.user) || await contest.isSupervisior(curUser))) {
         throw new Error("比赛没有结束或者没有公开哦");
       }
+    } else {
+      if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
     }
 
     await judge.loadRelationships();

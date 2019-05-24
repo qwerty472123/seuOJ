@@ -26,6 +26,13 @@ app.get('/', async (req, res) => {
       time: timeAgo.format(new Date(problem.publicize_time)),
     }));
 
+    if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) {
+      ranklist = [];
+      notices = [];
+      contests = await Contest.query([1, 1], { id: syzoj.config.cur_vip_contest, is_public: true }, [['start_time', 'desc']]);
+      problems = [];
+    }
+
     res.render('index', {
       ranklist: ranklist,
       notices: notices,

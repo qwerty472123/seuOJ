@@ -8,6 +8,7 @@ const ContestSecret = syzoj.model('contest_secret');
 // Ranklist
 app.get('/ranklist', async (req, res) => {
   try {
+    if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
     const sort = req.query.sort || syzoj.config.sorting.ranklist.field;
     const order = req.query.order || syzoj.config.sorting.ranklist.order;
     if (!['ac_num', 'rating', 'id', 'username'].includes(sort) || !['asc', 'desc'].includes(order)) {
@@ -33,6 +34,7 @@ app.get('/ranklist', async (req, res) => {
 
 app.get('/find_user', async (req, res) => {
   try {
+    if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
     let user = await User.fromName(req.query.nickname);
     if (!user) throw new ErrorMessage('无此用户。');
     res.redirect(syzoj.utils.makeUrl(['user', user.id]));

@@ -11,6 +11,7 @@ const { getSubmissionInfo, getRoughResult, processOverallResult } = require('../
 
 app.get('/contests', async (req, res) => {
   try {
+    if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
     let where;
     if (res.locals.user && res.locals.user.is_admin) where = {}
     else where = { is_public: true };
@@ -182,6 +183,7 @@ app.get('/contest/:id', async (req, res) => {
   try {
     const curUser = res.locals.user;
     let contest_id = parseInt(req.params.id);
+    if (syzoj.config.cur_vip_contest && contest_id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
 
     let contest = await Contest.fromID(contest_id);
     if (!contest) throw new ErrorMessage('无此比赛。');
@@ -304,6 +306,7 @@ app.get('/contest/:id', async (req, res) => {
 app.get('/contest/:id/ranklist', async (req, res) => {
   try {
     let contest_id = parseInt(req.params.id);
+    if (syzoj.config.cur_vip_contest && contest_id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
     let contest = await Contest.fromID(contest_id);
     const curUser = res.locals.user;
 
@@ -429,6 +432,7 @@ function getDisplayConfig(contest) {
 app.get('/contest/:id/submissions', async (req, res) => {
   try {
     let contest_id = parseInt(req.params.id);
+    if (syzoj.config.cur_vip_contest && contest_id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
     let contest = await Contest.fromID(contest_id);
     if (!contest.is_public && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛未公开，请耐心等待 (´∀ `)');
     if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
@@ -545,6 +549,7 @@ app.get('/contest/submission/:id', async (req, res) => {
     }
 
     const contest = await Contest.fromID(judge.type_info);
+    if (syzoj.config.cur_vip_contest && judge.type_info !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
     if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
     contest.ended = contest.isEnded();
 
@@ -587,6 +592,7 @@ app.get('/contest/submission/:id', async (req, res) => {
 app.get('/contest/:id/problem/:pid', async (req, res) => {
   try {
     let contest_id = parseInt(req.params.id);
+    if (syzoj.config.cur_vip_contest && contest_id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
     let contest = await Contest.fromID(contest_id);
     if (!contest) throw new ErrorMessage('无此比赛。');
     if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
@@ -655,6 +661,7 @@ app.get('/contest/:id/problem/:pid', async (req, res) => {
 app.get('/contest/:id/:pid/download/additional_file', async (req, res) => {
   try {
     let id = parseInt(req.params.id);
+    if (syzoj.config.cur_vip_contest && id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
     let contest = await Contest.fromID(id);
     if (!contest) throw new ErrorMessage('无此比赛。');
     if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
@@ -692,6 +699,7 @@ app.get('/contest/:id/:pid/download/additional_file', async (req, res) => {
 app.post('/contest/:id/submit_ban_problems_id', async (req, res) => {
   try {
     let id = parseInt(req.params.id);
+    if (syzoj.config.cur_vip_contest && id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
     let contest = await Contest.fromID(id);
     if (!contest) throw new ErrorMessage('无此比赛。');
     if (!contest.is_public && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛未公开，请耐心等待 (´∀ `)');
@@ -733,6 +741,7 @@ app.post('/contest/:id/submit_ban_problems_id', async (req, res) => {
 app.post('/contest/:id/release_ranklist', async (req, res) => {
   try {
     let id = parseInt(req.params.id);
+    if (syzoj.config.cur_vip_contest && id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
     let contest = await Contest.fromID(id);
     if (!contest) throw new ErrorMessage('无此比赛。');
     if (!await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('权限不足！');

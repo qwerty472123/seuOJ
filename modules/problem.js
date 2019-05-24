@@ -14,6 +14,7 @@ let CodeFormatter = syzoj.lib('code_formatter');
 
 app.get('/problems', async (req, res) => {
   try {
+    if (syzoj.config.cur_vip_contest && (!res.locals.user || !await res.locals.user.hasPrivilege('manage_problem'))) throw new ErrorMessage('比赛中！');
     const sort = req.query.sort || syzoj.config.sorting.problem.field;
     const order = req.query.order || syzoj.config.sorting.problem.order;
     if (!['id', 'title', 'rating', 'ac_num', 'submit_num', 'ac_rate', 'publicize_time'].includes(sort) || !['asc', 'desc'].includes(order)) {
@@ -66,6 +67,7 @@ app.get('/problems', async (req, res) => {
 
 app.get('/problems/search', async (req, res) => {
   try {
+    if (syzoj.config.cur_vip_contest && (!res.locals.user || !await res.locals.user.hasPrivilege('manage_problem'))) throw new ErrorMessage('比赛中！');
     let id = parseInt(req.query.keyword) || 0;
     const sort = req.query.sort || syzoj.config.sorting.problem.field;
     const order = req.query.order || syzoj.config.sorting.problem.order;
@@ -136,6 +138,7 @@ app.get('/problems/search', async (req, res) => {
 
 app.get('/problems/tag/:tagIDs', async (req, res) => {
   try {
+    if (syzoj.config.cur_vip_contest && (!res.locals.user || !await res.locals.user.hasPrivilege('manage_problem'))) throw new ErrorMessage('比赛中！');
     let tagIDs = Array.from(new Set(req.params.tagIDs.split(',').map(x => parseInt(x))));
     let tags = await tagIDs.mapAsync(async tagID => ProblemTag.fromID(tagID));
     const sort = req.query.sort || syzoj.config.sorting.problem.field;
@@ -201,6 +204,7 @@ app.get('/problems/tag/:tagIDs', async (req, res) => {
 
 app.get('/problem/:id', async (req, res) => {
   try {
+    if (syzoj.config.cur_vip_contest && (!res.locals.user || !await res.locals.user.hasPrivilege('manage_problem'))) throw new ErrorMessage('比赛中！');
     let id = parseInt(req.params.id);
     let problem = await Problem.fromID(id);
     if (!problem) throw new ErrorMessage('无此题目。');
@@ -246,6 +250,7 @@ app.get('/problem/:id', async (req, res) => {
 
 app.get('/problem/:id/export', async (req, res) => {
   try {
+    if (syzoj.config.cur_vip_contest && (!res.locals.user || !await res.locals.user.hasPrivilege('manage_problem'))) throw new ErrorMessage('比赛中！');
     let id = parseInt(req.params.id);
     let problem = await Problem.fromID(id);
     if (!problem || !problem.is_public) throw new ErrorMessage('无此题目。');
@@ -279,6 +284,7 @@ app.get('/problem/:id/export', async (req, res) => {
 
 app.get('/problem/:id/edit', async (req, res) => {
   try {
+    if (syzoj.config.cur_vip_contest && (!res.locals.user || !await res.locals.user.hasPrivilege('manage_problem'))) throw new ErrorMessage('比赛中！');
     let id = parseInt(req.params.id) || 0;
     let problem = await Problem.fromID(id);
 
@@ -310,6 +316,7 @@ app.get('/problem/:id/edit', async (req, res) => {
 
 app.post('/problem/:id/edit', async (req, res) => {
   try {
+    if (syzoj.config.cur_vip_contest && (!res.locals.user || !await res.locals.user.hasPrivilege('manage_problem'))) throw new ErrorMessage('比赛中！');
     let id = parseInt(req.params.id) || 0;
     let problem = await Problem.fromID(id);
     if (!problem) {
@@ -372,6 +379,7 @@ app.post('/problem/:id/edit', async (req, res) => {
 
 app.get('/problem/:id/import', async (req, res) => {
   try {
+    if (syzoj.config.cur_vip_contest && (!res.locals.user || !await res.locals.user.hasPrivilege('manage_problem'))) throw new ErrorMessage('比赛中！');
     let id = parseInt(req.params.id) || 0;
     let problem = await Problem.fromID(id);
 
@@ -403,6 +411,7 @@ app.get('/problem/:id/import', async (req, res) => {
 
 app.post('/problem/:id/import', async (req, res) => {
   try {
+    if (syzoj.config.cur_vip_contest && (!res.locals.user || !await res.locals.user.hasPrivilege('manage_problem'))) throw new ErrorMessage('比赛中！');
     let id = parseInt(req.params.id) || 0;
     let problem = await Problem.fromID(id);
     if (!problem) {
@@ -483,6 +492,7 @@ app.post('/problem/:id/import', async (req, res) => {
 // The 'manage' is not `allow manage`'s 'manage', I just have no better name for it.
 app.get('/problem/:id/manage', async (req, res) => {
   try {
+    if (syzoj.config.cur_vip_contest && (!res.locals.user || !await res.locals.user.hasPrivilege('manage_problem'))) throw new ErrorMessage('比赛中！');
     let id = parseInt(req.params.id);
     let problem = await Problem.fromID(id);
 
@@ -507,6 +517,7 @@ app.get('/problem/:id/manage', async (req, res) => {
 
 app.post('/problem/:id/manage', app.multer.fields([{ name: 'testdata', maxCount: 1 }, { name: 'additional_file', maxCount: 1 }]), async (req, res) => {
   try {
+    if (syzoj.config.cur_vip_contest && (!res.locals.user || !await res.locals.user.hasPrivilege('manage_problem'))) throw new ErrorMessage('比赛中！');
     let id = parseInt(req.params.id);
     let problem = await Problem.fromID(id);
 
@@ -555,6 +566,7 @@ app.post('/problem/:id/manage', app.multer.fields([{ name: 'testdata', maxCount:
 // Set problem public
 async function setPublic(req, res, is_public) {
   try {
+    if (syzoj.config.cur_vip_contest && (!res.locals.user || !await res.locals.user.hasPrivilege('manage_problem'))) throw new ErrorMessage('比赛中！');
     let id = parseInt(req.params.id);
     let problem = await Problem.fromID(id);
     if (!problem) throw new ErrorMessage('无此题目。');
@@ -652,6 +664,7 @@ app.post('/problem/:id/submit', app.multer.fields([{ name: 'answer', maxCount: 1
     let contest_id = parseInt(req.query.contest_id);
     let contest;
     if (contest_id) {
+      if (syzoj.config.cur_vip_contest && contest_id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
       contest = await Contest.fromID(contest_id);
       if (!contest) throw new ErrorMessage('无此比赛。');
       if ((!contest.isRunning()) && (!await contest.isSupervisior(curUser))) throw new ErrorMessage('比赛未开始或已结束。');
@@ -692,6 +705,7 @@ app.post('/problem/:id/submit', app.multer.fields([{ name: 'answer', maxCount: 1
 
       await judge_state.save();
     } else {
+      if (syzoj.config.cur_vip_contest && (!res.locals.user || !await res.locals.user.hasPrivilege('manage_problem'))) throw new ErrorMessage('比赛中！');
       if (!await problem.isAllowedUseBy(curUser)) throw new ErrorMessage('您没有权限进行此操作。');
       judge_state.type = 0;
       await judge_state.save();
@@ -743,6 +757,7 @@ app.post('/problem/:id/submit', app.multer.fields([{ name: 'answer', maxCount: 1
 
 app.post('/problem/:id/delete', async (req, res) => {
   try {
+    if (syzoj.config.cur_vip_contest && (!res.locals.user || !await res.locals.user.hasPrivilege('manage_problem'))) throw new ErrorMessage('比赛中！');
     let id = parseInt(req.params.id);
     let problem = await Problem.fromID(id);
     if (!problem) throw new ErrorMessage('无此题目。');
@@ -762,6 +777,7 @@ app.post('/problem/:id/delete', async (req, res) => {
 
 app.get('/problem/:id/testdata', async (req, res) => {
   try {
+    if (syzoj.config.cur_vip_contest && (!res.locals.user || !await res.locals.user.hasPrivilege('manage_problem'))) throw new ErrorMessage('比赛中！');
     let id = parseInt(req.params.id);
     let problem = await Problem.fromID(id);
 
@@ -789,6 +805,7 @@ app.get('/problem/:id/testdata', async (req, res) => {
 
 app.post('/problem/:id/testdata/upload', app.multer.array('file'), async (req, res) => {
   try {
+    if (syzoj.config.cur_vip_contest && (!res.locals.user || !await res.locals.user.hasPrivilege('manage_problem'))) throw new ErrorMessage('比赛中！');
     let id = parseInt(req.params.id);
     let problem = await Problem.fromID(id);
 
@@ -812,6 +829,7 @@ app.post('/problem/:id/testdata/upload', app.multer.array('file'), async (req, r
 
 app.post('/problem/:id/testdata/delete/:filename', async (req, res) => {
   try {
+    if (syzoj.config.cur_vip_contest && (!res.locals.user || !await res.locals.user.hasPrivilege('manage_problem'))) throw new ErrorMessage('比赛中！');
     let id = parseInt(req.params.id);
     let problem = await Problem.fromID(id);
 
@@ -832,6 +850,7 @@ app.post('/problem/:id/testdata/delete/:filename', async (req, res) => {
 app.get('/problem/:id/testdata/download/:filename?', async (req, res) => {
   try {
     let id = parseInt(req.params.id);
+    if (syzoj.config.cur_vip_contest && id != 1 && (!res.locals.user || !await res.locals.user.hasPrivilege('manage_problem'))) throw new ErrorMessage('比赛中！');
     let problem = await Problem.fromID(id);
 
     if (!problem) throw new ErrorMessage('无此题目。');
@@ -866,12 +885,14 @@ app.get('/problem/:id/download/additional_file', async (req, res) => {
     // XXX: Reduce duplication (see the '/problem/:id/submit' handler)
     let contest_id = parseInt(req.query.contest_id);
     if (contest_id) {
+      if (syzoj.config.cur_vip_contest && contest_id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
       let contest = await Contest.fromID(contest_id);
       if (!contest) throw new ErrorMessage('无此比赛。');
       if (!contest.isRunning()) throw new ErrorMessage('比赛未开始或已结束。');
       let problems_id = await contest.getProblems();
       if (!problems_id.includes(id)) throw new ErrorMessage('无此题目。');
     } else {
+      if (syzoj.config.cur_vip_contest && (!res.locals.user || !await res.locals.user.hasPrivilege('manage_problem'))) throw new ErrorMessage('比赛中！');
       if (!await problem.isAllowedUseBy(res.locals.user)) throw new ErrorMessage('您没有权限进行此操作。');
     }
 
@@ -891,6 +912,7 @@ app.get('/problem/:id/download/additional_file', async (req, res) => {
 
 app.get('/problem/:id/statistics/:type', async (req, res) => {
   try {
+    if (syzoj.config.cur_vip_contest && (!res.locals.user || !await res.locals.user.hasPrivilege('manage_problem'))) throw new ErrorMessage('比赛中！');
     let id = parseInt(req.params.id);
     let problem = await Problem.fromID(id);
 

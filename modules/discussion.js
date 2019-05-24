@@ -8,6 +8,7 @@ let User = syzoj.model('user');
 
 app.get('/discussion/:type?', async (req, res) => {
   try {
+    if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
     if (!['global', 'problems'].includes(req.params.type)) {
       res.redirect(syzoj.utils.makeUrl(['discussion', 'global']));
     }
@@ -46,6 +47,7 @@ app.get('/discussion/:type?', async (req, res) => {
 
 app.get('/discussion/problem/:pid', async (req, res) => {
   try {
+    if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
     let pid = parseInt(req.params.pid);
     let problem = await Problem.fromID(pid);
     if (!problem) throw new ErrorMessage('无此题目。');
@@ -77,6 +79,7 @@ app.get('/discussion/problem/:pid', async (req, res) => {
 app.get('/contest/:id/qa', async (req, res) => {
   try {
     let contest_id = parseInt(req.params.id);
+    if (syzoj.config.cur_vip_contest && contest_id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
     let contest = await Contest.fromID(contest_id);
     if (!contest) throw new ErrorMessage('无此比赛。');
     if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
@@ -111,9 +114,12 @@ app.get('/article/:id', async (req, res) => {
     if (!article) throw new ErrorMessage('无此帖子。');
     let contest = null;
     if (article.contest_id) {
+      if (syzoj.config.cur_vip_contest && article.contest_id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
       contest = await Contest.fromID(article.contest_id);
       if ((!contest.is_public || !(contest.isRunning() || contest.isEnded())) && !await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('比赛未公开，请耐心等待 (´∀ `)');
       if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+    } else {
+      if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
     }
     await article.loadRelationships();
     article.allowedEdit = await article.isAllowedEditBy(res.locals.user);
@@ -167,8 +173,11 @@ app.get('/article/:id/edit', async (req, res) => {
       if (req.query.contest_id) {
         let contest = await Contest.fromID(req.query.contest_id);
         if (!contest) throw new ErrorMessage('无对应比赛！');
+        if (syzoj.config.cur_vip_contest && contest.id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
         if ((!contest.is_public || !(contest.isRunning())) && !await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('比赛不在进行中！');
         if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+      } else {
+        if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
       }
       article = await Article.create();
       article.id = 0;
@@ -177,8 +186,11 @@ app.get('/article/:id/edit', async (req, res) => {
       if (article.contest_id) {
         let contest = await Contest.fromID(article.contest_id);
         if (!contest) throw new ErrorMessage('无对应比赛！');
+        if (syzoj.config.cur_vip_contest && contest.id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
         if ((!contest.is_public || !(contest.isRunning())) && !await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('比赛不在进行中！');
         if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+      } else {
+        if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
       }
       article.allowedEdit = await article.isAllowedEditBy(res.locals.user);
     }
@@ -218,18 +230,23 @@ app.post('/article/:id/edit', async (req, res) => {
       if (req.query.contest_id) {
         let contest = await Contest.fromID(req.query.contest_id);
         if (!contest) throw new ErrorMessage('无此比赛。');
+        if (syzoj.config.cur_vip_contest && contest.id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
         if ((!contest.is_public || !(contest.isRunning())) && !await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('比赛不在进行中！');
         if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
         article.contest_id = contest.id;
       } else {
+        if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
         article.contest_id = null;
       }
     } else {
       if (article.contest_id) {
         let contest = await Contest.fromID(article.contest_id);
         if (!contest) throw new ErrorMessage('无对应比赛！');
+        if (syzoj.config.cur_vip_contest && contest.id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
         if ((!contest.is_public || !(contest.isRunning())) && !await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('比赛不在进行中！');
         if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+      } else {
+        if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
       }
       if (!await article.isAllowedEditBy(res.locals.user)) throw new ErrorMessage('您没有权限进行此操作。');
     }
@@ -265,9 +282,12 @@ app.post('/article/:id/delete', async (req, res) => {
       if (article.contest_id) {
         contest = await Contest.fromID(article.contest_id);
         if (!contest) throw new ErrorMessage('无对应比赛！');
+        if (syzoj.config.cur_vip_contest && contest.id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
         if ((!contest.is_public || !(contest.isRunning())) && !await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('比赛不在进行中！');
         if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
         if (!await contest.isSupervisior(res.locals.user) && article.is_notice) throw new ErrorMessage('当前内容为公告，请额外发帖！');
+      } else {
+        if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
       }
       if (!await article.isAllowedEditBy(res.locals.user)) throw new ErrorMessage('您没有权限进行此操作。');
     }
@@ -297,9 +317,12 @@ app.post('/article/:id/comment', async (req, res) => {
       if (article.contest_id) {
         let contest = await Contest.fromID(article.contest_id);
         if (!contest) throw new ErrorMessage('无对应比赛！');
+        if (syzoj.config.cur_vip_contest && contest.id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
         if ((!contest.is_public || !(contest.isRunning())) && !await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('比赛不在进行中！');
         if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
         if (!await contest.isSupervisior(res.locals.user) && article.is_notice) throw new ErrorMessage('当前内容为公告，请额外发帖！');
+      } else {
+        if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
       }
       if (!await article.isAllowedCommentBy(res.locals.user)) throw new ErrorMessage('您没有权限进行此操作。');
     }
@@ -341,9 +364,12 @@ app.post('/article/:article_id/comment/:id/delete', async (req, res) => {
       if (article.contest_id) {
         let contest = await Contest.fromID(article.contest_id);
         if (!contest) throw new ErrorMessage('无对应比赛！');
+        if (syzoj.config.cur_vip_contest && contest.id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
         if ((!contest.is_public || !(contest.isRunning())) && !await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('比赛不在进行中！');
         if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
         if (!await contest.isSupervisior(res.locals.user) && article.is_notice) throw new ErrorMessage('当前内容为公告，请额外发帖！');
+      } else {
+        if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
       }
       if (!await comment.isAllowedEditBy(res.locals.user)) throw new ErrorMessage('您没有权限进行此操作。');
     }
