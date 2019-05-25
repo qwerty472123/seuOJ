@@ -833,18 +833,26 @@ app.get('/contest/:id/generate_resolve_xml', async (req, res) => {
     }
     
     let players = await contest.ranklist.getPlayers(), revUser = {};
+
+    let classify = null;
+    if (contest.needSecret && req.query.classify) {
+      classify = req.query.classify.split(',');
+    }
+
     i = 0;
     for (let player of players) {
+      if (classify) {
+        player.secret = await ContestSecret.find({ contest_id: contest.id, user_id: player.user_id });
+        if (!classify.includes(player.secret.classify_code.toString())) continue;
+      }
       i++;
       revUser[player.user_id] = i;
       if (contest.need_secret) {
-        player.secret = await ContestSecret.find({ contest_id: contest.id, user_id: player.user_id });
-        result.push('<team><id>' + i + '</id><icpc-id>' + i + '</icpc-id><name>' + player.secret.extra_info + '</name>' +
-        '<nationality>CN</nationality><university>Southeast university, China</university>');
+        if (!player.secret) player.secret = await ContestSecret.find({ contest_id: contest.id, user_id: player.user_id });
+        result.push('<team><id>' + i + '</id><name>' + player.secret.extra_info + '</name>');
       } else {
         player.user = await User.fromID(player.user_id);
-        result.push('<team><id>' + i + '</id><icpc-id>' + i + '</icpc-id><name>' + player.user.name + '</name>' +
-      '<nationality>CN</nationality><university>Southeast university, China</university>');
+        result.push('<team><id>' + i + '</id><name>' + player.user.name + '</name>');
       }
 
       if (specialRanking) {
@@ -854,7 +862,7 @@ app.get('/contest/:id/generate_resolve_xml', async (req, res) => {
 
     let judge_states = await JudgeState.query(null, { type: 1, type_info: contest.id }, [['submit_time', 'asc']]);
     i = 0;
-    for (let state of judge_states) if (status.hasOwnProperty(state.status)) {
+    for (let state of judge_states) if (status.hasOwnProperty(state.status)) if (revUser[state.user_id]) {
       i++;
       result.push('<run><id>' + i + '</id><language>' + state.language + '</language>' +
       '<problem>' + revProblem[state.problem_id] + '</problem><team>' + revUser[state.user_id] + '</team>' +
@@ -864,10 +872,10 @@ app.get('/contest/:id/generate_resolve_xml', async (req, res) => {
       '<time>' + (state.submit_time - contest.start_time) + '.02</time><timestamp>' + state.submit_time + '.02</timestamp></run>');
     }
 
-    result.push('<finalized><timestamp>' + contest.end_time + '.01</timestamp><last-gold>3</last-gold><last-silver>6</last-silver><last-bronze>9</last-bronze><comment>Finalized by seuOJ</comment></finalized>');
+    result.push('<finalized><timestamp>' + contest.end_time + '.50</timestamp><last-gold>1</last-gold><last-silver>2</last-silver><last-bronze>3</last-bronze><comment>Finalized by seuOJ</comment></finalized>');
 
     result.push('</contest>');
-    res.send({ xml: result.join('') });
+    res.send(result.join(''));
   } catch (e) {
     syzoj.log(e);
     res.render('error', {
