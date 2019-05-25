@@ -902,8 +902,8 @@ app.post('/contest/:id/generate_resolve_json', async (req, res) => {
           id: i,
           name: player.secret.extra_info
         };
-        if (hasOrg) info.organization_id = revOrg[player.secret.classify_code];
-        if (hasPhoto) {
+        if (hasOrg && revOrg[player.secret.classify_code]) info.organization_id = revOrg[player.secret.classify_code];
+        if (hasPhoto && photoInfo[player.secret.extra_info]) {
           info.photo = [{
             href: 'photo/' + photoInfo[player.secret.extra_info],
             mime: 'image/png'
