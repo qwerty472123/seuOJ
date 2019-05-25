@@ -764,7 +764,7 @@ app.post('/contest/:id/release_ranklist', async (req, res) => {
   }
 });
 
-app.get('/contest/:id/generate_resolve_json', async (req, res) => {
+app.post('/contest/:id/generate_resolve_json', async (req, res) => {
   try {
     let id = parseInt(req.params.id);
     if (syzoj.config.cur_vip_contest && id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
@@ -847,8 +847,43 @@ app.get('/contest/:id/generate_resolve_json', async (req, res) => {
     let players = await contest.ranklist.getPlayers(), revUser = {};
 
     let classify = null;
-    if (contest.need_secret && req.query.hasOwnProperty('classify')) {
-      classify = req.query.classify.split(',');
+    if (contest.need_secret && req.body.hasOwnProperty('classify')) {
+      classify = req.body.classify.split(',');
+    }
+
+    let hasOrg = false, revOrg = {};
+    if (contest.need_secret && req.body.hasOwnProperty('org')) {
+      let orgInfo = null;
+      try {
+        orgInfo = JSON.parse(req.body.org);
+      } catch (e) {
+        throw new ErrorMessage('JSON 解析失败');
+      }
+      let haveLogo = false, idx = 0;
+      if (req.body.hasOwnProperty('have_logo') && req.body.have_logo.toLowerCase() === 'true') haveLogo = true;
+      hasOrg = true;
+      for (let name in orgInfo) {
+        idx++;
+        let codes = orgInfo[name];
+        for (let code of codes) revOrg[code] = idx.toString();
+        let info = {
+          id: idx.toString(),
+          name,
+          formal_name: name
+        };
+        if (haveLogo) info.logo = [{href: 'logo/' + codes[0] + '.png',mime: 'image/png'}];
+        createEvent('organizations', info);
+      }
+    }
+
+    let hasPhoto = false, photoInfo = null;
+    if (contest.need_secret && req.body.hasOwnProperty('photo_info')) {
+      try {
+        photoInfo = JSON.parse(req.body.photo_info);
+      } catch (e) {
+        throw new ErrorMessage('JSON 解析失败');
+      }
+      hasPhoto = true;
     }
 
     i = 0;
@@ -863,10 +898,18 @@ app.get('/contest/:id/generate_resolve_json', async (req, res) => {
       teamCnt++;
       if (contest.need_secret) {
         if (!player.secret) player.secret = await ContestSecret.find({ contest_id: contest.id, user_id: player.user_id });
-        createEvent('teams', {
+        let info = {
           id: i,
           name: player.secret.extra_info
-        });
+        };
+        if (hasOrg) info.organization_id = revOrg[player.secret.classify_code];
+        if (hasPhoto) {
+          info.photo = [{
+            href: 'photo/' + photoInfo[player.secret.extra_info],
+            mime: 'image/png'
+          }];
+        }
+        createEvent('teams', info);
       } else {
         player.user = await User.fromID(player.user_id);
         createEvent('team', {
@@ -940,10 +983,10 @@ app.get('/contest/:id/generate_resolve_json', async (req, res) => {
       last_bronze: 6
     });
     
-    if (req.query.hasOwnProperty('awards')) {
+    if (req.body.hasOwnProperty('awards')) {
       let cfg = null;
       try {
-        cfg = JSON.parse(req.query.awards);
+        cfg = JSON.parse(req.body.awards);
       } catch (e) {
         throw new ErrorMessage('JSON 解析失败');
       }
