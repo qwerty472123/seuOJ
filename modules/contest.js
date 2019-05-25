@@ -835,9 +835,8 @@ app.get('/contest/:id/generate_resolve_xml', async (req, res) => {
     let players = await contest.ranklist.getPlayers(), revUser = {};
 
     let classify = null;
-    if (contest.needSecret && req.query.hasOwnProperty('classify')) {
+    if (contest.need_secret && req.query.hasOwnProperty('classify')) {
       classify = req.query.classify.split(',');
-      console.log(classify);
     }
 
     i = 0;
