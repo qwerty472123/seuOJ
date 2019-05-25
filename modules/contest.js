@@ -829,14 +829,15 @@ app.get('/contest/:id/generate_resolve_xml', async (req, res) => {
       i++;
       revProblem[problem.id] = String.fromCharCode('A'.charCodeAt(0) + parseInt(i) - 1);
       result.push('<problem><id>' + i + '</id><label>' + String.fromCharCode('A'.charCodeAt(0) + parseInt(i) - 1) + '</label><name>'
-      + problem.title + '</name><test_data_count>1</test_data_count></problem>');
+      + problem.title + '</name></problem>');
     }
     
     let players = await contest.ranklist.getPlayers(), revUser = {};
 
     let classify = null;
-    if (contest.needSecret && req.query.classify) {
+    if (contest.needSecret && req.query.hasOwnProperty('classify')) {
       classify = req.query.classify.split(',');
+      console.log(classify);
     }
 
     i = 0;
