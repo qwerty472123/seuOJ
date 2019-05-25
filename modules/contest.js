@@ -764,7 +764,7 @@ app.post('/contest/:id/release_ranklist', async (req, res) => {
   }
 });
 
-app.get('/contest/:id/generate_resolve_xml', async (req, res) => {
+app.get('/contest/:id/generate_resolve_json', async (req, res) => {
   try {
     let id = parseInt(req.params.id);
     if (syzoj.config.cur_vip_contest && id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
@@ -776,28 +776,32 @@ app.get('/contest/:id/generate_resolve_xml', async (req, res) => {
 
     await contest.loadRelationships();
 
-    const singlePenalty = 20;
+    let result = [], cdsId = 0;
 
-    let result = ['<?xml version=\'1.0\' encoding=\'UTF-8\'?>','<contest>'];
+    function createEvent(type, data, op) {
+      if (!op) op = 'create';
+      cdsId++;
+      result.push(JSON.stringify({type, id: 'cds' + cdsId, op, data}));
+    }
 
-    result.push('<info><title>' + contest.title + '</title><length>' + syzoj.utils.formatTime(contest.end_time - contest.start_time)
-    + '</length><scoreboard-freeze-length>' + syzoj.utils.formatTime(contest.end_time - contest.freeze_time) + '</scoreboard-freeze-length>' +
-    '<penalty-amount>' + singlePenalty + '</penalty-amount><starttime>' + contest.start_time + '.00</starttime></info>');
+    createEvent('contest', {
+      id: 'contest-' + contest.id,
+      name: contest.title,
+      formal_name: contest.title,
+      start_time: (new Date(contest.start_time * 1000)).toISOString(),
+      duration: syzoj.utils.formatTime(contest.end_time - contest.start_time) + '.000',
+      scoreboard_freeze_duration: syzoj.utils.formatTime(contest.end_time - contest.freeze_time) + '.000'
+    });
 
-    let languagesList = syzoj.config.enabled_languages, i = 0;
+    let languagesList = syzoj.config.enabled_languages, revLang = {}, i = 0;
     if (contest && contest.allow_languages) languagesList = contest.allow_languages.split('|');
     for (let lang of languagesList){
       i++;
-      result.push('<language><id>' + i + '</id><name>' + lang + '</name></language>');
-    }
-
-    let specialRanking = contest.need_secret && contest.ranklist.ranking_group_info instanceof Array && contest.ranklist.ranking_group_info.length > 0;
-    if (specialRanking) {
-      for (let type in contest.ranklist.ranking_group_info[0]) {
-        result.push('<group><name>' + contest.ranklist.ranking_group_info[0][type][0] + '</name></group>');
-      }
-    } else {
-      result.push('<group><name>参与者</name></group>');
+      revLang[lang] = i;
+      createEvent('language', {
+        id: i,
+        name: lang
+      });
     }
 
     let status = {
@@ -817,9 +821,12 @@ app.get('/contest/:id/generate_resolve_xml', async (req, res) => {
     };
 
     for (let type in status){
-      let penalty = status[type] !== 'CE' && status[type] !== 'AC';
-      result.push('<judgement><acronym>' + status[type] + '</acronym><name>' + type + '</name><penalty>' + penalty.toString() + '</penalty>' +
-      '<solved>' + (status[type] === 'AC') + '</solved></judgement>');
+      createEvent('judgement-types', {
+        id: status[type],
+        name: type,
+        penalty: status[type] !== 'CE' && status[type] !== 'AC',
+        solved: status[type] === 'AC'
+      });
     }
 
     let problems_id = await contest.getProblems(), revProblem = {};
@@ -828,8 +835,13 @@ app.get('/contest/:id/generate_resolve_xml', async (req, res) => {
     for (let problem of problems) {
       i++;
       revProblem[problem.id] = String.fromCharCode('A'.charCodeAt(0) + parseInt(i) - 1);
-      result.push('<problem><id>' + i + '</id><label>' + String.fromCharCode('A'.charCodeAt(0) + parseInt(i) - 1) + '</label><name>'
-      + problem.title + '</name></problem>');
+      createEvent('problem', {
+        id: String.fromCharCode('A'.charCodeAt(0) + parseInt(i) - 1),
+        label: String.fromCharCode('A'.charCodeAt(0) + parseInt(i) - 1),
+        name: problem.title,
+        ordinal: i,
+        test_data_count: 1
+      });
     }
     
     let players = await contest.ranklist.getPlayers(), revUser = {};
@@ -840,6 +852,7 @@ app.get('/contest/:id/generate_resolve_xml', async (req, res) => {
     }
 
     i = 0;
+    let teamCnt = 0;
     for (let player of players) {
       if (classify) {
         player.secret = await ContestSecret.find({ contest_id: contest.id, user_id: player.user_id });
@@ -847,35 +860,113 @@ app.get('/contest/:id/generate_resolve_xml', async (req, res) => {
       }
       i++;
       revUser[player.user_id] = i;
+      teamCnt++;
       if (contest.need_secret) {
         if (!player.secret) player.secret = await ContestSecret.find({ contest_id: contest.id, user_id: player.user_id });
-        result.push('<team><id>' + i + '</id><name>' + player.secret.extra_info + '</name></team>');
+        createEvent('team', {
+          id: i,
+          name: player.secret.extra_info
+        });
       } else {
         player.user = await User.fromID(player.user_id);
-        result.push('<team><id>' + i + '</id><name>' + player.user.name + '</name></team>');
+        createEvent('team', {
+          id: i,
+          name: player.user.name
+        });
       }
-
-      if (specialRanking) {
-        result.push('<group>' + contest.ranklist.ranking_group_info[0][player.secret.classify_code][0] + '</group></team>');
-      } else result.push('<group>参与者</group></team>');
     }
+
+    createEvent('state', {
+      started: (new Date(contest.start_time * 1000)).toISOString(),
+      ended: null,
+      finalized: null
+    });
 
     let judge_states = await JudgeState.query(null, { type: 1, type_info: contest.id }, [['submit_time', 'asc']]);
     i = 0;
+    let haveFrozen = false;
     for (let state of judge_states) if (status.hasOwnProperty(state.status)) if (revUser[state.user_id]) {
       i++;
-      result.push('<run><id>' + i + '</id><language>' + state.language + '</language>' +
-      '<problem>' + revProblem[state.problem_id] + '</problem><team>' + revUser[state.user_id] + '</team>' +
-      '<judged>true</judged><result>' + status[state.status] + '</result>' +
-      '<solved>' + (status[state.status] === 'AC') + '</solved>' +
-      '<penalty>' + (status[state.status] !== 'AC' && status[state.status] !== 'CE') + '</penalty>' +
-      '<time>' + (state.submit_time - contest.start_time) + '.02</time><timestamp>' + state.submit_time + '.02</timestamp></run>');
+      if (!haveFrozen && state.submit_time >= contest.freeze_time) {
+        createEvent('state', {
+          started: (new Date(contest.start_time * 1000)).toISOString(),
+          ended: null,
+          frozen: (new Date(contest.freeze_time * 1000)).toISOString(),
+          finalized: null
+        }, 'update');
+        haveFrozen = true;
+      }
+      createEvent('submissions', {
+        id: i,
+        problem_id: revProblem[state.problem_id],
+        team_id: revUser[state.user_id],
+        language_id: revLang[state.language],
+        files: [],
+        contest_time: syzoj.utils.formatTime(state.submit_time - contest.start_time) + '.020',
+        time: (new Date(state.submit_time * 1000 + 20)).toISOString()
+      });
+      createEvent('judgements', {
+        id: i,
+        submission_id: i,
+        judgement_type_id: status[state.status],
+        start_contest_time: syzoj.utils.formatTime(state.submit_time - contest.start_time) + '.020',
+        end_contest_time: syzoj.utils.formatTime(state.submit_time - contest.start_time) + '.020',
+        start_time: (new Date(state.submit_time * 1000 + 20)).toISOString(),
+        end_time: (new Date(state.submit_time * 1000 + 20)).toISOString()
+      });
     }
 
-    result.push('<finalized><timestamp>' + contest.end_time + '.50</timestamp><last-gold>1</last-gold><last-silver>2</last-silver><last-bronze>3</last-bronze><comment>Finalized by seuOJ</comment></finalized>');
+    if (!haveFrozen) {
+      createEvent('state', {
+        started: (new Date(contest.start_time * 1000)).toISOString(),
+        ended: null,
+        frozen: (new Date(contest.freeze_time * 1000)).toISOString(),
+        finalized: null
+      }, 'update');
+      haveFrozen = true;
+    }
 
-    result.push('</contest>');
-    res.send(result.join(''));
+    createEvent('state', {
+      started: (new Date(contest.start_time * 1000)).toISOString(),
+      ended: (new Date(contest.end_time * 1000)).toISOString(),
+      frozen: (new Date(contest.freeze_time * 1000)).toISOString(),
+      finalized: (new Date(contest.end_time * 1000)).toISOString(),
+      thawed: (new Date(contest.end_time * 1000)).toISOString()
+    }, 'update');
+
+    createEvent('finalized', {
+      last_gold: 1,
+      last_silver: 3,
+      last_bronze: 6
+    });
+    
+    if (req.query.hasOwnProperty('awards')) {
+      let cfg = null;
+      try {
+        cfg = JSON.parse(awards);
+      } catch (e) {
+        throw new ErrorMessage('JSON 解析失败');
+      }
+      let cur = 0;
+      for (let award of cfg) {
+          let team = [];
+          while (teamCnt > 0 && award[2] > 0) {
+            cur++;
+            teamCnt--;
+            award[2]--;
+            team.push(cur.toString());
+          }
+          createEvent('awards',{
+            id: award[1],
+            citation: award[0],
+            team_ids: team
+          });
+      }
+    }
+
+    result.push('');
+    res.setHeader('Content-Type', 'application/json');
+    res.send(result.join('\n'));
   } catch (e) {
     syzoj.log(e);
     res.render('error', {
