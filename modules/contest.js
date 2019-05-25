@@ -943,7 +943,7 @@ app.get('/contest/:id/generate_resolve_json', async (req, res) => {
     if (req.query.hasOwnProperty('awards')) {
       let cfg = null;
       try {
-        cfg = JSON.parse(awards);
+        cfg = JSON.parse(req.query.awards);
       } catch (e) {
         throw new ErrorMessage('JSON 解析失败');
       }
