@@ -784,7 +784,7 @@ app.get('/contest/:id/generate_resolve_json', async (req, res) => {
       result.push(JSON.stringify({type, id: 'cds' + cdsId, op, data}));
     }
 
-    createEvent('contest', {
+    createEvent('contests', {
       id: 'contest-' + contest.id,
       name: contest.title,
       formal_name: contest.title,
@@ -798,7 +798,7 @@ app.get('/contest/:id/generate_resolve_json', async (req, res) => {
     for (let lang of languagesList){
       i++;
       revLang[lang] = i;
-      createEvent('language', {
+      createEvent('languages', {
         id: i,
         name: lang
       });
@@ -835,7 +835,7 @@ app.get('/contest/:id/generate_resolve_json', async (req, res) => {
     for (let problem of problems) {
       i++;
       revProblem[problem.id] = String.fromCharCode('A'.charCodeAt(0) + parseInt(i) - 1);
-      createEvent('problem', {
+      createEvent('problems', {
         id: String.fromCharCode('A'.charCodeAt(0) + parseInt(i) - 1),
         label: String.fromCharCode('A'.charCodeAt(0) + parseInt(i) - 1),
         name: problem.title,
@@ -863,7 +863,7 @@ app.get('/contest/:id/generate_resolve_json', async (req, res) => {
       teamCnt++;
       if (contest.need_secret) {
         if (!player.secret) player.secret = await ContestSecret.find({ contest_id: contest.id, user_id: player.user_id });
-        createEvent('team', {
+        createEvent('teams', {
           id: i,
           name: player.secret.extra_info
         });
