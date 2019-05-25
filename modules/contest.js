@@ -849,10 +849,10 @@ app.get('/contest/:id/generate_resolve_xml', async (req, res) => {
       revUser[player.user_id] = i;
       if (contest.need_secret) {
         if (!player.secret) player.secret = await ContestSecret.find({ contest_id: contest.id, user_id: player.user_id });
-        result.push('<team><id>' + i + '</id><name>' + player.secret.extra_info + '</name>');
+        result.push('<team><id>' + i + '</id><name>' + player.secret.extra_info + '</name></team>');
       } else {
         player.user = await User.fromID(player.user_id);
-        result.push('<team><id>' + i + '</id><name>' + player.user.name + '</name>');
+        result.push('<team><id>' + i + '</id><name>' + player.user.name + '</name></team>');
       }
 
       if (specialRanking) {
