@@ -2,7 +2,8 @@ let Sequelize = require('sequelize');
 let db = syzoj.db;
 
 let User = syzoj.model('user');
-const Problem = syzoj.model('problem');
+let Problem = syzoj.model('problem');
+let Contest = syzoj.model('contest');
 
 let model = db.define('article', {
   id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
@@ -74,10 +75,21 @@ class Article extends Model {
   }
 
   async isAllowedEditBy(user) {
+    if (this.contest_id) {
+      this.contest = await Contest.fromID(this.contest_id);
+      if (user && await this.contest.isSupervisior(user)) return true;
+      if (this.is_notice) return false;
+    }
     return user && (user.is_admin || this.user_id === user.id);
   }
 
   async isAllowedCommentBy(user) {
+    if (this.contest_id) {
+      this.contest = await Contest.fromID(this.contest_id);
+      if (user && await this.contest.isSupervisior(user)) return true;
+      if (this.is_notice) return false;
+      return user && this.user_id === user.id;
+    }
     return user && (this.allow_comment || user.is_admin || this.user_id === user.id);
   }
 

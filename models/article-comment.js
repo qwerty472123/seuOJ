@@ -3,6 +3,7 @@ let db = syzoj.db;
 
 let User = syzoj.model('user');
 let Article = syzoj.model('article');
+let Contest = syzoj.model('contest');
 
 let model = db.define('comment', {
   id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
@@ -45,6 +46,12 @@ class ArticleComment extends Model {
 
   async isAllowedEditBy(user) {
     await this.loadRelationships();
+    if (this.article.contest_id) {
+      this.article.contest = await Contest.fromID(this.article.contest_id);
+      if (user && await this.article.contest.isSupervisior(user)) return true;
+      if (this.article.is_notice) return false;
+      return user && this.user_id === user.id;
+    }
     return user && (user.is_admin || this.user_id === user.id || user.id === this.article.user_id);
   }
 

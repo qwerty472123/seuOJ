@@ -287,7 +287,6 @@ app.post('/article/:id/delete', async (req, res) => {
         if (syzoj.config.cur_vip_contest && contest.id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
         if ((!contest.is_public || !(contest.isRunning())) && !await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('比赛不在进行中！');
         if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
-        if (!await contest.isSupervisior(res.locals.user) && article.is_notice) throw new ErrorMessage('当前内容为公告，请额外发帖！');
       } else {
         if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
       }
@@ -322,7 +321,6 @@ app.post('/article/:id/comment', async (req, res) => {
         if (syzoj.config.cur_vip_contest && contest.id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
         if ((!contest.is_public || !(contest.isRunning())) && !await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('比赛不在进行中！');
         if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
-        if (!await contest.isSupervisior(res.locals.user) && article.is_notice) throw new ErrorMessage('当前内容为公告，请额外发帖！');
       } else {
         if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
       }
@@ -369,7 +367,6 @@ app.post('/article/:article_id/comment/:id/delete', async (req, res) => {
         if (syzoj.config.cur_vip_contest && contest.id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
         if ((!contest.is_public || !(contest.isRunning())) && !await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('比赛不在进行中！');
         if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
-        if (!await contest.isSupervisior(res.locals.user) && article.is_notice) throw new ErrorMessage('当前内容为公告，请额外发帖！');
       } else {
         if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
       }
