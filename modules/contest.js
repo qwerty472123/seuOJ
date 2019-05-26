@@ -791,14 +791,19 @@ app.post('/contest/:id/generate_resolve_json', async (req, res) => {
       result.push(JSON.stringify({type, id: 'cds' + cdsId, op, data}));
     }
 
-    createEvent('contests', {
+    let contestInfo = {
       id: 'contest-' + contest.id,
       name: contest.title,
       formal_name: contest.title,
       start_time: (new Date(contest.start_time * 1000)).toISOString(),
       duration: syzoj.utils.formatTime(contest.end_time - contest.start_time) + '.000',
       scoreboard_freeze_duration: syzoj.utils.formatTime(contest.end_time - contest.freeze_time) + '.000'
-    });
+    };
+    if (req.body.hasOwnProperty('main_logo')) contestInfo.logo = [{
+      href: req.body.main_logo,
+      mime: 'image/png'
+    }];
+    createEvent('contests', contestInfo);
 
     let languagesList = syzoj.config.enabled_languages, revLang = {}, i = 0;
     if (contest && contest.allow_languages) languagesList = contest.allow_languages.split('|');
