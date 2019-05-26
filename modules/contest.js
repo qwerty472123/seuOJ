@@ -152,15 +152,16 @@ app.post('/contest/:id/edit', async (req, res) => {
     contest.information = req.body.information;
     contest.start_time = syzoj.utils.parseDate(req.body.start_time);
     contest.end_time = syzoj.utils.parseDate(req.body.end_time);
+    if (contest.start_time > contest.end_time) throw new ErrorMessage('开始时间不能超过结束时间！');
     contest.is_public = req.body.is_public === 'on';
     contest.hide_statistics = req.body.hide_statistics === 'on';
     contest.need_secret = req.body.need_secret === 'on';
     if (['acm', 'scc'].includes(contest.type) && req.body.enable_freeze) {
       let freeze_time = syzoj.utils.parseDate(req.body.freeze_time);
+      if (contest.start_time > freeze_time || contest.end_time < freeze_time) throw new ErrorMessage('封榜时间应在比赛时间内！');
       if (freeze_time !== contest.freeze_time) {
         let now = syzoj.utils.getCurrentDate();
         if (now >= freeze_time) throw new ErrorMessage('新设定封榜时间不能小于当前时间！');
-        if (contest.start_time > freeze_time || contest.end_time <= freeze_time) throw new ErrorMessage('封榜时间应在比赛时间内！');
         if (contest.freeze_time && now >= contest.freeze_time) {
           contest.freeze_time = freeze_time;
           await ranklist.updatePlayer(contest, null, null);
@@ -168,7 +169,13 @@ app.post('/contest/:id/edit', async (req, res) => {
         } else contest.freeze_time = freeze_time;
       }
     } else if (req.body.enable_freeze) throw new ErrorMessage('该比赛的赛制无法进行封榜！');
-    else contest.freeze_time = 0;
+    else {
+      if (contest.freeze_time) {
+        ranklist.freeze_ranking = [];
+        await ranklist.save();
+      }
+      contest.freeze_time = 0;
+    }
 
     await contest.save();
 
