@@ -25,7 +25,7 @@ app.get('/problems', async (req, res) => {
 
     let sortVal = sort;
     if (sort === 'ac_rate') {
-      sortVal = { raw: 'ac_num / submit_num' };
+      sortVal = Sequelize.literal('ac_num / submit_num');
     }
     let where = {};
     if (!res.locals.user || !await res.locals.user.hasPrivilege('manage_problem')) {
