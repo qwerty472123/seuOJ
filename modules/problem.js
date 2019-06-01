@@ -111,7 +111,7 @@ app.get('/problems/search', async (req, res) => {
 
     let sortVal = sort;
     if (sort === 'ac_rate') {
-      sortVal = { raw: 'ac_num / submit_num' };
+      sortVal = Sequelize.literal('ac_num / submit_num');
     }
 
     let paginate = syzoj.utils.paginate(await Problem.count(where), req.query.page, syzoj.config.page.problem);
