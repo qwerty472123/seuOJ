@@ -146,7 +146,7 @@
   "kotlin": {
     "show": "Kotlin",
     "highlight": "kotlin",
-    "version": "kotlinc-jvm 1.3.31",
+    "version": "Kotlin 1.3.31",
     "editor": "kotlin"
   }
 }
