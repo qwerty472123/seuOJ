@@ -82,7 +82,8 @@
     "python3",
     "nodejs",
     "ruby",
-    "haskell"
+    "haskell",
+    "kotlin"
   ],
   "filter_enabled_languages": [
     "cpp",
@@ -101,7 +102,8 @@
     "python3",
     "nodejs",
     "ruby",
-    "haskell"
+    "haskell",
+    "kotlin"
   ],
   "links": [
     {
