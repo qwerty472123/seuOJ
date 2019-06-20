@@ -134,6 +134,7 @@ class ContestRanklist extends Model {
       this.freeze_ranking = [freeze_ranking];
     } else if (judge_state) {
       if (!this.freeze_ranking || this.freeze_ranking.length != 1) {
+        if (contest.isEnded()) return; // Do not update information while ranking is released.
         this.freeze_ranking = [[]];
       }
       let newPlayer = true;
