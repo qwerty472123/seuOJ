@@ -177,6 +177,15 @@ app.post('/contest/:id/edit', async (req, res) => {
       contest.freeze_time = 0;
     }
 
+    if (req.body.enable_rank_open) {
+      let rank_open_time = syzoj.utils.parseDate(req.body.rank_open_time);
+      if (contest.start_time > rank_open_time || contest.end_time < rank_open_time) throw new ErrorMessage('开榜时间应在比赛时间内！');
+      if (contest.freeze_time && rank_open_time > contest.freeze_time) throw new ErrorMessage('开榜时间应在封榜时间前！');
+      contest.rank_open_time = rank_open_time;
+    } else {
+      contest.rank_open_time = 0;
+    }
+
     await contest.save();
 
     res.redirect(syzoj.utils.makeUrl(['contest', contest.id]));
@@ -252,12 +261,13 @@ app.get('/contest/:id', async (req, res) => {
     }
 
     let hasStatistics = false;
-    if ((!contest.hide_statistics) || (contest.ended) || (isSupervisior)) {
+    let now = syzoj.utils.getCurrentDate();
+    if ((!contest.hide_statistics && (!contest.rank_open_time || contest.rank_open_time <= now)) || (contest.ended) || (isSupervisior)) {
       hasStatistics = true;
 
       await contest.loadRelationships();
       let players = await contest.ranklist.getPlayers();
-      let isFrozen = (!isSupervisior) && contest.freeze_time && contest.freeze_time <= syzoj.utils.getCurrentDate()
+      let isFrozen = (!isSupervisior) && contest.freeze_time && contest.freeze_time <= now
       && (contest.isRunning() || (contest.isEnded() && contest.ranklist.freeze_ranking && contest.ranklist.freeze_ranking.length == 1));
       for (let problem of problems) {
         problem.statistics = { attempt: 0, accepted: 0 };
@@ -328,12 +338,15 @@ app.get('/contest/:id/ranklist', async (req, res) => {
       throw new ErrorMessage('您没有权限进行此操作。');
     if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
 
+    let now = syzoj.utils.getCurrentDate();
+    if (!(await contest.isSupervisior(curUser)) && contest.rank_open_time && contest.rank_open_time > now)
+      throw new ErrorMessage('榜单将会在 ' + syzoj.utils.formatDate(contest.rank_open_time) + ' 后可以访问，请先自行做题！ (´∀ `)');
+
     await contest.loadRelationships();
 
     let problems_id = await contest.getProblems();
     let problems = await problems_id.mapAsync(async id => await Problem.fromID(id));
 
-    let now = syzoj.utils.getCurrentDate();
     if (!(await contest.isSupervisior(curUser)) && contest.freeze_time && contest.freeze_time <= now 
     && (contest.isRunning() || (contest.isEnded() && contest.ranklist.freeze_ranking && contest.ranklist.freeze_ranking.length == 1))) {
       let ranklist = [];

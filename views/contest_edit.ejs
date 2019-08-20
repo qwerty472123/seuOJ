@@ -116,6 +116,17 @@
                 <label>封榜时间：</label>
                 <input type="text" name="freeze_time" value="<%= syzoj.utils.formatDate((contest.freeze_time ? contest.freeze_time : contest.end_time) || syzoj.utils.getCurrentDate()) %>">
             </div>
+            <div class="inline field">
+              <label class="ui header">设定开放榜单时间</label>
+              <div class="ui toggle checkbox">
+                <input type="checkbox"<% if (contest.rank_open_time) { %> checked<% } %> name="enable_rank_open" onchange="$('#rank_open_time_div').slideToggle();">
+                <label><span style="visibility: hidden; ">　</span></label>
+              </div>
+            </div>
+            <div class="field" id="rank_open_time_div"<% if (!contest.rank_open_time) { %> style="display: none;"<% } %> >
+                <label>开放榜单时间：</label>
+                <input type="text" name="rank_open_time" value="<%= syzoj.utils.formatDate((contest.rank_open_time ? contest.rank_open_time : contest.start_time) || syzoj.utils.getCurrentDate()) %>">
+            </div>
             <div class="field">
               <label>允许使用的语言（不填表示可以使用任意语言）</label>
               <select class="ui fluid search dropdown" <% if (contest.id) { %>disabled <% } %> multiple="" id="search_languages" name="allow_languages">

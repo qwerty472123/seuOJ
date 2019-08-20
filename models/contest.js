@@ -42,7 +42,8 @@ let model = db.define('contest', {
   one_language: { type: Sequelize.BOOLEAN },
   allow_languages: { type: Sequelize.TEXT },
   ban_count: { type: Sequelize.INTEGER },
-  freeze_time: { type: Sequelize.INTEGER }
+  freeze_time: { type: Sequelize.INTEGER },
+  rank_open_time: { type: Sequelize.INTEGER }
 }, {
     timestamps: false,
     tableName: 'contest',
@@ -76,7 +77,8 @@ class Contest extends Model {
       one_language: false,
       allow_languages: '',
       ban_count: 0,
-      freeze_time: 0
+      freeze_time: 0,
+      rank_open_time: 0
     }, val)));
   }
 
