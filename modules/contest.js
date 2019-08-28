@@ -143,7 +143,11 @@ app.post('/contest/:id/edit', async (req, res) => {
 
     contest.title = req.body.title;
     contest.subtitle = req.body.subtitle;
-    if (!Array.isArray(req.body.problems)) req.body.problems = [req.body.problems];
+    if (!Array.isArray(req.body.problems)) {
+      if (typeof req.body.problems != "string" && typeof req.body.problems != "number")
+        req.body.problems = [];
+      else req.body.problems = [req.body.problems];
+    }
     if (!Array.isArray(req.body.admins)) req.body.admins = [req.body.admins];
     let fixedPids = [];
     for (let pid of req.body.problems) fixedPids.push(pid.startsWith('P') ? pid.slice(1) : pid);
