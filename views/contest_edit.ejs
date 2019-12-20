@@ -70,7 +70,7 @@
                 <input type="text" name="end_time" value="<%= syzoj.utils.formatDate(contest.end_time || syzoj.utils.getCurrentDate()) %>">
             </div>
             <div class="field">
-                <label>需要放弃强制的题目数量</label>
+                <label>需要强制放弃的题目数量</label>
                 <input type="text" <% if (contest.id) { %>disabled <% } %> name="ban_count" value="<%= (contest.ban_count || 0).toString() %>">
             </div>
             <div class="inline field">
