@@ -19,6 +19,7 @@ app.post('/api/login', async (req, res) => {
     else if (user.password == null || user.password === '') res.send({ error_code: 1003 });
     else if (user.password !== User.passwordEncrypt(req.body.password)) res.send({ error_code: 1002 });
     else {
+      if(syzoj.config.forbidden_remote_access && !res.locals.useLocalLibs && !user.is_admin) throw 1004;
       req.session.user_id = user.id;
       setLoginCookie(user.username, user.password, res);
       res.send({ error_code: 1 });

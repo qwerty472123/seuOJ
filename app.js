@@ -232,9 +232,11 @@ global.syzoj = {
 
     app.use((req, res, next) => {
       if(syzoj.config.forbidden_remote_access && !res.locals.useLocalLibs && (!res.locals.user || !res.locals.user.is_admin)) {
-        res.render('error', {
-          err: "外部访问被临时禁止！"
-        });
+        if(!req.path.startsWith("/api/login")&&!req.path.startsWith("/login")){
+          res.render('error', {
+            err: "外部访问被临时禁止！"
+          });
+        } else next();
       } else next();
     });
 
