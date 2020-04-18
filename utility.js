@@ -295,7 +295,7 @@ module.exports = {
     let fs = require('fs-extra');
     fs.writeFileAsync(syzoj.configDir, JSON.stringify(syzoj.config, null, 2));
   },
-  calcCodeLength(code, lang) { // Only support Java/C/Python
+  calcCodeLength(code, lang) { // Only support Java/C/Python/Kotlin/Nodejs
     lang = lang.toLowerCase();
     let isC = lang.startsWith('c');
     let isJava = lang.startsWith('j');
@@ -307,6 +307,6 @@ module.exports = {
         return y;
       }).join('').length; 
     } else if (isJava) return code.split('\n').map(x => x.trim()).join('').length; 
-    else return code.length; // Like Python
+    else return code.length; // Like Python/Kotlin/Nodejs
   }
 };
