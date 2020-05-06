@@ -43,7 +43,7 @@
     "js-yaml": "^3.9.0",
     "jsondiffpatch": "0.2.5",
     "jsonwebtoken": "^8.4.0",
-    "katex": "^0.10.0",
+    "katex": "^0.11.1",
     "mathjax-node": "^2.1.1",
     "moemark": "^0.3.10",
     "moment": "^2.23.0",
