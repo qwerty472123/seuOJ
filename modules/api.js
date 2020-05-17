@@ -278,7 +278,7 @@ app.get('/static/uploads/answer/:md5', async (req, res) => {
 
 app.post('/api/secret_submit', async (req, res) => {
   try {
-    res.setHeader('Content-Type', 'application/json');console.log("")
+    res.setHeader('Content-Type', 'application/json');
     let secret = await ContestSecret.find({ contest_id: req.body.contest_id, secret: req.body.secret });
     if (!secret) throw 1001;
     //if (req.body.contest_id != secret.contest_id.toString()) throw 1002;
