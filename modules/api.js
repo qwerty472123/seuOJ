@@ -285,6 +285,7 @@ app.post('/api/secret_submit', async (req, res) => {
     if (secret.user_id > -1) {
       if (secret.user_id != res.locals.user.id) throw 1003;
     } else {
+      if (await ContestSecret.find({ contest_id: req.body.contest_id, user_id: res.locals.user.id })) throw 1004;
       secret.user_id = res.locals.user.id;
       await secret.save();
     }
