@@ -4,6 +4,7 @@ yarn.lock
 *.db
 .git.*
 package-lock.json
+uploads
 
 # Logs
 logs
