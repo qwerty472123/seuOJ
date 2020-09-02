@@ -112,7 +112,7 @@
     }
   ],
   "session_secret": "@SESSION_SECRET@",
-  "rabbitMQ": "amqp://localhost/",
+  "judge_token": "@JUDGE_TOKEN@",
   "email_jwt_secret": "@EMAIL_JWT_SECRET@",
   "password_secret": "",
   "gravatar_url": "https://cdn.v2ex.com/gravatar",
@@ -123,6 +123,7 @@
     "type": "like-google-fonts",
     "url": "https://fonts.loli.net"
   },
+  "no_cdn": false,
   "cur_vip_contest": 0,
   "forbidden_remote_access": false
 }

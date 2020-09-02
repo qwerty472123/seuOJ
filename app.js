@@ -1,9 +1,11 @@
-let fs = require('fs'),
-    path = require('path');
-const serializejs = require('serialize-javascript');
-const UUID = require('uuid');
+const fs = require('fs'),
+      path = require('path'),
+      util = require('util'),
+      http = require('http'),
+      serializejs = require('serialize-javascript'),
+      UUID = require('uuid'),
+      commandLineArgs = require('command-line-args');
 
-const commandLineArgs = require('command-line-args');
 const optionDefinitions = [
     { name: 'config', alias: 'c', type: String, defaultValue: './config.json' },
 ];
@@ -209,7 +211,7 @@ global.syzoj = {
     }));
 
     app.use((req, res, next) => {
-      res.locals.useLocalLibs = 'true' !== req.headers['x-remote-access']; // !!parseInt(req.headers['syzoj-no-cdn']);
+      res.locals.useLocalLibs = 'true' !== req.headers['x-remote-access'] || syzoj.config.no_cdn; // !!parseInt(req.headers['syzoj-no-cdn']);
 
       let User = syzoj.model('user');
       if (req.session.user_id) {
