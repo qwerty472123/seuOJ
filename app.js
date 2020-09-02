@@ -1,6 +1,7 @@
 let fs = require('fs'),
     path = require('path');
 const serializejs = require('serialize-javascript');
+const UUID = require('uuid');
 
 const commandLineArgs = require('command-line-args');
 const optionDefinitions = [
@@ -17,6 +18,7 @@ global.syzoj = {
   models: [],
   modules: [],
   db: null,
+  serviceID: UUID(),
   log(obj) {
     if (obj instanceof ErrorMessage) return;
     console.log(obj);
@@ -28,15 +30,6 @@ global.syzoj = {
     syzoj.production = app.get('env') === 'production';
     let winstonLib = require('./libs/winston');
     winstonLib.configureWinston(!syzoj.production);
-
-    app.server = require('http').createServer(app);
-
-    if (!module.parent) {
-      // Loaded by `require()`, not node CLI.
-      app.server.listen(parseInt(syzoj.config.port), syzoj.config.hostname, () => {
-        this.log(`SYZOJ is listening on ${syzoj.config.hostname}:${parseInt(syzoj.config.port)}...`);
-      });
-    }
 
     // Set assets dir
     app.use(Express.static(__dirname + '/static', { maxAge: syzoj.production ? '1y' : 0 }));
@@ -70,10 +63,41 @@ global.syzoj = {
     })());
 
     await this.connectDatabase();
-    if (!module.parent) {
-      await this.lib('judger').connect();
-    }
     this.loadModules();
+    if (!module.parent) {
+      // Loaded by node CLI, not by `require()`.
+
+      if (process.send) {
+        // if it's started by child_process.fork(), it must be requested to restart
+        // wait until parent process quited.
+        await new Promise((resolve, reject) => {
+          process.on('message', message => {
+            if (message === 'quited') resolve();
+          });
+          process.send('quit');
+        });
+      }
+
+      await this.lib('judger').connect();
+
+      app.server = require('http').createServer(app);
+      app.server.listen(parseInt(syzoj.config.port), syzoj.config.hostname, () => {
+        this.log(`SYZOJ is listening on ${syzoj.config.hostname}:${parseInt(syzoj.config.port)}...`);
+      });
+    }
+  },
+  restart() {
+    console.log('Will now fork a new process.');
+    const child = require('child_process').fork(__filename, ['-c', options.config]);
+    child.on('message', (message) => {
+      if (message !== 'quit') return;
+
+      console.log('Child process requested "quit".')
+      child.send('quited', err => {
+        if (err) console.error('Error sending "quited" to child process:', err);
+        process.exit();
+      });
+    });
   },
   async connectDatabase() {
     let Sequelize = require('sequelize');
@@ -125,7 +149,7 @@ global.syzoj = {
     global.Promise = Sequelize.Promise;
     this.db.countQuery = async (sql, options) => (await this.db.query(`SELECT COUNT(*) FROM (${sql}) AS \`__tmp_table\``, options))[0][0]['COUNT(*)'];
 
-    this.loadModels();
+    await this.loadModels();
   },
   loadModules() {
     fs.readdir('./modules/', (err, files) => {
@@ -137,7 +161,7 @@ global.syzoj = {
            .forEach((file) => this.modules.push(require(`./modules/${file}`)));
     });
   },
-  loadModels() {
+  async loadModels() {
     fs.readdir('./models/', (err, files) => {
       if (err) {
         this.log(err);
@@ -145,9 +169,8 @@ global.syzoj = {
       }
       files.filter((file) => file.endsWith('.js'))
            .forEach((file) => require(`./models/${file}`));
-
-      this.db.sync();
     });
+    await this.db.sync();
   },
   lib(name) {
     return require(`./libs/${name}`);
