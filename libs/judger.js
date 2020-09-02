@@ -27,7 +27,7 @@ let judgeQueue;
 async function connect() {
     const JudgeState = syzoj.model('judge_state');
 
-    const  blockableRedisClient = syzoj.redis.duplicate();
+    const blockableRedisClient = syzoj.redis.duplicate();
     judgeQueue = {
         redisZADD: util.promisify(syzoj.redis.zadd).bind(syzoj.redis),
         redisBZPOPMAX: util.promisify(blockableRedisClient.bzpopmax).bind(blockableRedisClient),
