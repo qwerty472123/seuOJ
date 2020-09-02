@@ -66,6 +66,10 @@ global.syzoj = {
 
     await this.connectDatabase();
     this.loadModules();
+
+    // redis and redisCache is for syzoj-renderer
+    const redis = require('redis');
+    this.redis = redis.createClient(this.config.redis);
     if (!module.parent) {
       // Loaded by node CLI, not by `require()`.
 

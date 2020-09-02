@@ -113,6 +113,7 @@
   ],
   "session_secret": "@SESSION_SECRET@",
   "judge_token": "@JUDGE_TOKEN@",
+  "redis": "redis://127.0.0.1:6379",
   "email_jwt_secret": "@EMAIL_JWT_SECRET@",
   "password_secret": "",
   "gravatar_url": "https://cdn.v2ex.com/gravatar",
