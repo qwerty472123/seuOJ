@@ -295,6 +295,19 @@ module.exports = {
     let fs = require('fs-extra');
     fs.writeFileAsync(syzoj.configDir, JSON.stringify(syzoj.config, null, 2));
   },
+  withTimeoutRetry(func) {
+    let attemptCount = 0;
+    return new Promise((resolve, reject) => {
+      function attempt() {
+        if (attemptCount++) console.log(`syzoj.utils.withTimeout(): attemptCount = ${attemptCount}`);
+        Promise.method(func)().timeout(5000)
+        .then(resolve)
+        .catch(Promise.TimeoutError, attempt)
+        .catch(reject);
+      }
+      attempt();
+    });
+  },
   calcCodeLength(code, lang) { // Only support Java/C/Python/Kotlin/Nodejs
     lang = lang.toLowerCase();
     let isC = lang.startsWith('c');

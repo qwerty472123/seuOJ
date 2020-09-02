@@ -1,5 +1,4 @@
 <% this.title = '登录' %>
-<% this.noPreserveUrl = true; %>
 <% include header %>
 <div class="ui error message" id="error" hidden></div>
 <div class="ui middle aligned center aligned grid">
@@ -50,7 +49,7 @@ function show_error(error) {
     $("#error").show();
 }
 function success(session_id) {
-    window.location.href = location.protocol + '//' + location.host + <%- JSON.stringify(req.query.url || '/') %>;
+    window.location.href = location.protocol + '//' + location.host + <%- serializejs(req.query.url || '/') %>;
 }
 function login() {
     password = md5($("#password").val() + "syzoj2_xxx");

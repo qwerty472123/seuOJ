@@ -1,5 +1,6 @@
 let fs = require('fs'),
     path = require('path');
+const serializejs = require('serialize-javascript');
 
 const commandLineArgs = require('command-line-args');
 const optionDefinitions = [
@@ -17,6 +18,7 @@ global.syzoj = {
   modules: [],
   db: null,
   log(obj) {
+    if (obj instanceof ErrorMessage) return;
     console.log(obj);
   },
   async run() {
@@ -52,6 +54,7 @@ global.syzoj = {
 
     // Use cookie parser
     app.use(require('cookie-parser')());
+    app.locals.serializejs = serializejs;
 
     let multer = require('multer');
     app.multer = multer({ dest: syzoj.utils.resolvePath(syzoj.config.upload_dir, 'tmp') });

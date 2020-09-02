@@ -106,7 +106,7 @@ app.get('/submissions', async (req, res) => {
 
     await judge_state.forEachAsync(async obj => {
       await obj.loadRelationships();
-      obj.code_length = obj.code.length;
+      if (obj.problem.type !== 'submit-answer') obj.code_length = obj.code.length;
     })
 
     res.render('submissions', {
@@ -152,7 +152,7 @@ app.get('/submission/:id', async (req, res) => {
 
       if ((!contest.ended || !contest.is_public) &&
         !(await judge.problem.isAllowedEditBy(res.locals.user) || await contest.isSupervisior(curUser))) {
-        throw new Error("比赛没有结束或者没有公开哦");
+        throw new Error("比赛未结束或未公开。");
       }
     } else {
       if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
@@ -184,7 +184,7 @@ app.get('/submission/:id', async (req, res) => {
       roughResult: getRoughResult(judge, displayConfig, false),
       code: (judge.problem.type !== 'submit-answer') ? judge.code.toString("utf8") : '',
       formattedCode: judge.formattedCode ? judge.formattedCode.toString("utf8") : null,
-      preferFormattedCode: res.locals.user ? res.locals.user.prefer_formatted_code : false,
+      preferFormattedCode: res.locals.user ? res.locals.user.prefer_formatted_code : true,
       detailResult: processOverallResult(judge.result, displayConfig),
       socketToken: (judge.pending && judge.task_id != null) ? jwt.sign({
         taskId: judge.task_id,

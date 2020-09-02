@@ -551,7 +551,7 @@ app.get('/contest/:id/submissions', async (req, res) => {
       form: req.query,
       displayConfig: displayConfig,
       pushType: pushType,
-      isFiltered: !!(where.user_id || where.language || where.status),
+      isFiltered: !!(where.problem_id || where.user_id || where.score || where.language || where.status),
       allowLangs: allowLangs
     });
   } catch (e) {
@@ -598,9 +598,9 @@ app.get('/contest/submission/:id', async (req, res) => {
       roughResult: getRoughResult(judge, displayConfig),
       code: (displayConfig.showCode && judge.problem.type !== 'submit-answer') ? judge.code.toString("utf8") : '',
       formattedCode: judge.formattedCode ? judge.formattedCode.toString("utf8") : null,
-      preferFormattedCode: res.locals.user ? res.locals.user.prefer_formatted_code : false,
+      preferFormattedCode: res.locals.user ? res.locals.user.prefer_formatted_code : true,
       detailResult: processOverallResult(judge.result, displayConfig),
-      socketToken: (judge.pending && judge.task_id != null) ? jwt.sign({
+      socketToken: (displayConfig.showDetailResult && judge.pending && judge.task_id != null) ? jwt.sign({
         taskId: judge.task_id,
         displayConfig: displayConfig,
         type: 'detail'

@@ -10,6 +10,8 @@ class Model {
     let model = this.getModel();
     let obj = JSON.parse(JSON.stringify(this.record.get({ plain: true })));
     for (let key in obj) {
+      if (!model.tableAttributes[key]) continue;
+
       if (model.tableAttributes[key].type instanceof Sequelize.JSON && typeof obj[key] === 'string') {
         try {
           this[key] = JSON.parse(obj[key]);
@@ -34,7 +36,8 @@ class Model {
     for (let key in obj) this.record.set(key, obj[key]);
 
     let isNew = this.record.isNewRecord;
-    await this.record.save();
+
+    await syzoj.utils.withTimeoutRetry(() => this.record.save());
     if (!isNew) return;
 
     await this.reload();
