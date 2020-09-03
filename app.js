@@ -64,6 +64,8 @@ global.syzoj = {
       return router;
     })());
 
+    app.server = require('http').createServer(app);
+
     await this.connectDatabase();
     this.loadModules();
 
@@ -86,7 +88,6 @@ global.syzoj = {
 
       await this.lib('judger').connect();
 
-      app.server = require('http').createServer(app);
       app.server.listen(parseInt(syzoj.config.port), syzoj.config.hostname, () => {
         this.log(`SYZOJ is listening on ${syzoj.config.hostname}:${parseInt(syzoj.config.port)}...`);
       });
