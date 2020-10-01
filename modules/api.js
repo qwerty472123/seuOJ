@@ -17,12 +17,21 @@ app.post('/api/login', async (req, res) => {
 
     if (!user) throw 1001;
     else if (user.password == null || user.password === '') res.send({ error_code: 1003 });
-    else if (user.password !== User.passwordEncrypt(req.body.password)) res.send({ error_code: 1002 });
     else {
-      if(syzoj.config.forbidden_remote_access && !res.locals.useLocalLibs && !user.is_admin) throw 1004;
-      req.session.user_id = user.id;
-      setLoginCookie(user.username, user.password, res);
-      res.send({ error_code: 1 });
+      if (user.password.startsWith("[")) {
+        let pwd = user.password.slice(1).split("]");
+        if (pwd.length != 2) throw 1002;
+        if (pwd[1] !== User.passwordEncrypt(User.passwordEncryptBySecret(req.body.password, pwd[0]))) throw 1002;
+        user.password = User.passwordEncrypt(req.body.password);
+        await user.save();
+      }
+      if (user.password !== User.passwordEncrypt(req.body.password)) res.send({ error_code: 1002 });
+      else {
+        if(syzoj.config.forbidden_remote_access && !res.locals.useLocalLibs && !user.is_admin) throw 1004;
+        req.session.user_id = user.id;
+        setLoginCookie(user.username, user.password, res);
+        res.send({ error_code: 1 });
+      }
     }
   } catch (e) {
     syzoj.log(e);

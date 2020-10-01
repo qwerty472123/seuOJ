@@ -232,10 +232,13 @@ class User extends Model {
   getModel() { return model; }
 
   static passwordEncrypt(password) {
+    return User.passwordEncryptBySecret(password, syzoj.config.password_secret);
+  }
+  static passwordEncryptBySecret(password, secret) {
     let hash = Crypto.createHash('sha256');
     hash.update('_oj|' + password + 'syzoj');
-	let reHash = Crypto.createHash('sha256');
-	reHash.update('secret' + hash.digest('hex') + '^split^' + syzoj.config.password_secret + 'pwd');
+    let reHash = Crypto.createHash('sha256');
+    reHash.update('secret' + hash.digest('hex') + '^split^' + secret + 'pwd');
     return reHash.digest('hex');
   }
 }
