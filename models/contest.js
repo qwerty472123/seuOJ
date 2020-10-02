@@ -5,7 +5,7 @@ let User = syzoj.model('user');
 let Problem = syzoj.model('problem');
 let ContestRanklist = syzoj.model('contest_ranklist');
 let ContestPlayer = syzoj.model('contest_player');
-let ContestSecret = syzoj.model('contest_secret');
+let Secret = syzoj.model('secret');
 
 let model = db.define('contest', {
   id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
@@ -82,13 +82,13 @@ class Contest extends Model {
     }, val)));
   }
 
-  async allowedContestSecret(req, res) {
+  async allowedSecret(req, res) {
     if (res.locals.user && await this.isSupervisior(res.locals.user)) return true;
     if (this.isEnded()) return true;
     if (this.need_secret) {
-      if (req.session.contest_secret) {console.log(req.session.contest_secret);
+      if (req.session.contest_secret) {
         let secret = JSON.parse(req.session.contest_secret)[this.id];
-        let secretInfo = await ContestSecret.find({ contest_id: this.id, secret });
+        let secretInfo = await Secret.find({ type: 0, type_id: this.id, secret });
         if (secretInfo && secretInfo.user_id == res.locals.user.id)
           return true;
       }

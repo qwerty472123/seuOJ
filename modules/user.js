@@ -1,9 +1,9 @@
-let User = syzoj.model('user');
+const User = syzoj.model('user');
 const RatingCalculation = syzoj.model('rating_calculation');
 const RatingHistory = syzoj.model('rating_history');
 const Contest = syzoj.model('contest');
 const ContestPlayer = syzoj.model('contest_player');
-const ContestSecret = syzoj.model('contest_secret');
+const Secret = syzoj.model('secret');
 
 // Ranklist
 app.get('/ranklist', async (req, res) => {
@@ -114,7 +114,7 @@ app.get('/user/:id', async (req, res) => {
     ratingHistories.reverse();
 
     if (syzoj.config.cur_vip_contest) {
-      let secret = await ContestSecret.find({user_id: user.id, contest_id: syzoj.config.cur_vip_contest});
+      let secret = await Secret.find({user_id: user.id, type: 0, type_id: syzoj.config.cur_vip_contest});
       if (secret) user.spec = secret.extra_info;
       if ((!res.locals.user || !res.locals.user.is_admin) && (!res.locals.user || user.id !== res.locals.user.id)) throw new ErrorMessage('比赛中！');
       if ((!res.locals.user || !res.locals.user.is_admin)) {

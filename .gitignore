@@ -67,3 +67,5 @@ tags
 # End of https://www.gitignore.io/api/vim
 
 /static/downloadway.js
+
+.pygmentize-bundled-cache

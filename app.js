@@ -69,9 +69,9 @@ global.syzoj = {
     await this.connectDatabase();
     this.loadModules();
 
-    // redis and redisCache is for syzoj-renderer
+    /*/ redis and redisCache is for syzoj-renderer
     const redis = require('redis');
-    this.redis = redis.createClient(this.config.redis);
+    this.redis = redis.createClient(this.config.redis);*/
     if (!module.parent) {
       // Loaded by node CLI, not by `require()`.
 
@@ -86,7 +86,7 @@ global.syzoj = {
         });
       }
 
-      await this.lib('judger').connect();
+      //await this.lib('judger').connect();
 
       app.server.listen(parseInt(syzoj.config.port), syzoj.config.hostname, () => {
         this.log(`SYZOJ is listening on ${syzoj.config.hostname}:${parseInt(syzoj.config.port)}...`);
@@ -169,13 +169,16 @@ global.syzoj = {
     });
   },
   async loadModels() {
-    fs.readdir('./models/', (err, files) => {
-      if (err) {
-        this.log(err);
-        return;
-      }
-      files.filter((file) => file.endsWith('.js'))
-           .forEach((file) => require(`./models/${file}`));
+    await new Promise(resolve => {
+      fs.readdir('./models/', (err, files) => {
+        if (err) {
+          this.log(err);
+          return;
+        }
+        files.filter((file) => file.endsWith('.js'))
+             .forEach((file) => require(`./models/${file}`));
+        resolve();
+      });
     });
     await this.db.sync();
   },

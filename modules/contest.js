@@ -1,10 +1,11 @@
-let Contest = syzoj.model('contest');
-let ContestRanklist = syzoj.model('contest_ranklist');
-let ContestPlayer = syzoj.model('contest_player');
-let Problem = syzoj.model('problem');
-let JudgeState = syzoj.model('judge_state');
-let User = syzoj.model('user');
-let ContestSecret = syzoj.model('contest_secret');
+const Contest = syzoj.model('contest');
+const ContestRanklist = syzoj.model('contest_ranklist');
+const ContestPlayer = syzoj.model('contest_player');
+const Problem = syzoj.model('problem');
+const JudgeState = syzoj.model('judge_state');
+const User = syzoj.model('user');
+const Secret = syzoj.model('secret');
+const randomstring = require('randomstring');
 
 const jwt = require('jsonwebtoken');
 const { getSubmissionInfo, getRoughResult, processOverallResult } = require('../libs/submissions_process');
@@ -201,6 +202,98 @@ app.post('/contest/:id/edit', async (req, res) => {
   }
 });
 
+app.get('/contest/:id/secret', async (req, res) => {
+  try {
+    if (!res.locals.user || !res.locals.user.is_admin) throw new ErrorMessage('您没有权限进行此操作。');
+    let contest_id = parseInt(req.params.id);
+    let contest = await Contest.fromID(parseInt(contest_id));
+    if (!contest) throw new ErrorMessage('无此比赛');
+    if (!contest.need_secret) throw new ErrorMessage('比赛不需要 SECRET');
+    let paginate = null, secrets = null;
+    const sort = req.query.sort || 'extra_info';
+    const order = req.query.order || 'asc';
+    let searchData = {};
+    if (!['secret', 'extra_info', 'classify_code', 'user_id'].includes(sort) || !['asc', 'desc'].includes(order)) {
+      throw new ErrorMessage('错误的排序参数。');
+    }
+    let where = {
+      type: 0,
+      type_id: contest.id
+    };
+    searchData.secret = req.query.secret || '';
+    if (req.query.secret) where.secret = req.query.secret;
+    searchData.extra_info = req.query.extra_info || '';
+    if (req.query.extra_info) where.extra_info = { $like: `%${req.query.extra_info}%` }; //
+    searchData.classify_code = req.query.classify_code || '';
+    if (req.query.classify_code) where.classify_code = req.query.classify_code;
+    searchData.user = [];
+    if (req.query.user_ids) {
+      if (!Array.isArray(req.query.user_ids)) req.query.user_ids = [req.query.user_ids];
+      let cond = [];
+      for(let id of req.query.user_ids) {
+        cond.push({ $eq: id });
+        if (id == '-1') {
+          searchData.user.push({ id: -1, name: '暂未绑定' });
+          continue;
+        }
+        let user = await User.fromID(id);
+        if (user) searchData.user.push({ id, name: user.username });
+      }
+      where.user_id = { $or: cond };
+    }
+    paginate = syzoj.utils.paginate(await Secret.count(where), req.query.page, syzoj.config.page.ranklist);
+    secrets = await Secret.query(paginate, where, [[sort, order]]);
+    await secrets.forEachAsync(async v => {
+      await v.loadRelationships();
+      v.user_desc = v.user ? v.user.username : '暂未绑定';
+    });
+    res.render('secret_manager', {
+      paginate,
+      secrets,
+      curSort: sort,
+      curOrder: order === 'asc',
+      curType: 'contest',
+      curTitle: contest.title,
+      curTypeDesc: '比赛',
+      curTypeId: contest.id,
+      searchData
+    });
+  } catch (e) {
+    syzoj.log(e);
+    res.render('error', {
+      err: e
+    })
+  }
+});
+
+app.post('/contest/:id/secret/apply', async (req, res) => {
+  try {
+    if (!res.locals.user || !res.locals.user.is_admin) throw new ErrorMessage('您没有权限进行此操作。');
+    if (!req.body.contest) throw new ErrorMessage('未指定比赛。');
+    let contest = await Contest.fromID(parseInt(req.params.id));
+    if (!contest) throw new ErrorMessage('无此比赛');
+    if (!contest.need_secret) throw new ErrorMessage('比赛不需要 SECRET');
+    if (Array.isArray(req.body.user_id) || !req.body.user_id) throw new ErrorMessage('指定的用户应为一个');
+    
+    let rec = null;
+    if (!req.body.secret) {
+      do {
+        req.body.secret = randomstring.generate(16);
+      } while(await Secret.find({ type: 0, type_id: contest.id, secret: req.body.secret }));
+    } else rec = await Secret.find({ type: 0, type_id: contest.id, secret: req.body.secret });
+    if (rec) {
+      rec = await Secret.create({ type: 0, type_id: contest.id, secret: req.body.secret });
+    }
+
+    
+  } catch (e) {
+    syzoj.log(e);
+    res.render('error', {
+      err: e
+    })
+  }
+});
+
 app.get('/contest/:id', async (req, res) => {
   try {
     const curUser = res.locals.user;
@@ -312,7 +405,7 @@ app.get('/contest/:id', async (req, res) => {
       problems: problems,
       hasStatistics: hasStatistics,
       isSupervisior: isSupervisior,
-      needSecret: !await contest.allowedContestSecret(req, res),
+      needSecret: !await contest.allowedSecret(req, res),
       isLogin: !!curUser,
       needBan: contest.ban_count && !!curUser && contest.isRunning() && (!player || !player.ban_problems_id || player.ban_problems_id.split('|').length < contest.ban_count),
       banIds: (contest.ban_count && !!curUser && !!player && !!player.ban_problems_id && player.ban_problems_id.split('|').length === contest.ban_count) 
@@ -340,7 +433,7 @@ app.get('/contest/:id/ranklist', async (req, res) => {
     contest.isEnded(),
     await contest.isSupervisior(curUser)].every(x => !x))
       throw new ErrorMessage('您没有权限进行此操作。');
-    if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+    if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
 
     let now = syzoj.utils.getCurrentDate();
     if (!(await contest.isSupervisior(curUser)) && contest.rank_open_time && contest.rank_open_time > now)
@@ -366,7 +459,7 @@ app.get('/contest/:id/ranklist', async (req, res) => {
 
           let user = await User.fromID(info.user_id);
           if (contest.need_secret) {
-            let secret = await ContestSecret.find({ contest_id, user_id: info.user_id });
+            let secret = await Secret.find({ type: 0, type_id: contest_id, user_id: info.user_id });
             if (secret) {
               user.extra_info = secret.extra_info;
               user.classify_code = secret.classify_code;
@@ -415,7 +508,7 @@ app.get('/contest/:id/ranklist', async (req, res) => {
 
       let user = await User.fromID(player.user_id);
       if (contest.need_secret) {
-        let secret = await ContestSecret.find({ contest_id, user_id: player.user_id });
+        let secret = await Secret.find({ type: 0, type_id: contest_id, user_id: player.user_id });
         if (secret) {
           user.extra_info = secret.extra_info;
           user.classify_code = secret.classify_code;
@@ -462,7 +555,7 @@ app.get('/contest/:id/submissions', async (req, res) => {
     if (syzoj.config.cur_vip_contest && contest_id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
     let contest = await Contest.fromID(contest_id);
     if (!contest.is_public && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛未公开，请耐心等待 (´∀ `)');
-    if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+    if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
 
     if (contest.isEnded()) {
       res.redirect(syzoj.utils.makeUrl(['submissions'], { contest: contest_id }));
@@ -577,7 +670,7 @@ app.get('/contest/submission/:id', async (req, res) => {
 
     const contest = await Contest.fromID(judge.type_info);
     if (syzoj.config.cur_vip_contest && judge.type_info !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
-    if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+    if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
     contest.ended = contest.isEnded();
 
     const displayConfig = getDisplayConfig(contest);
@@ -622,7 +715,7 @@ app.get('/contest/:id/problem/:pid', async (req, res) => {
     if (syzoj.config.cur_vip_contest && contest_id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
     let contest = await Contest.fromID(contest_id);
     if (!contest) throw new ErrorMessage('无此比赛。');
-    if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+    if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
     const curUser = res.locals.user;
 
     let problems_id = await contest.getProblems();
@@ -691,7 +784,7 @@ app.get('/contest/:id/:pid/download/additional_file', async (req, res) => {
     if (syzoj.config.cur_vip_contest && id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
     let contest = await Contest.fromID(id);
     if (!contest) throw new ErrorMessage('无此比赛。');
-    if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+    if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
 
     let problems_id = await contest.getProblems();
 
@@ -732,7 +825,7 @@ app.post('/contest/:id/submit_ban_problems_id', async (req, res) => {
     if (!contest.is_public && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛未公开，请耐心等待 (´∀ `)');
     if (!res.locals.user) throw new ErrorMessage('请先登陆。');
     if (!contest.isRunning()) throw new ErrorMessage('比赛不在进行中！');
-    if (!await contest.allowedContestSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+    if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
     if (!contest.ban_count) throw new ErrorMessage('本次比赛不需要声明。');
 
     let problems_id = await contest.getProblems(), real_problem_ids = [], visited_ids = {};
@@ -919,14 +1012,14 @@ app.post('/contest/:id/generate_resolve_json', async (req, res) => {
     let teamCnt = 0;
     for (let player of players) {
       if (classify) {
-        player.secret = await ContestSecret.find({ contest_id: contest.id, user_id: player.user_id });
+        player.secret = await Secret.find({ type: 0, type_id: contest.id, user_id: player.user_id });
         if (!classify.includes(player.secret.classify_code.toString())) continue;
       }
       i++;
       revUser[player.user_id] = i;
       teamCnt++;
       if (contest.need_secret) {
-        if (!player.secret) player.secret = await ContestSecret.find({ contest_id: contest.id, user_id: player.user_id });
+        if (!player.secret) player.secret = await Secret.find({ type: 0, type_id: contest.id, user_id: player.user_id });
         let info = {
           id: i,
           name: player.secret.extra_info

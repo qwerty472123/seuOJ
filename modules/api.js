@@ -1,7 +1,6 @@
-let User = syzoj.model('user');
-let Problem = syzoj.model('problem');
-let File = syzoj.model('file');
-let ContestSecret = syzoj.model('contest_secret');
+const User = syzoj.model('user');
+const File = syzoj.model('file');
+const Secret = syzoj.model('secret');
 const Email = require('../libs/email');
 const jwt = require('jsonwebtoken');
 
@@ -290,13 +289,13 @@ app.get('/static/uploads/answer/:md5', async (req, res) => {
 app.post('/api/secret_submit', async (req, res) => {
   try {
     res.setHeader('Content-Type', 'application/json');
-    let secret = await ContestSecret.find({ contest_id: req.body.contest_id, secret: req.body.secret });
+    let secret = await Secret.find({ type: 0, type_id: req.body.contest_id, secret: req.body.secret });
     if (!secret) throw 1001;
     //if (req.body.contest_id != secret.contest_id.toString()) throw 1002;
     if (secret.user_id > -1) {
       if (secret.user_id != res.locals.user.id) throw 1003;
     } else {
-      if (await ContestSecret.find({ contest_id: req.body.contest_id, user_id: res.locals.user.id })) throw 1004;
+      if (await Secret.find({ type: 0, type_id: req.body.contest_id, user_id: res.locals.user.id })) throw 1004;
       secret.user_id = res.locals.user.id;
       await secret.save();
     }
