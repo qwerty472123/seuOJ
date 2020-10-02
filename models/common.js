@@ -66,6 +66,10 @@ class Model {
     return this.fromRecord(this.model.findOne(options));
   }
 
+  static async destroy(options) {
+    await this.model.destroy(options);
+  }
+
   static async all() {
     return (await this.model.findAll()).mapAsync(record => (this.fromRecord(record)));
   }

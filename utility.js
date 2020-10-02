@@ -242,6 +242,7 @@ module.exports = {
       currPage: currPage,
       perPage: perPage,
       pageCnt: pageCnt,
+      totalCnt: count,
       toSQL: () => {
         if (!pageCnt) return '';
         else return ` LIMIT ${(currPage - 1) * perPage},${perPage}`

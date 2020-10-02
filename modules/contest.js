@@ -206,9 +206,9 @@ app.get('/contest/:id/secret', async (req, res) => {
   try {
     if (!res.locals.user || !res.locals.user.is_admin) throw new ErrorMessage('您没有权限进行此操作。');
     let contest_id = parseInt(req.params.id);
-    let contest = await Contest.fromID(parseInt(contest_id));
+    let contest = await Contest.fromID(contest_id);
     if (!contest) throw new ErrorMessage('无此比赛');
-    if (!contest.need_secret) throw new ErrorMessage('比赛不需要 SECRET');
+    if (!contest.need_secret) throw new ErrorMessage('比赛不需要 SECRET 码');
     let paginate = null, secrets = null;
     const sort = req.query.sort || 'extra_info';
     const order = req.query.order || 'asc';
@@ -223,7 +223,7 @@ app.get('/contest/:id/secret', async (req, res) => {
     searchData.secret = req.query.secret || '';
     if (req.query.secret) where.secret = req.query.secret;
     searchData.extra_info = req.query.extra_info || '';
-    if (req.query.extra_info) where.extra_info = { $like: `%${req.query.extra_info}%` }; //
+    if (req.query.extra_info) where.extra_info = { $like: `%${req.query.extra_info}%` };
     searchData.classify_code = req.query.classify_code || '';
     if (req.query.classify_code) where.classify_code = req.query.classify_code;
     searchData.user = [];
@@ -269,11 +269,11 @@ app.get('/contest/:id/secret', async (req, res) => {
 app.post('/contest/:id/secret/apply', async (req, res) => {
   try {
     if (!res.locals.user || !res.locals.user.is_admin) throw new ErrorMessage('您没有权限进行此操作。');
-    if (!req.body.contest) throw new ErrorMessage('未指定比赛。');
     let contest = await Contest.fromID(parseInt(req.params.id));
     if (!contest) throw new ErrorMessage('无此比赛');
-    if (!contest.need_secret) throw new ErrorMessage('比赛不需要 SECRET');
-    if (Array.isArray(req.body.user_id) || !req.body.user_id) throw new ErrorMessage('指定的用户应为一个');
+    if (!contest.need_secret) throw new ErrorMessage('比赛不需要 SECRET 码');
+    if (Array.isArray(req.body.user_ids) || !req.body.user_ids) throw new ErrorMessage('指定的用户应为一个');
+    let user_id = parseInt(req.body.user_ids);
     
     let rec = null;
     if (!req.body.secret) {
@@ -281,16 +281,72 @@ app.post('/contest/:id/secret/apply', async (req, res) => {
         req.body.secret = randomstring.generate(16);
       } while(await Secret.find({ type: 0, type_id: contest.id, secret: req.body.secret }));
     } else rec = await Secret.find({ type: 0, type_id: contest.id, secret: req.body.secret });
-    if (rec) {
-      rec = await Secret.create({ type: 0, type_id: contest.id, secret: req.body.secret });
+    if (user_id != -1 && await Secret.find({type: 0, type_id: contest.id, user_id, secret: { $ne: req.body.secret }}))
+      throw new ErrorMessage('一个用户只能绑定一个 SECRET 码');
+    if (!rec) rec = await Secret.create({ type: 0, type_id: contest.id, secret: req.body.secret });
+
+    rec.user_id = user_id;
+    rec.extra_info = req.body.extra_info;
+    rec.classify_code = req.body.classify_code;
+    await rec.save();
+
+    res.send({ success: true });
+  } catch (e) {
+    res.send({ success: false, message: e.message });
+  }
+});
+
+app.post('/contest/:id/secret/delete', async (req, res) => {
+  try {
+    if (!res.locals.user || !res.locals.user.is_admin) throw new ErrorMessage('您没有权限进行此操作。');
+    let contest = await Contest.fromID(parseInt(req.params.id));
+    if (!contest) throw new ErrorMessage('无此比赛');
+    if (!contest.need_secret) throw new ErrorMessage('比赛不需要 SECRET 码');
+    
+    let secret = await Secret.find({
+      type: 0,
+      type_id: contest.id,
+      secret: req.body.secret
+    });
+
+    if (!secret) throw new ErrorMessage('找不到记录');
+
+    await secret.destroy();
+
+    res.send({ success: true });
+  } catch (e) {
+    res.send({ success: false, message: e.message });
+  }
+});
+
+app.post('/contest/:id/secret/delete_all', async (req, res) => {
+  try {
+    if (!res.locals.user || !res.locals.user.is_admin) throw new ErrorMessage('您没有权限进行此操作。');
+    let contest = await Contest.fromID(parseInt(req.params.id));
+    if (!contest) throw new ErrorMessage('无此比赛');
+    if (!contest.need_secret) throw new ErrorMessage('比赛不需要 SECRET 码');
+
+    let where = {
+      type: 0,
+      type_id: contest.id
+    };
+    if (req.body.secret) where.secret = req.body.secret;
+    if (req.body.extra_info) where.extra_info = { $like: `%${req.body.extra_info}%` };
+    if (req.body.classify_code) where.classify_code = req.body.classify_code;
+    if (req.body.user_ids) {
+      if (!Array.isArray(req.body.user_ids)) req.body.user_ids = [req.body.user_ids];
+      let cond = [];
+      for(let id of req.body.user_ids) cond.push({ $eq: id });
+      where.user_id = { $or: cond };
     }
 
+    if (parseInt(req.body.number) !== await Secret.count(where)) throw new ErrorMessage('数目不匹配，请刷新重试');
+
+    await Secret.destroy({ where });
     
+    res.send({ success: true });
   } catch (e) {
-    syzoj.log(e);
-    res.render('error', {
-      err: e
-    })
+    res.send({ success: false, message: e.message });
   }
 });
 
