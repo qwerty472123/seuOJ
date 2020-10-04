@@ -69,9 +69,9 @@ global.syzoj = {
     await this.connectDatabase();
     this.loadModules();
 
-    /*/ redis and redisCache is for syzoj-renderer
+    // redis and redisCache is for syzoj-renderer
     const redis = require('redis');
-    this.redis = redis.createClient(this.config.redis);*/
+    this.redis = redis.createClient(this.config.redis);
 
     if (!module.parent) {
       // Loaded by node CLI, not by `require()`.
@@ -87,7 +87,7 @@ global.syzoj = {
         });
       }
 
-      //await this.lib('judger').connect();
+      await this.lib('judger').connect();
 
       app.server.listen(parseInt(syzoj.config.port), syzoj.config.hostname, () => {
         this.log(`SYZOJ is listening on ${syzoj.config.hostname}:${parseInt(syzoj.config.port)}...`);
