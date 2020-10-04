@@ -2,7 +2,8 @@ require.config({
   paths: {
     vs: window.pathLib + "monaco-editor/0.21.2/min/vs",
     tokenizer: window.pathSelfLib + 'vendor/tokenizer'
-  }
+  },
+  'vs/nls': { availableLanguages: { '*': "zh-cn" } }
 });
 
 window.onEditorLoaded = function (fn) {
@@ -605,13 +606,9 @@ require(['vs/editor/editor.main'], function () {
             lineNumbersMinChars: 4,
             glyphMargin: false,
             renderFinalNewline: true,
-            scrollbar: {
-              useShadows: false,
-              verticalScrollbarSize: 0,
-              vertical: 'hidden'
-            },
             overviewRulerBorder: false,
-            hideCursorInOverviewRuler: true
+            hideCursorInOverviewRuler: true,
+            wordWrap: true
           });
 
           autoLayout(editor);
@@ -633,27 +630,10 @@ require(['vs/editor/editor.main'], function () {
             fontFamily: "'Fira Mono', 'Source Han Sans SC', 'Noto Sans CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft Yahei', monospace",
             lineNumbersMinChars: 4,
             glyphMargin: false,
-            lineNumbers: false,
-            folding: false,
-            minimap: {
-              enabled: false
-            },
-            hover: {
-              enabled: false
-            },
-            wordWrap: "on",
-            renderIndentGuides: false,
-            renderFinalNewline: false,
-            wordBasedSuggestions: false,
-            renderLineHighlight: false,
-            occurrencesHighlight: false,
-            scrollbar: {
-              useShadows: false,
-              vertical: 'auto',
-              verticalScrollbarSize: 10
-            },
+            renderFinalNewline: true,
             overviewRulerBorder: false,
-            hideCursorInOverviewRuler: true
+            hideCursorInOverviewRuler: true,
+            wordWrap: true
           });
 
           input.form.addEventListener('submit', function () {
