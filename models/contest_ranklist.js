@@ -63,7 +63,7 @@ class ContestRanklist extends Model {
           player.latest = Math.max(player.latest, judge_state.submit_time);
 
           if (player.score_details[i].score != null) {
-            let multiplier = this.ranking_params[i] || 1.0;
+            let multiplier = (this.ranking_params || {})[i] || 1.0;
             player.score_details[i].weighted_score = Math.round(player.score_details[i].score * multiplier);
             player.score += player.score_details[i].weighted_score;
           }
