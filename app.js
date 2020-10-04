@@ -69,9 +69,10 @@ global.syzoj = {
     await this.connectDatabase();
     this.loadModules();
 
-    // redis and redisCache is for syzoj-renderer
+    /*/ redis and redisCache is for syzoj-renderer
     const redis = require('redis');
-    this.redis = redis.createClient(this.config.redis);
+    this.redis = redis.createClient(this.config.redis);*/
+
     if (!module.parent) {
       // Loaded by node CLI, not by `require()`.
 
@@ -86,7 +87,7 @@ global.syzoj = {
         });
       }
 
-      await this.lib('judger').connect();
+      //await this.lib('judger').connect();
 
       app.server.listen(parseInt(syzoj.config.port), syzoj.config.hostname, () => {
         this.log(`SYZOJ is listening on ${syzoj.config.hostname}:${parseInt(syzoj.config.port)}...`);
@@ -205,7 +206,7 @@ global.syzoj = {
     }
     app.use(Session(sessionConfig));
 
-    app.use(require('express-minify-html')({
+    /*app.use(require('express-minify-html')({
       override: true,
       htmlMinifier: {
         removeComments: true,
@@ -216,7 +217,7 @@ global.syzoj = {
         minifyJS: true,
         minifyCSS: true
       }
-    }));
+    }));*/
 
     app.use((req, res, next) => {
       res.locals.useLocalLibs = 'true' !== req.headers['x-remote-access'] || syzoj.config.no_cdn; // !!parseInt(req.headers['syzoj-no-cdn']);
