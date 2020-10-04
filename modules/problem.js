@@ -685,7 +685,7 @@ app.post('/problem/:id/submit', app.multer.fields([{ name: 'answer', maxCount: 1
       contest = await Contest.fromID(contest_id);
       if (!contest) throw new ErrorMessage('无此比赛。');
       if ((!contest.isRunning()) && (!await contest.isSupervisior(curUser))) throw new ErrorMessage('比赛未开始或已结束。');
-      if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+      if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入准入码。');
       let problems_id = await contest.getProblems();
       if (!problems_id.includes(id)) throw new ErrorMessage('无此题目。');
       if (problem.type !== 'submit-answer' && contest.allow_languages && !contest.allow_languages.split('|').includes(req.body.language)) throw new ErrorMessage('本次比赛禁止使用该语言！');

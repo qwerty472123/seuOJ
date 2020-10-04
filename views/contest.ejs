@@ -40,7 +40,7 @@
           <% if (isSupervisior) { %>
             <a class="ui small button" href="<%= syzoj.utils.makeUrl(['contest', contest.id, 'edit']) %>">编辑比赛</a>
             <% if (contest.need_secret) { %>
-              <a class="ui small blue button" href="<%= syzoj.utils.makeUrl(['contest', contest.id, 'secret']) %>">SECRET 码管理</a>
+              <a class="ui small blue button" href="<%= syzoj.utils.makeUrl(['contest', contest.id, 'secret']) %>">准入码管理</a>
             <% } %>
             <% if (allowReleaseRank) { %>
               <a class="ui small red button" href-post="<%= syzoj.utils.makeUrl(['contest', contest.id, 'release_ranklist']) %>">释放榜单</a>
@@ -146,7 +146,7 @@
             <div class="field">
               <div class="ui left icon input">
                 <i class="lock icon"></i>
-                <input id="secret_id" placeholder="Secret码" type="text" onkeydown="key_secret(event)">
+                <input id="secret_id" placeholder="准入码" type="text" onkeydown="key_secret(event)">
               </div>
             </div>
             <div class="ui fluid large submit button" onclick="secret_submit()" id="secret_submit_btn">提交</div>
@@ -240,13 +240,13 @@ function secret_submit() {
           error_code = data.error_code;
           switch (error_code) {
               case 1001:
-                  show_error("Secret 不存在");
+                  show_error("准入码不存在");
                   break;
               case 1002:
-                  show_error("Secret 与竞赛不匹配");
+                  show_error("准入码与竞赛不匹配");
                   break;
               case 1003:
-                  show_error("Secret 已被其他账户绑定");
+                  show_error("准入码已被其他账户绑定");
                   break;
               case 1:
                   success();

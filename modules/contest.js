@@ -208,7 +208,7 @@ app.get('/contest/:id/secret', async (req, res) => {
     let contest_id = parseInt(req.params.id);
     let contest = await Contest.fromID(contest_id);
     if (!contest) throw new ErrorMessage('无此比赛');
-    if (!contest.need_secret) throw new ErrorMessage('比赛不需要 SECRET 码');
+    if (!contest.need_secret) throw new ErrorMessage('比赛不需要准入码');
     let paginate = null, secrets = null;
     const sort = req.query.sort || 'extra_info';
     const order = req.query.order || 'asc';
@@ -271,7 +271,7 @@ app.post('/contest/:id/secret/apply', async (req, res) => {
     if (!res.locals.user || !res.locals.user.is_admin) throw new ErrorMessage('您没有权限进行此操作。');
     let contest = await Contest.fromID(parseInt(req.params.id));
     if (!contest) throw new ErrorMessage('无此比赛');
-    if (!contest.need_secret) throw new ErrorMessage('比赛不需要 SECRET 码');
+    if (!contest.need_secret) throw new ErrorMessage('比赛不需要准入码');
     if (Array.isArray(req.body.user_ids) || !req.body.user_ids) throw new ErrorMessage('指定的用户应为一个');
     let user_id = parseInt(req.body.user_ids);
     
@@ -282,7 +282,7 @@ app.post('/contest/:id/secret/apply', async (req, res) => {
       } while(await Secret.find({ type: 0, type_id: contest.id, secret: req.body.secret }));
     } else rec = await Secret.find({ type: 0, type_id: contest.id, secret: req.body.secret });
     if (user_id != -1 && await Secret.find({type: 0, type_id: contest.id, user_id, secret: { $ne: req.body.secret }}))
-      throw new ErrorMessage('一个用户只能绑定一个 SECRET 码');
+      throw new ErrorMessage('一个用户只能绑定一个准入码');
     if (!rec) rec = await Secret.create({ type: 0, type_id: contest.id, secret: req.body.secret });
 
     rec.user_id = user_id;
@@ -301,7 +301,7 @@ app.post('/contest/:id/secret/delete', async (req, res) => {
     if (!res.locals.user || !res.locals.user.is_admin) throw new ErrorMessage('您没有权限进行此操作。');
     let contest = await Contest.fromID(parseInt(req.params.id));
     if (!contest) throw new ErrorMessage('无此比赛');
-    if (!contest.need_secret) throw new ErrorMessage('比赛不需要 SECRET 码');
+    if (!contest.need_secret) throw new ErrorMessage('比赛不需要准入码');
     
     let secret = await Secret.find({
       type: 0,
@@ -324,7 +324,7 @@ app.post('/contest/:id/secret/delete_all', async (req, res) => {
     if (!res.locals.user || !res.locals.user.is_admin) throw new ErrorMessage('您没有权限进行此操作。');
     let contest = await Contest.fromID(parseInt(req.params.id));
     if (!contest) throw new ErrorMessage('无此比赛');
-    if (!contest.need_secret) throw new ErrorMessage('比赛不需要 SECRET 码');
+    if (!contest.need_secret) throw new ErrorMessage('比赛不需要准入码');
 
     let where = {
       type: 0,
@@ -489,7 +489,7 @@ app.get('/contest/:id/ranklist', async (req, res) => {
     contest.isEnded(),
     await contest.isSupervisior(curUser)].every(x => !x))
       throw new ErrorMessage('您没有权限进行此操作。');
-    if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+    if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入准入码。');
 
     let now = syzoj.utils.getCurrentDate();
     if (!(await contest.isSupervisior(curUser)) && contest.rank_open_time && contest.rank_open_time > now)
@@ -611,7 +611,7 @@ app.get('/contest/:id/submissions', async (req, res) => {
     if (syzoj.config.cur_vip_contest && contest_id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
     let contest = await Contest.fromID(contest_id);
     if (!contest.is_public && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛未公开，请耐心等待 (´∀ `)');
-    if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+    if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入准入码。');
 
     if (contest.isEnded()) {
       res.redirect(syzoj.utils.makeUrl(['submissions'], { contest: contest_id }));
@@ -726,7 +726,7 @@ app.get('/contest/submission/:id', async (req, res) => {
 
     const contest = await Contest.fromID(judge.type_info);
     if (syzoj.config.cur_vip_contest && judge.type_info !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
-    if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+    if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入准入码。');
     contest.ended = contest.isEnded();
 
     const displayConfig = getDisplayConfig(contest);
@@ -771,7 +771,7 @@ app.get('/contest/:id/problem/:pid', async (req, res) => {
     if (syzoj.config.cur_vip_contest && contest_id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
     let contest = await Contest.fromID(contest_id);
     if (!contest) throw new ErrorMessage('无此比赛。');
-    if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+    if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入准入码。');
     const curUser = res.locals.user;
 
     let problems_id = await contest.getProblems();
@@ -840,7 +840,7 @@ app.get('/contest/:id/:pid/download/additional_file', async (req, res) => {
     if (syzoj.config.cur_vip_contest && id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
     let contest = await Contest.fromID(id);
     if (!contest) throw new ErrorMessage('无此比赛。');
-    if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+    if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入准入码。');
 
     let problems_id = await contest.getProblems();
 
@@ -881,7 +881,7 @@ app.post('/contest/:id/submit_ban_problems_id', async (req, res) => {
     if (!contest.is_public && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛未公开，请耐心等待 (´∀ `)');
     if (!res.locals.user) throw new ErrorMessage('请先登陆。');
     if (!contest.isRunning()) throw new ErrorMessage('比赛不在进行中！');
-    if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+    if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入准入码。');
     if (!contest.ban_count) throw new ErrorMessage('本次比赛不需要声明。');
 
     let problems_id = await contest.getProblems(), real_problem_ids = [], visited_ids = {};

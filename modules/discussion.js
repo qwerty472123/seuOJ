@@ -84,7 +84,7 @@ app.get('/contest/:id/qa', async (req, res) => {
     if (syzoj.config.cur_vip_contest && contest_id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
     let contest = await Contest.fromID(contest_id);
     if (!contest) throw new ErrorMessage('无此比赛。');
-    if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+    if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入准入码。');
     let where;
     if (res.locals.user) where = (await contest.isSupervisior(res.locals.user)) ? { contest_id: contest_id } : { contest_id: contest_id, [Sequelize.Op.or]: [{is_notice: true}, {user_id: res.locals.user.id}] };
     else where = { contest_id: contest_id, is_notice: true};
@@ -119,7 +119,7 @@ app.get('/article/:id', async (req, res) => {
       if (syzoj.config.cur_vip_contest && article.contest_id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
       contest = await Contest.fromID(article.contest_id);
       if ((!contest.is_public || !(contest.isRunning() || contest.isEnded())) && !await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('比赛未公开，请耐心等待 (´∀ `)');
-      if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+      if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入准入码。');
     } else {
       if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
     }
@@ -177,7 +177,7 @@ app.get('/article/:id/edit', async (req, res) => {
         if (!contest) throw new ErrorMessage('无对应比赛！');
         if (syzoj.config.cur_vip_contest && contest.id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
         if ((!contest.is_public || !(contest.isRunning())) && !await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('比赛不在进行中！');
-        if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+        if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入准入码。');
       } else {
         if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
       }
@@ -190,7 +190,7 @@ app.get('/article/:id/edit', async (req, res) => {
         if (!contest) throw new ErrorMessage('无对应比赛！');
         if (syzoj.config.cur_vip_contest && contest.id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
         if ((!contest.is_public || !(contest.isRunning())) && !await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('比赛不在进行中！');
-        if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+        if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入准入码。');
       } else {
         if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
       }
@@ -234,7 +234,7 @@ app.post('/article/:id/edit', async (req, res) => {
         if (!contest) throw new ErrorMessage('无此比赛。');
         if (syzoj.config.cur_vip_contest && contest.id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
         if ((!contest.is_public || !(contest.isRunning())) && !await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('比赛不在进行中！');
-        if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+        if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入准入码。');
         article.contest_id = contest.id;
       } else {
         if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
@@ -246,7 +246,7 @@ app.post('/article/:id/edit', async (req, res) => {
         if (!contest) throw new ErrorMessage('无对应比赛！');
         if (syzoj.config.cur_vip_contest && contest.id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
         if ((!contest.is_public || !(contest.isRunning())) && !await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('比赛不在进行中！');
-        if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+        if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入准入码。');
       } else {
         if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
       }
@@ -286,7 +286,7 @@ app.post('/article/:id/delete', async (req, res) => {
         if (!contest) throw new ErrorMessage('无对应比赛！');
         if (syzoj.config.cur_vip_contest && contest.id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
         if ((!contest.is_public || !(contest.isRunning())) && !await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('比赛不在进行中！');
-        if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+        if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入准入码。');
       } else {
         if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
       }
@@ -320,7 +320,7 @@ app.post('/article/:id/comment', async (req, res) => {
         if (!contest) throw new ErrorMessage('无对应比赛！');
         if (syzoj.config.cur_vip_contest && contest.id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
         if ((!contest.is_public || !(contest.isRunning())) && !await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('比赛不在进行中！');
-        if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+        if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入准入码。');
       } else {
         if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
       }
@@ -366,7 +366,7 @@ app.post('/article/:article_id/comment/:id/delete', async (req, res) => {
         if (!contest) throw new ErrorMessage('无对应比赛！');
         if (syzoj.config.cur_vip_contest && contest.id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
         if ((!contest.is_public || !(contest.isRunning())) && !await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('比赛不在进行中！');
-        if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入Secret。');
+        if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入准入码。');
       } else {
         if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
       }
