@@ -41,6 +41,10 @@
     "problem": {
       "field": "id",
       "order": "asc"
+    },
+    "secret": {
+      "field": "extra_info",
+      "order": "asc"
     }
   },
   "limit": {
@@ -63,7 +67,8 @@
     "article_comment": 10,
     "contest": 10,
     "edit_contest_problem_list": 10,
-    "edit_problem_tag_list": 10
+    "edit_problem_tag_list": 10,
+    "secret": 50
   },
   "enabled_languages": [
     "cpp",

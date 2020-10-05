@@ -213,8 +213,8 @@ app.get('/contest/:id/secret', async (req, res) => {
     if (!await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('权限不足！');
 
     let paginate = null, secrets = null;
-    const sort = req.query.sort || 'extra_info';
-    const order = req.query.order || 'asc';
+    const sort = req.query.sort || syzoj.config.sorting.secret.field;
+    const order = req.query.order || syzoj.config.sorting.secret.order;
     let searchData = {};
     if (!['secret', 'extra_info', 'classify_code', 'user_id'].includes(sort) || !['asc', 'desc'].includes(order)) {
       throw new ErrorMessage('错误的排序参数。');
@@ -244,7 +244,7 @@ app.get('/contest/:id/secret', async (req, res) => {
       }
       where.user_id = { $or: cond };
     }
-    paginate = syzoj.utils.paginate(await Secret.count(where), req.query.page, syzoj.config.page.ranklist);
+    paginate = syzoj.utils.paginate(await Secret.count(where), req.query.page, syzoj.config.page.secret);
     secrets = await Secret.query(paginate, where, [[sort, order]]);
     await secrets.forEachAsync(async v => await v.loadRelationships());
     res.render('secret_manager', {
