@@ -6,6 +6,7 @@ const JudgeState = syzoj.model('judge_state');
 const User = syzoj.model('user');
 const Secret = syzoj.model('secret');
 const randomstring = require('randomstring');
+const xlsx = require('xlsx');
 
 const jwt = require('jsonwebtoken');
 const { getSubmissionInfo, getRoughResult, processOverallResult } = require('../libs/submissions_process');
@@ -204,11 +205,13 @@ app.post('/contest/:id/edit', async (req, res) => {
 
 app.get('/contest/:id/secret', async (req, res) => {
   try {
-    if (!res.locals.user || !res.locals.user.is_admin) throw new ErrorMessage('您没有权限进行此操作。');
     let contest_id = parseInt(req.params.id);
+    if (syzoj.config.cur_vip_contest && contest_id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
     let contest = await Contest.fromID(contest_id);
     if (!contest) throw new ErrorMessage('无此比赛');
     if (!contest.need_secret) throw new ErrorMessage('比赛不需要准入码');
+    if (!await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('权限不足！');
+
     let paginate = null, secrets = null;
     const sort = req.query.sort || 'extra_info';
     const order = req.query.order || 'asc';
@@ -243,10 +246,7 @@ app.get('/contest/:id/secret', async (req, res) => {
     }
     paginate = syzoj.utils.paginate(await Secret.count(where), req.query.page, syzoj.config.page.ranklist);
     secrets = await Secret.query(paginate, where, [[sort, order]]);
-    await secrets.forEachAsync(async v => {
-      await v.loadRelationships();
-      v.user_desc = v.user ? v.user.username : '暂未绑定';
-    });
+    await secrets.forEachAsync(async v => await v.loadRelationships());
     res.render('secret_manager', {
       paginate,
       secrets,
@@ -268,10 +268,12 @@ app.get('/contest/:id/secret', async (req, res) => {
 
 app.post('/contest/:id/secret/apply', async (req, res) => {
   try {
-    if (!res.locals.user || !res.locals.user.is_admin) throw new ErrorMessage('您没有权限进行此操作。');
-    let contest = await Contest.fromID(parseInt(req.params.id));
+    let contest_id = parseInt(req.params.id);
+    if (syzoj.config.cur_vip_contest && contest_id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
+    let contest = await Contest.fromID(contest_id);
     if (!contest) throw new ErrorMessage('无此比赛');
     if (!contest.need_secret) throw new ErrorMessage('比赛不需要准入码');
+    if (!await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('权限不足！');
     if (Array.isArray(req.body.user_ids) || !req.body.user_ids) throw new ErrorMessage('指定的用户应为一个');
     let user_id = parseInt(req.body.user_ids);
     
@@ -298,10 +300,12 @@ app.post('/contest/:id/secret/apply', async (req, res) => {
 
 app.post('/contest/:id/secret/delete', async (req, res) => {
   try {
-    if (!res.locals.user || !res.locals.user.is_admin) throw new ErrorMessage('您没有权限进行此操作。');
-    let contest = await Contest.fromID(parseInt(req.params.id));
+    let contest_id = parseInt(req.params.id);
+    if (syzoj.config.cur_vip_contest && contest_id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
+    let contest = await Contest.fromID(contest_id);
     if (!contest) throw new ErrorMessage('无此比赛');
     if (!contest.need_secret) throw new ErrorMessage('比赛不需要准入码');
+    if (!await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('权限不足！');
     
     let secret = await Secret.find({
       type: 0,
@@ -321,10 +325,12 @@ app.post('/contest/:id/secret/delete', async (req, res) => {
 
 app.post('/contest/:id/secret/delete_all', async (req, res) => {
   try {
-    if (!res.locals.user || !res.locals.user.is_admin) throw new ErrorMessage('您没有权限进行此操作。');
-    let contest = await Contest.fromID(parseInt(req.params.id));
+    let contest_id = parseInt(req.params.id);
+    if (syzoj.config.cur_vip_contest && contest_id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
+    let contest = await Contest.fromID(contest_id);
     if (!contest) throw new ErrorMessage('无此比赛');
     if (!contest.need_secret) throw new ErrorMessage('比赛不需要准入码');
+    if (!await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('权限不足！');
 
     let where = {
       type: 0,
@@ -346,6 +352,84 @@ app.post('/contest/:id/secret/delete_all', async (req, res) => {
     
     res.send({ success: true });
   } catch (e) {
+    res.send({ success: false, message: e.message });
+  }
+});
+
+function countTextWCH(str, cnWCH) {
+  let wch = 0;
+  for (let i = 0; i < str.length; i++) {
+    if ((/[\x00-\xff]/g).test(str.charAt(i)))
+      wch += 1;
+    else
+      wch += cnWCH;
+  }
+  return wch;
+}
+
+app.get('/contest/:id/secret/export', async (req, res) => {
+  try {
+    let contest_id = parseInt(req.params.id);
+    if (syzoj.config.cur_vip_contest && contest_id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
+    let contest = await Contest.fromID(contest_id);
+    if (!contest) throw new ErrorMessage('无此比赛');
+    if (!contest.need_secret) throw new ErrorMessage('比赛不需要准入码');
+    if (!await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('权限不足！');
+
+    let wb = xlsx.utils.book_new();
+
+    await contest.loadRelationships();
+    let players = await contest.ranklist.getPlayers();
+    let secrets = await Secret.findAll({ where: { type: 0, type_id: contest.id } });
+
+    let playersMap = {}, playersRank = {}, curRank = 0, lastScore = Number.MIN_VALUE, lastSecondary = Number.MIN_VALUE, rankDelta = 1;
+    for (let player of players) {
+      await player.getSecondaryScore(contest);
+      if (lastScore != player.score || lastSecondary != player.secondary) {
+        curRank += rankDelta;
+        lastScore = player.score;
+        lastSecondary = player.secondary;
+        rankDelta = 0;
+      }
+      rankDelta++;
+      playersRank[player.user_id] = curRank;
+      playersMap[player.user_id] = player;
+    }
+
+    await secrets.forEachAsync(async v => await v.loadRelationships());
+
+    let table = [['准入码', '绑定信息', '分类码', '用户 ID', '用户名', '排名', '得分']];
+
+    if (contest.type !== 'scc') table[0].push(contest.type === 'acm' ? '罚时' : '最后一次提交时间');
+    
+    for (let secret of secrets) {
+      let player = playersMap[secret.user_id];
+      let row = [secret.secret, secret.extra_info, secret.classify_code, secret.user_id, secret.user_desc];
+      if (player) {
+        if (contest.type !== 'scc') {
+          row.push(playersRank[secret.user_id], player.score);
+          let v = player.secondary / 24 / 3600;
+          row.push({ t: 'n', v, z: 'h:mm:ss', toString: () => xlsx.SSF.format('h:mm:ss', v) });
+        } else row.push(playersRank[secret.user_id], player.score / 100);
+      }
+      table.push(row);
+    }
+
+    let ws = xlsx.utils.aoa_to_sheet(table);
+    ws['!autofilter'] = { ref: 'A1:' + (contest.type !== 'scc' ? 'H' : 'G') + (1 + secrets.length) };
+    ws['!cols'] = [];
+    for(let i = 0; i < table[0].length; i++) {
+      let maxCh = countTextWCH(table[0][i].toString(), 2) + 2;
+      for (let row of table) if (row[i]) maxCh = Math.max(maxCh, countTextWCH(row[i].toString(), 2));
+      ws['!cols'].push({ wch: maxCh });
+    }
+    xlsx.utils.book_append_sheet(wb, ws, '准入码信息');
+
+    res.writeHead(200, [['Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'], ['Content-Disposition', require('content-disposition')(`${contest.title}_准入码信息.xlsx`)]]);
+    res.end(xlsx.write(wb, { bookType: 'xlsx', bookSST: false, type: 'buffer' }));
+  } catch (e) {
+    console.log(e);
+
     res.send({ success: false, message: e.message });
   }
 });

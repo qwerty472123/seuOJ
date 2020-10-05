@@ -175,8 +175,7 @@ class ContestRanklist extends Model {
           contest_id: contest.id,
           user_id: judge_state.user_id,
           score: 0,
-          score_details: null,
-          time_spent: 0
+          score_details: null
         };
         if (contest.type === 'scc') {
           new_player.score_details = { [judge_state.problem_id]: {

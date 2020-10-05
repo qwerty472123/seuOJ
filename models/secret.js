@@ -45,10 +45,12 @@ class Secret extends Model {
   async loadRelationships() {
     if (this.user_id < 0) {
       this.user = null;
+      this.user_desc = '暂未绑定';
       return;
     }
     const User = syzoj.model('user');
     this.user = await User.fromID(this.user_id);
+    this.user_desc = this.user.username;
   }
 
   static async find(where) {

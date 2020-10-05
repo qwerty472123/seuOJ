@@ -1,8 +1,8 @@
 let Sequelize = require('sequelize');
 let db = syzoj.db;
 
-let User = syzoj.model('user');
-let Problem = syzoj.model('problem');
+const User = syzoj.model('user');
+const JudgeState = syzoj.model('judge_state');
 
 let model = db.define('contest_player', {
   id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
@@ -11,7 +11,6 @@ let model = db.define('contest_player', {
 
   score: { type: Sequelize.INTEGER },
   score_details: { type: Sequelize.JSON },
-  time_spent: { type: Sequelize.INTEGER },
   language_limit: { type: Sequelize.STRING(20) },
   ban_problems_id: { type: Sequelize.TEXT }
 }, {
@@ -35,7 +34,6 @@ class ContestPlayer extends Model {
       user_id: 0,
       score: 0,
       score_details: {},
-      time_spent: 0,
       language_limit: '',
       ban_problems_id: ''
     }, val)));
@@ -56,8 +54,7 @@ class ContestPlayer extends Model {
       contest_id: this.contest_id,
       user_id: this.user_id,
       score: this.score,
-      score_details: this.score_details,
-      time_spent: this.time_spent
+      score_details: this.score_details
     };
     if (contest_type === 'acm') {
       let new_details = {};
@@ -225,6 +222,32 @@ class ContestPlayer extends Model {
 
         this.score = 0; // Can't calc here
       }
+    }
+  }
+
+  async getSecondaryScore(contest) {
+    if (contest.type === 'noi' || contest.type === 'ioi') {
+      let latest = 0;
+
+      for (let i in this.score_details) {
+        let judge_state = await JudgeState.fromID(this.score_details[i].judge_id);
+        if (!judge_state) continue;
+        latest = Math.max(latest, judge_state.submit_time - contest.start_time);
+      }
+
+      return this.secondary = latest;
+    } else if (contest.type === 'scc') {
+      return this.secondary = null;
+    } else if (contest.type === 'acm') {
+      let timeSum = 0;
+
+      for (let i in this.score_details) {
+        if (this.score_details[i].accepted) {
+          timeSum += (this.score_details[i].acceptedTime - contest.start_time) + (this.score_details[i].unacceptedCount * 20 * 60);
+        }
+      }
+
+      return this.secondary = timeSum;
     }
   }
 

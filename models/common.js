@@ -85,6 +85,10 @@ class Model {
     return this.model.count({ where: where });
   }
 
+  static async findAll(options) {
+    return (await this.model.findAll(options)).mapAsync(record => (this.fromRecord(record)));
+  }
+
   static async query(paginate, where, order, largeData) {
     let records = [];
 
