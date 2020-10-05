@@ -24,6 +24,8 @@
     });
   
     $('#submit_button').removeClass('disabled');
+
+    setTimeout(function () { monaco.editor.remeasureFonts(); }, 100);
   });
   </script>
 <% include admin_footer %>
