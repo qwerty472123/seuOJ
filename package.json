@@ -28,6 +28,7 @@
     "bluebird": "^3.7.2",
     "body-parser": "^1.18.3",
     "cheerio": "^1.0.0-rc.1",
+    "cls-hooked": "^4.2.2",
     "command-line-args": "^5.0.2",
     "cookie-parser": "^1.4.3",
     "cssfilter": "0.0.10",

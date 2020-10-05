@@ -6,9 +6,15 @@ require.config({
   'vs/nls': { availableLanguages: { '*': "zh-cn" } }
 });
 
+function autoRemeasureFonts() {
+  monaco.editor.remeasureFonts();
+  setTimeout(function () { monaco.editor.remeasureFonts(); }, 100);
+}
+
 window.onEditorLoaded = function (fn) {
   if (window.editorLoaded) {
     fn();
+    autoRemeasureFonts();
   } else {
     if (!window.editorLoadedHandles) window.editorLoadedHandles = [];
     window.editorLoadedHandles.push(fn);
@@ -649,6 +655,7 @@ require(['vs/editor/editor.main'], function () {
         for (var i in window.editorLoadedHandles) {
           window.editorLoadedHandles[i]();
         }
+        autoRemeasureFonts();
       });
     }
   );

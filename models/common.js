@@ -132,7 +132,7 @@ function getSqlFromFindAll(Model, options) {
     Model.addHook('beforeFindAfterOptions', id, options => {
       Model.removeHook('beforeFindAfterOptions', id);
 
-      resolve(Model.sequelize.dialect.QueryGenerator.selectQuery(Model.getTableName(), options, Model).slice(0, -1));
+      resolve(Model.sequelize.dialect.queryGenerator.selectQuery(Model.getTableName(), options, Model).slice(0, -1));
 
       return new Promise(() => {});
     });

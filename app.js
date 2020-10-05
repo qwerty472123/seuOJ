@@ -147,6 +147,10 @@ global.syzoj = {
       $col: Op.col
     };
 
+    const cls = require('cls-hooked');
+    const namespace = cls.createNamespace('my-very-own-namespace');
+    Sequelize.useCLS(namespace);
+
     this.db = new Sequelize(this.config.db.database, this.config.db.username, this.config.db.password, {
       host: this.config.db.host,
       dialect: 'mysql',
@@ -154,8 +158,9 @@ global.syzoj = {
       timezone: require('moment')().format('Z'),
       operatorsAliases: operatorsAliases
     });
-    global.Promise = Sequelize.Promise;
+    global.Promise = require('bluebird');
     this.db.countQuery = async (sql, options) => (await this.db.query(`SELECT COUNT(*) FROM (${sql}) AS \`__tmp_table\``, options))[0][0]['COUNT(*)'];
+    this.db.clsNameSpace = namespace;
 
     await this.loadModels();
   },

@@ -429,8 +429,145 @@ app.get('/contest/:id/secret/export', async (req, res) => {
     res.end(xlsx.write(wb, { bookType: 'xlsx', bookSST: false, type: 'buffer' }));
   } catch (e) {
     console.log(e);
+    res.render('error', {
+      err: e
+    });
+  }
+});
 
-    res.send({ success: false, message: e.message });
+const importColumn = {
+  0: { desc: '分类码', column: 'classify_code', selected: true, default: () => '0', parse: parseInt, match: /^\-?\d+$/ },
+  1: { desc: '绑定信息', column: 'extra_info', selected: true, required: true },
+  2: { desc: '准入码', column: 'secret', default: () => randomstring.generate(16) },
+  3: { desc: '用户 ID', column: 'user_id', default: () => '-1', parse: parseInt, match: /^\-?\d+$/ },
+};
+
+app.get('/contest/:id/secret/import', async (req, res) => {
+  try {
+    let contest_id = parseInt(req.params.id);
+    if (syzoj.config.cur_vip_contest && contest_id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
+    let contest = await Contest.fromID(contest_id);
+    if (!contest) throw new ErrorMessage('无此比赛');
+    if (!contest.need_secret) throw new ErrorMessage('比赛不需要准入码');
+    if (!await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('权限不足！');
+
+    res.render('secret_import', {
+      curType: 'contest',
+      curTitle: contest.title,
+      curTypeDesc: '比赛',
+      curTypeId: contest.id,
+      importColumn
+    });
+  } catch (e) {
+    syzoj.log(e);
+    res.render('error', {
+      err: e
+    });
+  }
+});
+
+app.post('/contest/:id/secret/import', app.multer.fields([{ name: 'file', maxCount: 1 }]), async (req, res) => {
+  try {
+    let contest_id = parseInt(req.params.id);
+    if (syzoj.config.cur_vip_contest && contest_id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
+    let contest = await Contest.fromID(contest_id);
+    if (!contest) throw new ErrorMessage('无此比赛');
+    if (!contest.need_secret) throw new ErrorMessage('比赛不需要准入码');
+    if (!await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('权限不足！');
+
+    let data = [];
+
+    if (req.files['file']) {
+      let fs = Promise.promisifyAll(require('fs'));
+      let wb = xlsx.read(await fs.readFileAsync(req.files['file'][0].path), { type: 'buffer' });
+      let activeTab = 0;
+      if (wb.Workbook && wb.Workbook.WBView && wb.Workbook.WBView.length > 0 && wb.Workbook.WBView[0].activeTab) activeTab = wb.Workbook.WBView[0].activeTab;
+      let ws = wb.Sheets[wb.SheetNames[activeTab]];
+      let aoa = xlsx.utils.sheet_to_json(ws, { header: 1 });
+
+      let descMap = {};
+      for (let id in importColumn) descMap[importColumn[id].desc] = id;
+      
+      let header = aoa.shift(), format = [];
+      for (let txt of header) if (txt in descMap){
+        if (descMap[txt] == -1) throw new ErrorMessage('格式内容重复');
+        format.push(descMap[txt]);
+        descMap[txt] = -1;
+      } else format.push(-1);
+
+      for (let arr of aoa) {
+        let row = [];
+        for (let idx of format) row[idx] = arr.shift();
+        delete row[-1];
+        data.push(row);
+      }
+    } else {
+      if (!req.body.format) throw new ErrorMessage('格式为空');
+      if (!Array.isArray(req.body.format)) req.body.format = [req.body.format];
+      let ref = {}, format = req.body.format;
+      for (let idx of format) {
+        if (ref[idx]) throw new ErrorMessage('格式内容重复');
+        ref[idx] = true;
+      }
+      let lines = req.body.text.replace(/\r/g,'').split('\n');
+      for(let line of lines) {
+        if (!line.trim().length) continue;
+        let text = line.split('\t');
+        console.log(text)
+        if (text.length < format.length) throw new ErrorMessage('内容缺失');
+        text.push(text.splice(format.length - 1).join('\t'));
+        let row = [];
+        for (let idx of format) row[idx] = text.shift();
+        data.push(row);
+      }
+    }
+
+    let records = [];
+
+    for (let row of data) {
+      let info = {}, rec;
+      for (let id in importColumn) {
+        let item = importColumn[id];
+        if (!row[id]) {
+          if (item.required) throw new ErrorMessage('必选项缺失');
+          row[id] = item.default();
+          info[item.column + 'Gen'] = true;
+        }
+        let val = row[id];
+        if (item.match && !item.match.test(val)) throw new ErrorMessage('格式错误');
+        if (item.parse) val = item.parse(val);
+        info[item.column] = val;
+      }
+      if (!info.secretGen)
+        rec = await Secret.find({ type: 0, type_id: contest.id, secret: info.secret })
+      if (!rec) {
+        rec = await Secret.create({ type: 0, type_id: contest.id });
+        rec.secretNew = true;
+      }
+      for (let name in info) rec[name] = info[name];
+      records.push(rec);
+    }
+
+    await syzoj.db.transaction(async trans => {
+      for (let rec of records) {
+        if (rec.user_id != -1 && await Secret.find({type: 0, type_id: contest.id, user_id: rec.user_id, secret: { $ne: rec.secret }}))
+          throw new ErrorMessage('用户 ID 冲突');
+        if (rec.secretNew && await Secret.find({type: 0, type_id: contest.id, secret: rec.secret })) {
+          if (!rec.secretGen) throw new ErrorMessage('准入码冲突');
+          do {
+            rec.secret = randomstring.generate(16);
+          } while(await Secret.find({ type: 0, type_id: contest.id, secret: rec.secret }));
+        }
+        await rec.save();
+      }
+    });
+
+    res.redirect(syzoj.utils.makeUrl(['contest', contest.id, 'secret']));
+  } catch (e) {
+    console.log(e);
+    res.render('error', {
+      err: e
+    });
   }
 });
 
