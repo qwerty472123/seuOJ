@@ -365,7 +365,8 @@ if (contest) {
     <% } %>
 </div>
 
-<% if (problem.type !== 'submit-answer') { %>
+<% if (!noSubmit) {
+    if (problem.type !== 'submit-answer') { %>
 <script type="text/javascript">
   var editor;
   window.onEditorLoaded(function () {
@@ -417,5 +418,6 @@ if (contest) {
     $('#answer_by_editor').val(JSON.stringify(a));
   }
   </script>
-<% } %>
+<% }
+  } %>
 <% include footer %>
