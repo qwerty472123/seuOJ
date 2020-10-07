@@ -287,13 +287,19 @@ app.post('/admin/other', async (req, res) => {
         await a.resetReplyCountAndTime();
       }
     } else if (req.body.type === 'reset_codelen') {
+      const problems = await Problem.query();
+      let typeMap = [];
+      for (const p of problems) {
+        typeMap[p.id] = p.type;
+      }
+      
       const submissions = await JudgeState.query();
-      for (const s of submissions) {
-        if (s.type !== 'submit-answer') {
+      await Promise.all(submissions.map(async s => {
+        if (typeMap[s.problem_id] !== 'submit-answer') {
           s.code_length = Buffer.from(s.code).length;
           await s.save();
         }
-      }
+      }));
     } else {
       throw new ErrorMessage("操作类型不正确");
     }
