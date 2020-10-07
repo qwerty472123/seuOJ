@@ -176,6 +176,8 @@ ORDER BY `max_memory` DESC \
 '
 };
 
+const statisticsCodeOnly = ["fastest", "slowest", "min", "max"];
+
 let Sequelize = require('sequelize');
 let db = syzoj.db;
 
@@ -497,6 +499,10 @@ class Problem extends Model {
 
   // type: fastest / slowest / shortest / longest / earliest
   async countStatistics(type) {
+    if (this.type === 'submit-answer' && statisticsCodeOnly.includes(type)) {
+      return null;
+    }
+
     let statement = statisticsStatements[type];
     if (!statement) return null;
 
@@ -506,6 +512,10 @@ class Problem extends Model {
 
   // type: fastest / slowest / shortest / longest / earliest
   async getStatistics(type, paginate) {
+    if (this.type === 'submit-answer' && statisticsCodeOnly.includes(type)) {
+      return null;
+    }
+
     let statistics = {
       type: type,
       judge_state: null,

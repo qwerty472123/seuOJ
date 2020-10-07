@@ -26,7 +26,7 @@ function firstNonAC(t) {
 exports.firstNonAC = firstNonAC;
 function convertResult(taskId, source) {
     winston.debug(`Converting result for ${taskId}`, source);
-    let time = null, memory = null, score = null, done = true, statusString = null;
+    let time = null, memory = null, score = 0, done = true, statusString = null;
     if (source.compile && source.compile.status === interfaces.TaskStatus.Failed) {
         statusString = compileError;
     }

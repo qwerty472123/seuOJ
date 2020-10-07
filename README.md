@@ -5,6 +5,12 @@ SYZOJ(https://github.com/syzoj/syzoj) 修改版
 
 # 升级须知
 
+## 2020/10/8 更新
+
+```sql
+UPDATE judge_state SET score=0 WHERE score IS NULL;
+```
+
 ## 2020/10/6 更新
 
 ```sql

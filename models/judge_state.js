@@ -82,7 +82,7 @@ class JudgeState extends Model {
 
       pending: false,
 
-      score: null,
+      score: 0,
       total_time: null,
       max_memory: null,
       status: 'Unknown',
@@ -138,7 +138,7 @@ class JudgeState extends Model {
 
       this.status = 'Unknown';
       this.pending = false;
-      this.score = null;
+      this.score = 0;
       if (this.language) {
         // language is empty if it's a submit-answer problem
         this.total_time = null;
