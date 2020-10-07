@@ -211,19 +211,6 @@ global.syzoj = {
     }
     app.use(Session(sessionConfig));
 
-    /*app.use(require('express-minify-html')({
-      override: true,
-      htmlMinifier: {
-        removeComments: true,
-        collapseWhitespace: true,
-        collapseBooleanAttributes: true,
-        removeAttributeQuotes: true,
-        removeEmptyAttributes: true,
-        minifyJS: true,
-        minifyCSS: true
-      }
-    }));*/
-
     app.use((req, res, next) => {
       res.locals.useLocalLibs = 'true' !== req.headers['x-remote-access'] || syzoj.config.no_cdn; // !!parseInt(req.headers['syzoj-no-cdn']);
 
