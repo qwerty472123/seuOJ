@@ -654,26 +654,28 @@ app.post('/problem/:id/submit', app.multer.fields([{ name: 'answer', maxCount: 1
         code_length: size,
         language: null,
         user_id: curUser.id,
-        problem_id: req.params.id,
+        problem_id: id,
         is_public: problem.is_public
       });
     } else {
-      let code;
+      let code, code_length;
       if (req.files['answer']) {
         if (req.files['answer'][0].size > syzoj.config.limit.submit_code) throw new ErrorMessage('代码文件太大。');
         let fs = Promise.promisifyAll(require('fs'));
         code = (await fs.readFileAsync(req.files['answer'][0].path)).toString();
+        code_length = Buffer.from(code).length;
       } else {
-        if (req.body.code.length > syzoj.config.limit.submit_code) throw new ErrorMessage('代码太长。');
+        code_length = Buffer.from(code).length;
+        if (code_length > syzoj.config.limit.submit_code) throw new ErrorMessage('代码太长。');
         code = req.body.code;
       }
 
       judge_state = await JudgeState.create({
         code: code,
-        code_length: code.length,
+        code_length,
         language: req.body.language,
         user_id: curUser.id,
-        problem_id: req.params.id,
+        problem_id: id,
         is_public: problem.is_public
       });
     }
@@ -781,7 +783,7 @@ app.post('/problem/:id/delete', async (req, res) => {
     let problem = await Problem.fromID(id);
     if (!problem) throw new ErrorMessage('无此题目。');
 
-    if (!problem.isAllowedManageBy(res.locals.user)) throw new ErrorMessage('您没有权限进行此操作。');
+    if (!await problem.isAllowedManageBy(res.locals.user)) throw new ErrorMessage('您没有权限进行此操作。');
 
     await problem.delete();
 

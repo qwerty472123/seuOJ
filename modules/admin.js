@@ -290,7 +290,7 @@ app.post('/admin/other', async (req, res) => {
       const submissions = await JudgeState.query();
       for (const s of submissions) {
         if (s.type !== 'submit-answer') {
-          s.code_length = s.code.length;
+          s.code_length = Buffer.from(s.code).length;
           await s.save();
         }
       }
