@@ -169,7 +169,6 @@ window.onEditorLoaded(function () {
 $(function () {
   $('#search_admins')
     .dropdown({
-      debug: true,
       apiSettings: {
         url: '/api/v2/search/users/{query}',
         onResponse: function (response) {
@@ -184,7 +183,6 @@ $(function () {
     });
   $('#search_problems')
     .dropdown({
-      debug: true,
       apiSettings: {
         url: '/api/v2/search/problems/{query}',
         onResponse: function (response) {
@@ -199,7 +197,6 @@ $(function () {
     });
     $('#search_languages')
     .dropdown({
-      debug: true,
       apiSettings: {
         url: '/api/v2/enabled_langs',
         onResponse: function (response) {
