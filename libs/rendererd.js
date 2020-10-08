@@ -1,4 +1,4 @@
-const renderer = require('syzoj-renderer');
+const renderer = require('@4qwerty7/syzoj-renderer');
 const XSS = require('xss');
 const xssWhiteList = Object.assign({}, require('xss/lib/default').whiteList);
 delete xssWhiteList.audio;
