@@ -1,7 +1,7 @@
 {
   "name": "syzoj",
   "version": "2.0.0",
-  "description": "An OnlineJudge System for OI",
+  "description": "An OnlineJudge System for ICPC",
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
@@ -43,8 +43,6 @@
     "js-yaml": "^3.14.0",
     "jsondiffpatch": "0.2.5",
     "jsonwebtoken": "^8.4.0",
-    "katex": "^0.11.1",
-    "mathjax-node": "^2.1.1",
     "moemark": "^0.3.10",
     "moment": "^2.23.0",
     "msgpack-lite": "^0.1.26",
@@ -54,7 +52,6 @@
     "nodemailer": "^4.7.0",
     "object-assign-deep": "^0.4.0",
     "object-hash": "^1.3.1",
-    "pygmentize-bundled-cached": "^1.1.0",
     "random-js": "1.0.8",
     "randomstring": "^1.1.5",
     "redis": "^2.8.0",
@@ -67,6 +64,7 @@
     "session-file-store": "^1.0.0",
     "socket.io": "^2.2.0",
     "stream-to-string": "^1.1.0",
+    "syzoj-renderer": "github:qwerty472123/syzoj-renderer",
     "tempfile": "^2.0.0",
     "tmp-promise": "^1.0.3",
     "uuid": "^3.3.2",

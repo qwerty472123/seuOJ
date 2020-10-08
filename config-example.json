@@ -131,5 +131,6 @@
   },
   "no_cdn": false,
   "cur_vip_contest": 0,
-  "forbidden_remote_access": false
+  "forbidden_remote_access": false,
+  "renderer_cache_size": "3000"
 }

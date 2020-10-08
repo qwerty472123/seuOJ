@@ -33,6 +33,8 @@ global.syzoj = {
     let winstonLib = require('./libs/winston');
     winstonLib.configureWinston(!syzoj.production);
 
+    this.utils = require('./utility');
+
     // Set assets dir
     app.use(Express.static(__dirname + '/static', { maxAge: syzoj.production ? '1y' : 0 }));
 
@@ -280,8 +282,7 @@ global.syzoj = {
         } else next();
       } else next();
     });
-  },
-  utils: require('./utility')
+  }
 };
 
 syzoj.run();

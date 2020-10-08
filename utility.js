@@ -19,13 +19,13 @@ let Promise = require('bluebird');
 let path = require('path');
 let fs = Promise.promisifyAll(require('fs-extra'));
 let util = require('util');
-let markdownRenderer = require('./libs/markdown');
 let moment = require('moment');
 let url = require('url');
 let querystring = require('querystring');
 let gravatar = require('gravatar');
 let filesize = require('file-size');
 let AsyncLock = require('async-lock');
+let renderer = require('./libs/renderer');
 
 module.exports = {
   resolvePath(s) {
@@ -59,13 +59,13 @@ module.exports = {
     return new Promise((resolve, reject) => {
       if (!keys) {
         if (!obj || !obj.trim()) resolve("");
-        else markdownRenderer(obj, s => {
+        else renderer.markdown(obj, s => {
             resolve(replaceUI(s));
         });
       } else {
         let res = obj, cnt = keys.length;
         for (let key of keys) {
-          markdownRenderer(res[key], (s) => {
+          renderer.markdown(res[key], (s) => {
             res[key] = replaceUI(s);
             if (!--cnt) resolve(res);
           });
@@ -136,7 +136,7 @@ module.exports = {
   },
   highlight(code, lang) {
     return new Promise((resolve, reject) => {
-      require('./libs/highlight')(code, lang, res => {
+      renderer.highlight(code, lang, res => {
         resolve(res);
       });
     });
