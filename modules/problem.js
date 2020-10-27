@@ -231,7 +231,7 @@ app.get('/problem/:id', async (req, res) => {
 
     let testcases = await syzoj.utils.parseTestdata(problem.getTestdataPath(), problem.type === 'submit-answer');
 
-    let discussionCount = await Article.count({ problem_id: id });
+    let discussionCount = await Article.count({ contest_id: { $eq: null }, problem_id: id });
 
     res.render('problem', {
       problem: problem,
