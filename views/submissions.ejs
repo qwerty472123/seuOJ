@@ -17,11 +17,15 @@
   <form action="<%= syzoj.utils.makeUrl(displayConfig.inContest ? ['contest', contest.id, 'submissions'] : ['submissions']) %>" class="ui mini form" method="get" role="form" id="form">
     <input type="hidden" name="contest" value="<%= form.contest %>" />
     <div class="inline fields" style="margin-bottom: 25px; white-space: nowrap; ">
-      <label style="font-size: 1.2em; margin-right: 1px; ">题目：</label>
-      <div class="field"><input name="problem_id" style="width: 50px; " type="text" value="<%= form.problem_id %>"></div>
+      <div class="field ui left icon input">
+        <input placeholder="题目" name="problem_id" style="width: 80px; " type="text" value="<%= form.problem_id %>">
+        <i aria-hidden="true" class="hashtag icon"></i>
+      </div>
       <% if (displayConfig.showOthers) { %>
-        <label style="font-size: 1.2em; margin-right: 1px; ">提交者：</label>
-        <div class="field"><input name="submitter" style="width: 100px; " type="text" value="<%= form.submitter %>"></div>
+        <div class="field ui left icon input">
+          <input placeholder="提交者" name="submitter" style="width: 100px; " type="text" value="<%= form.submitter %>">
+          <i aria-hidden="true" class="user icon"></i>
+        </div>
       <% } %>
       <% if (displayConfig.showScore) { %>
         <label style="font-size: 1.2em; margin-right: 1px; ">分数：</label>
@@ -29,31 +33,34 @@
         <label style="font-size: 1.2em; margin-right: 7px; ">～</label>
         <div class="field"><input name="max_score" style="width: 45px; " type="text" value="<%= form.max_score || 100 %>"></div>
       <% } %>
-      <label style="font-size: 1.2em; margin-right: 1px; ">语言：</label>
       <div class="field">
-        <div class="ui fluid selection dropdown" id="select_language" style="width: 110px; ">
+        <div class="ui fluid selection dropdown" id="select_language" style="width: 150px; ">
           <input type="hidden" name="language" value="<%= form.language %>">
           <i class="dropdown icon"></i>
           <div class="default text"></div>
           <div class="menu">
-            <div class="item" data-value=""><b>不限</b></div>
-            <div class="item" data-value="submit-answer"><b>提交答案</b></div>
-            <div class="item" data-value="non-submit-answer"><b>非提交答案</b></div>
+            <div class="item" data-value="">
+              <span class="color: hsla(0,0%,74.9%,.87);"><i aria-hidden="true" class="code icon"></i><b>语言</b></span>
+            </div>
+            <div class="item" data-value="submit-answer"><i aria-hidden="true" class="code icon"></i><b>提交答案</b></div>
+            <div class="item" data-value="non-submit-answer"><i aria-hidden="true" class="code icon"></i><b>非提交答案</b></div>
             <% for (let lang of allowLangs ? allowLangs : syzoj.config.filter_enabled_languages) { %>
-              <div style="font-size: 12.5px; " class="item" data-value="<%= lang %>"><b><%= syzoj.languages[lang].show %></b></div>
+              <div style="font-size: 12.5px; " class="item" data-value="<%= lang %>"><i aria-hidden="true" class="code icon"></i><b><%= syzoj.languages[lang].show %></b></div>
             <% } %>
           </div>
         </div>
       </div>
       <% if (displayConfig.showResult) { %>
-        <label style="font-size: 1.2em; margin-right: 1px; ">状态：</label>
         <div class="field">
           <div class="ui fluid selection dropdown" id="select_status" style="width: 210px; ">
             <input type="hidden" name="status" value="<%= form.status %>">
             <i class="dropdown icon"></i>
             <div class="default text"></div>
             <div class="menu">
-              <div class="item" data-value=""><b>不限</b><i class="dropdown icon" style="visibility: hidden; "></i></div>
+              <div class="item" data-value="">
+                <span class="color: hsla(0,0%,74.9%,.87);"><i aria-hidden="true" class="question icon"></i><b>状态</b></span>
+                <i class="dropdown icon" style="visibility: hidden; "></i>
+              </div>
               <% for (let status in this.icon) { %>
                 <% if (this.iconHidden.includes(status)) continue; %>
                 <div class="item" data-value="<%= status === 'Pending' ? 'Waiting' : status %>"><span class="status <%= status.toLowerCase().split(' ').join('_') %>"><i class="<%= this.icon[status] %> icon"></i> <b><%= status %></b></div>
