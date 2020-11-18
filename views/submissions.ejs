@@ -15,7 +15,7 @@
   <% } %>
 
     <style>
-      .nopaddingfields > .field {
+      .nopaddingfields > .field.ui {
         padding-right: 0!important;
       }
     </style>
@@ -36,12 +36,12 @@
       <% if (displayConfig.showScore) { %>
         <div class="field"><div class="ui input">
             <div class="ui icon input">
-                <input type="text" placeholder="0" name="min_score" style="width:50px;border-top-right-radius: 0; border-bottom-right-radius: 0" value="<%= form.min_score || 0 %>">
+                <input type="text" placeholder="0" name="min_score" style="width:80px;border-top-right-radius: 0; border-bottom-right-radius: 0" value="<%= form.min_score || 0 %>">
                 <i class="percent icon"></i>
             </div>
             <div class="ui label" style="border-radius: 0; margin: 0">~</div>
             <div class="ui icon input">
-                <input type="text" name="max_score" placeholder="100" style="width:50px;border-top-left-radius: 0; border-bottom-left-radius: 0" value="<%= form.max_score || 100 %>">
+                <input type="text" name="max_score" placeholder="100" style="width:80px;border-top-left-radius: 0; border-bottom-left-radius: 0" value="<%= form.max_score || 100 %>">
                 <i class="percent icon"></i>
             </div>
         </div></div>
