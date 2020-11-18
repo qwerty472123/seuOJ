@@ -1017,6 +1017,7 @@ app.get('/contest/:id/problem/:pid', async (req, res) => {
     await syzoj.utils.markdown(problem, ['description', 'input_format', 'output_format', 'example', 'limit_and_hint']);
 
     let state = await problem.getJudgeState(res.locals.user, false);
+    let bestState = await problem.getJudgeState(res.locals.user, true);
     let testcases = await syzoj.utils.parseTestdata(problem.getTestdataPath(), problem.type === 'submit-answer');
 
     await problem.loadRelationships();
@@ -1045,7 +1046,8 @@ app.get('/contest/:id/problem/:pid', async (req, res) => {
       lastLanguage: res.locals.user ? await res.locals.user.getLastSubmitLanguage() : null,
       testcases: testcases,
       language_limit: language_limit,
-      forceNoSubmit: forceNoSubmit
+      forceNoSubmit: forceNoSubmit,
+      bestState
     });
   } catch (e) {
     syzoj.log(e);

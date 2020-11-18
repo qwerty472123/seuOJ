@@ -20,9 +20,16 @@ if (contest) {
 
 <% include monaco-editor %>
 
-<div class="ui center aligned grid">
+<div class="ui grid">
     <div class="row">
-      <h1 class="ui header">
+      <h1 class="column ui header">
+        <% if (bestState) { %>
+          <a href="<%= syzoj.utils.makeUrl(['submission', bestState.id]) %>">
+            <span class="status <%= bestState.status.toLowerCase().split(' ').join('_') %>">
+              <i class="<%= icon[bestState.status] || 'remove' %> icon"></i>
+            </span>
+          </a>
+        <% } %>
         <% if (contest) { %>
           <%= this.alpha(pid) %>. <%= syzoj.utils.removeTitleTag(problem.title) %>
         <% } else { %>
@@ -30,51 +37,100 @@ if (contest) {
         <% } %>
       </h1>
     </div>
-    <% if (problem.type !== 'submit-answer') { %>
-      <div class="row" style="margin-top: -15px">
-          <span class="ui label">内存限制：<%= problem.memory_limit %> MiB</span>
-          <span class="ui label">时间限制：<%= problem.time_limit %> ms</span>
-          <% if (problem.type === 'interaction') { %>
-            <span class="ui label">题目类型：交互</span>
-          <% } else if (problem.file_io) { %>
-            <span class="ui label">输入文件：<%= problem.file_io_input_name %></span>
-            <span class="ui label">输出文件：<%= problem.file_io_output_name %></span>
-          <% } else { %>
-            <span class="ui label">标准输入输出</span>
-          <% } %>
-      </div>
-    <% } %>
-    <% if (problem.type !== 'interaction') { %>
-      <div class="row" style="margin-top: -<%= problem.type === 'submit-answer' ? 15 : 23 %>px">
-          <span class="ui label">题目类型：<%= { 'submit-answer': '答案提交', 'interaction': '交互', 'traditional': '传统' }[problem.type] %></span>
-          <span class="ui label">评测方式：<%= (testcases && !testcases.error) ? (testcases.spj ? 'Special Judge' : '文本比较') : '无测试数据' %></span>
-      </div>
-    <% } %>
-    <% if (!contest) { %>
-        <div class="row" style="margin-top: -23px">
-            <span class="ui label">上传者：
-            <% if (problem.is_anonymous && !problem.allowedManage) { %>
-              匿名
+    <div class="row" style="margin-top: -15px"><div class="column">
+      <span class="ui teal label" title="题目类型：<%= { 'submit-answer': '答案提交', 'interaction': '交互', 'traditional': '传统' }[problem.type] %>"><i aria-hidden="true" class="book icon"></i> <%= { 'submit-answer': '答案提交', 'interaction': '交互', 'traditional': '传统' }[problem.type] %></span>
+      <% if (problem.type !== 'submit-answer') { %>
+        <span class="ui pink label" title="时间限制：<%= problem.time_limit %> ms"><i aria-hidden="true" class="clock icon"></i><%= problem.time_limit %> ms</span>
+        <span class="ui blue label" title="内存限制：<%= problem.memory_limit %> MiB"><i aria-hidden="true" class="microchip icon"></i><%= problem.memory_limit %> MiB</span>
+
+        <% if (problem.type !== 'interaction') {
+           if (problem.file_io) { %>
+          <div class="ui orange label" id="bindToFileIO" title="IO 方式：读写指定文件"><i aria-hidden="true" class="file icon"></i>文件 IO</div>
+          <div class="ui flowing popup bottom center transition hidden" id="popupToFileIO">
+            <div class="ui two column divided center aligned grid">
+              <div class="column">
+                <h4 class="ui header">输入文件名</h4>
+                <p><%= problem.file_io_input_name %></p>
+                <div class="ui button" onclick="copyTxt(<%= serializejs(problem.file_io_input_name) %>, this)">复制</div>
+              </div>
+              <div class="column">
+                <h4 class="ui header">输出文件名</h4>
+                <p><%= problem.file_io_output_name %></p>
+                <div class="ui button" onclick="copyTxt(<%= serializejs(problem.file_io_output_name) %>, this)">复制</div>
+              </div>
+            </div>
+          </div>
+          <script type="text/javascript">
+            function copyTxt(text, button) {
+              if (navigator.clipboard) {
+                navigator.clipboard.writeText(text);
+              } else {
+                  var temp = $("<textarea>");
+                  $("body").append(temp);
+                  temp.val(text).select();
+                  document.execCommand("copy");
+                  temp.remove();
+              }
+              if (button) {
+                $(button).addClass('green').text('成功');
+                setTimeout(function(){
+                  $(button).removeClass('green').text('复制');
+                },500);
+              }
+            }
+            $(function(){
+              $('#bindToFileIO').popup({position:'bottom center',hoverable:true,popup:$('#popupToFileIO')});
+            });
+          </script>
+        <% } else { %>
+          <div class="ui orange label" title="IO 方式：读写标准输入输出流"><i aria-hidden="true" class="file icon"></i>标准 IO</div>
+        <% }
+           } %>
+      <% } %>
+      <% if (problem.type !== 'interaction') { %>
+            <span class="ui green label" title="评测方式：<%= (testcases && !testcases.error) ? (testcases.spj ? '特定评判程序' : '文本比较') : '无测试数据' %>"><i aria-hidden="true" class="copy icon"></i><%= (testcases && !testcases.error) ? (testcases.spj ? 'Special Judge' : '文本比较') : '无测试数据' %></span>
+      <% } %>
+      <% if (!contest) { %>
+        <span class="ui blue label" title="上传者"><i aria-hidden="true" class="upload icon"></i>
+        <% if (problem.is_anonymous && !problem.allowedManage) { %>
+          匿名
+        <% } else { %>
+          <a href="<%= syzoj.utils.makeUrl(['user', problem.user_id]) %>"><%= problem.user.username %></a>
+        <% } %>
+        </span>
+        <% if (problem.allowedManage) { %>
+            <span class="ui red label" title="公开者"><i aria-hidden="true" class="user icon"></i>
+            <% if (problem.publicizer) { %>
+              <a href="<%= syzoj.utils.makeUrl(['user', problem.publicizer_id]) %>"><%= problem.publicizer.username %></a>
             <% } else { %>
-              <a href="<%= syzoj.utils.makeUrl(['user', problem.user_id]) %>"><%= problem.user.username %></a>
+              未知
             <% } %>
             </span>
-            <% if (problem.allowedManage) { %>
-                <span class="ui label">公开者：
-                <% if (problem.publicizer) { %>
-                  <a href="<%= syzoj.utils.makeUrl(['user', problem.publicizer_id]) %>"><%= problem.publicizer.username %></a>
-                <% } else { %>
-                  未知
-                <% } %>
-                </span>
-            <% } %>
-        </div>
+        <% } %>
     <% } %>
+    <% if (problem.tags && problem.tags.length && (typeof contest === 'undefined' || !contest)) { %>
+    <a class="ui grey label" id="show_tag_button">
+        <i aria-hidden="true" class="tag icon"></i>
+        标签
+    </a>
+    <div id="tag_buttons" class="ui popup bottom center transition hidden">
+      <% for (let tag of problem.tags) { %>
+        <a href="<%= syzoj.utils.makeUrl(['problems', 'tag', tag.id]) %>" class="ui medium <%= tag.color %> label"><%= tag.name %></a>
+      <% } %>
+    </div>
+    <script>
+    $(function () {
+      $('#show_tag_button').popup({position:'bottom center',hoverable:true,popup:$('#tag_buttons')});
+    });
+    </script>
+  <% } %>
+    </div>
+</div>
 </div>
 <div class="ui grid">
-  <div class="row">
+  <div class="row" style="margin-top: -64px;pointer-events: none;">
     <div class="column">
-      <div class="ui buttons">
+      <div class="ui buttons right floated" style="pointer-events: auto;">
         <% if (typeof contest !== 'undefined' && contest) { %>
           <% if (!contest.ended && !forceNoSubmit) { %>
             <a class="small ui primary button" href="#submit_code">提交</a>
@@ -104,8 +160,12 @@ if (contest) {
           </a>
         <% } %>
       </div>
+    </div>
+  </div>
       <% if (!contest) { %>
-        <div class="ui buttons right floated">
+        <div class="row" style="margin-top: -104px;pointer-events: none;">
+        <div class="column">
+        <div class="ui buttons right floated" style="pointer-events: auto;">
           <% if (problem.allowedEdit) { %>
             <a class="small ui button" href="<%= syzoj.utils.makeUrl(['problem', problem.id, 'edit']) %>">编辑</a>
             <a class="small ui button" href="<%= syzoj.utils.makeUrl(['problem', problem.id, 'manage']) %>">管理</a>
@@ -140,6 +200,8 @@ if (contest) {
             <div class="small ui red button" onclick="$('#modal-delete').modal('show')">删除</div>
           <% } %>
         </div>
+        </div>
+        </div>
       <% } %>
       <% if (language_limit && language_limit === 'Undetermined') { %>
       <div class="ui basic modal" id="modal-submit-lang">
@@ -164,8 +226,6 @@ if (contest) {
         </div>
       </div>
       <% } %>
-    </div>
-  </div>
   <% if (problem.description) { %>
   <div class="row">
     <div class="column">
@@ -205,31 +265,6 @@ if (contest) {
           <div class="ui bottom attached segment font-content"><%- problem.limit_and_hint %></div>
         </div>
     </div>
-  <% } %>
-  <% if (problem.tags && problem.tags.length && (typeof contest === 'undefined' || !contest)) { %>
-    <div class="row">
-      <div class="column">
-        <h4 class="ui block header" id="show_tag_title_div" style="margin-bottom: 0; margin-left: -1px; margin-right: -1px; "><a href="#" id="show_tag_button" style="color: #000; ">显示分类标签</a></h4>
-        <div class="ui bottom attached segment" style="display: none; " id="show_tag_div">
-          <% for (let tag of problem.tags) { %>
-            <a href="<%= syzoj.utils.makeUrl(['problems', 'tag', tag.id]) %>" class="ui medium <%= tag.color %> label">
-              <%= tag.name %>
-            </a>
-          <% } %>
-        </div>
-      </div>
-    </div>
-    <script>
-    $(function () {
-      $('#show_tag_button').click(function (e) {
-        e.preventDefault();
-        $('#show_tag_title_div').addClass('top');
-        $('#show_tag_title_div').addClass('top attached');
-        $('#show_tag_title_div').text('分类标签');
-        $('#show_tag_div').css('display', '');
-      })
-    });
-    </script>
   <% } %>
     <% let noSubmit = forceNoSubmit; %>
     <%

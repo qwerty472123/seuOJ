@@ -226,6 +226,8 @@ app.get('/problem/:id', async (req, res) => {
 
     let state = await problem.getJudgeState(res.locals.user, false);
 
+    let bestState = await problem.getJudgeState(res.locals.user, true);
+
     problem.tags = await problem.getTags();
     await problem.loadRelationships();
 
@@ -240,7 +242,8 @@ app.get('/problem/:id', async (req, res) => {
       testcases: testcases,
       discussionCount: discussionCount,
       language_limit: false,
-      forceNoSubmit: !res.locals.user
+      forceNoSubmit: !res.locals.user,
+      bestState
     });
   } catch (e) {
     syzoj.log(e);
