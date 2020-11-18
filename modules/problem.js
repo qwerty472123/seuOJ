@@ -665,9 +665,9 @@ app.post('/problem/:id/submit', app.multer.fields([{ name: 'answer', maxCount: 1
         code = (await fs.readFileAsync(req.files['answer'][0].path)).toString();
         code_length = Buffer.from(code).length;
       } else {
+        code = req.body.code;
         code_length = Buffer.from(code).length;
         if (code_length > syzoj.config.limit.submit_code) throw new ErrorMessage('代码太长。');
-        code = req.body.code;
       }
 
       judge_state = await JudgeState.create({
