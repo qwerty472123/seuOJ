@@ -14,9 +14,15 @@
     </div>
   <% } %>
 
-  <form action="<%= syzoj.utils.makeUrl(displayConfig.inContest ? ['contest', contest.id, 'submissions'] : ['submissions']) %>" class="ui mini form" method="get" role="form" id="form">
+    <style>
+      .nopaddingfields > .field {
+        padding-right: 0;
+      }
+    </style>
+
+  <form action="<%= syzoj.utils.makeUrl(displayConfig.inContest ? ['contest', contest.id, 'submissions'] : ['submissions']) %>" class="ui form" method="get" role="form" id="form">
     <input type="hidden" name="contest" value="<%= form.contest %>" />
-    <div class="inline fields" style="margin-bottom: 25px; white-space: nowrap; ">
+    <div class="inline fields nopaddingfields" style="margin-bottom: 25px; white-space: nowrap; ">
       <div class="field ui left icon input">
         <input placeholder="题目" name="problem_id" style="width: 80px; " type="text" value="<%= form.problem_id %>">
         <i aria-hidden="true" class="hashtag icon"></i>
@@ -28,10 +34,17 @@
         </div>
       <% } %>
       <% if (displayConfig.showScore) { %>
-        <label style="font-size: 1.2em; margin-right: 1px; ">分数：</label>
-        <div class="field" style="padding-right: 6px; "><input name="min_score" style="width: 45px; " type="text" value="<%= form.min_score || 0 %>"></div>
-        <label style="font-size: 1.2em; margin-right: 7px; ">～</label>
-        <div class="field"><input name="max_score" style="width: 45px; " type="text" value="<%= form.max_score || 100 %>"></div>
+        <div class="ui input">
+            <div class="ui icon input">
+                <input type="text" placeholder="0" name="min_score" style="width:50px;border-top-right-radius: 0; border-bottom-right-radius: 0" value="<%= form.min_score || 0 %>">
+                <i class="percent icon"></i>
+            </div>
+            <div class="ui label" style="border-radius: 0; margin: 0">~</div>
+            <div class="ui icon input">
+                <input type="text" name="max_score" placeholder="100" style="width:50px;border-top-left-radius: 0; border-bottom-left-radius: 0" value="<%= form.max_score || 100 %>">
+                <i class="percent icon"></i>
+            </div>
+        </div>
       <% } %>
       <div class="field">
         <div class="ui fluid selection dropdown" id="select_language" style="width: 150px; ">
@@ -40,8 +53,8 @@
           <div class="default text"></div>
           <div class="menu">
             <div class="item" data-value="">
-              <span style="color: hsla(0,0%,74.9%,.87);"><i aria-hidden="true" class="code icon"></i>
-                <b>语言</b></span>
+              <i aria-hidden="true" style="color: hsla(0,0%,74.9%,.87);" class="code icon"></i>
+              <b style="color: hsla(0,0%,74.9%,.87);">语言</b>
             </div>
             <div class="item" data-value="submit-answer"><i aria-hidden="true" class="code icon"></i><b>提交答案</b></div>
             <div class="item" data-value="non-submit-answer"><i aria-hidden="true" class="code icon"></i><b>非提交答案</b></div>
@@ -59,8 +72,8 @@
             <div class="default text"></div>
             <div class="menu">
               <div class="item" data-value="">
-                <span style="color: hsla(0,0%,74.9%,.87);"><i aria-hidden="true" class="question icon"></i>
-                  <b>状态</b></span>
+                  <i style="color: hsla(0,0%,74.9%,.87);" aria-hidden="true" class="question icon"></i>
+                  <b style="color: hsla(0,0%,74.9%,.87);">状态</b>
                 <i class="dropdown icon" style="visibility: hidden; "></i>
               </div>
               <% for (let status in this.icon) { %>
@@ -71,12 +84,12 @@
           </div>
         </div>
       <% } %>
-      <button class="ui labeled icon mini button" type="submit">
+      <button class="ui labeled icon button" type="submit">
         <i class="search icon"></i>
-        查询
+        筛选
       </button>
       <% if (user && displayConfig.showOthers) { %>
-      <a class="ui mini labeled icon blue button" style="margin-left: auto; " id="my_submit">
+      <a class="ui labeled icon blue button" style="margin-left: auto; " id="my_submit">
         <i class="user icon"></i>
         我的提交
       </a>
