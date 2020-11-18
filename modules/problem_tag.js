@@ -55,3 +55,14 @@ app.post('/problems/tag/:id/edit', async (req, res) => {
     });
   }
 });
+
+app.post('/problems/tags/list', async (req, res) => {
+  try {
+    let records = await ProblemTag.all();
+
+    res.send({ success: true, data: records.map(record => ({name: record.name, color: record.color, id: record.id})) });
+  } catch (e) {
+    syzoj.log(e);
+    res.send({ err: e.toString(), success: false });
+  }
+});
