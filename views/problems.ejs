@@ -49,9 +49,9 @@ if (typeof tags !== 'undefined') tagIDs = tags.map(x => x.id);
           }
           var tagIDs = <%- serializejs(tagIDs) %>;
           $(function() {
-            if (sessionStorage.getItem("show_tags")) tagsChange(true);
+            if (sessionStorage.getItem("show_tags")) tagsChange(true, true);
           });
-          function tagsChange(init) {
+          function tagsChange(init, noanim) {
             if (!init) {
               if (sessionStorage.getItem("show_tags")) {
                 sessionStorage.setItem("show_tags", '');
@@ -104,7 +104,8 @@ if (typeof tags !== 'undefined') tagIDs = tags.map(x => x.id);
                 document.getElementById('tagsSeg').appendChild(doc);
               }
               $("#tagsChanger").addClass("active");
-              $('#tagsSeg').slideDown();
+              if (noanim) $('#tagsSeg').show();
+              else $('#tagsSeg').slideDown();
             } catch (e) {
               // ignore
             }
