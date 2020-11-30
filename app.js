@@ -194,7 +194,11 @@ global.syzoj = {
     return require(`./libs/${name}`);
   },
   model(name) {
-    return require(`./models/${name}`);
+    let result = require(`./models/${name}`);
+    if (!result || Object.keys(result).length === 0) {
+      console.log('loop reference detected!');
+    }
+    return result;
   },
   loadHooks() {
     let Session = require('express-session');

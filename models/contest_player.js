@@ -2,7 +2,11 @@ let Sequelize = require('sequelize');
 let db = syzoj.db;
 
 const User = syzoj.model('user');
-const JudgeState = syzoj.model('judge_state');
+const JudgeState = null; // not require at start (avoid loop reference)
+
+function acquireJudgeState() {
+  JudgeState = syzoj.model('judge_state');
+}
 
 let model = db.define('contest_player', {
   id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
@@ -227,8 +231,10 @@ class ContestPlayer extends Model {
 
   async getSecondaryScore(contest) {
     if (contest.type === 'noi' || contest.type === 'ioi') {
-      let latest = 0;
+      acquireJudgeState();
 
+      let latest = 0;
+      
       for (let i in this.score_details) {
         let judge_state = await JudgeState.fromID(this.score_details[i].judge_id);
         if (!judge_state) continue;
