@@ -460,7 +460,7 @@ class Problem extends Model {
     return null;
   }
 
-  async getJudgeState(user, acFirst) {
+  async getJudgeState(user, acFirst, restriction) {
     if (!user) return null;
     let JudgeState = syzoj.model('judge_state');
 
@@ -468,6 +468,8 @@ class Problem extends Model {
       user_id: user.id,
       problem_id: this.id
     };
+
+    if (restriction) Object.assign(where, restriction);
 
     if (acFirst) {
       where.status = 'Accepted';

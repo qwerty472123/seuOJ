@@ -1018,8 +1018,11 @@ app.get('/contest/:id/problem/:pid', async (req, res) => {
 
     await syzoj.utils.markdown(problem, ['description', 'input_format', 'output_format', 'example', 'limit_and_hint']);
 
-    let state = await problem.getJudgeState(res.locals.user, false);
-    let bestState = await problem.getJudgeState(res.locals.user, true);
+    let judgeStateLimit = { type: 1, type_info: contest.id };
+
+    let state = await problem.getJudgeState(res.locals.user, false, judgeStateLimit);
+    let bestState = await problem.getJudgeState(res.locals.user, true, judgeStateLimit);
+
     let testcases = await syzoj.utils.parseTestdata(problem.getTestdataPath(), problem.type === 'submit-answer');
 
     await problem.loadRelationships();
