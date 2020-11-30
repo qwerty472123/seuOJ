@@ -149,7 +149,7 @@ class ContestPlayer extends Model {
         this.score_details[judge_state.problem_id].submissions[judge_state.id] = {
           judge_id: judge_state.id,
           accepted: judge_state.status === 'Accepted',
-          compiled: judge_state.score != null,
+          compiled: ['Partially Correct', 'Accepted', 'Success', 'Wrong Answer', 'Runtime Error', 'Invalid Interaction', 'Time Limit Exceeded', 'Memory Limit Exceeded', 'Output Limit Exceeded', 'File Error'].includes(judge_state.status),
           time: judge_state.submit_time,
           is_waiting: judge_state.status === 'Unknown'
         };
