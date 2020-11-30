@@ -52,7 +52,7 @@ if (special_ranklist) {
                 <th>
                 <% if (contest.type === 'acm' || contest.type === 'scc') { %>
                   <a href="<%= syzoj.utils.makeUrl(['contest', contest.id, 'problem', i + 1]) %>" title="#<%= problems[i].id %>. <%= syzoj.utils.removeTitleTag(problems[i].title) %>">
-                    <%= syzoj.utils.idToAlpha(i) %>
+                    <%= syzoj.utils.idToAlpha(i + 1) %>
                   </a>
                 <% } else { %>
                   <a href="<%= syzoj.utils.makeUrl(['contest', contest.id, i + 1]) %>">
