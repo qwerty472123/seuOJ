@@ -7,6 +7,16 @@ Array.prototype.filterAsync = async function (fn) {
   return this.filter((x, i) => a[i]);
 };
 
+if (!Object.fromEntries) {
+  Object.fromEntries = function (entries) {
+    let obj = {};
+    for (let [key, value] of entries) {
+      obj[key] = value;
+    }
+    return obj;
+  };
+}
+
 global.ErrorMessage = class ErrorMessage {
   constructor(message, nextUrls, details) {
     this.message = message;
@@ -235,7 +245,7 @@ module.exports = {
   alphaIdParse(alpha) {
     if (typeof alpha !== 'string') return alpha;
     if (/^[A-Za-z]$/.test(alpha)) {
-      return alpha.toLowerCase().charCodeAt(0) - 65 + 1;
+      return alpha.toUpperCase().charCodeAt(0) - 'A'.charCodeAt(0) + 1;
     }
     return parseInt(alpha);
   },

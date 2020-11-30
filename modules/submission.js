@@ -47,7 +47,7 @@ app.get('/submissions', async (req, res) => {
         where.type = { $eq: 1 };
         where.type_info = { $eq: contestId };
         inContest = true;
-        contestProblemsId = contest.getProblems();
+        contestProblemsId = await contest.getProblems();
         if (contest.allow_languages) allowLangs = contest.allow_languages.split('|');
       } else {
         throw new Error("您暂时无权查看此比赛的详细评测信息。");
@@ -79,10 +79,7 @@ app.get('/submissions', async (req, res) => {
 
     if (!inContest && (!curUser || !await curUser.hasPrivilege('manage_problem'))) {
       if (req.query.problem_id) {
-        let problem_id = 0;
-        if (inContest) {
-          problem_id = contestProblemsId[syzoj.utils.alphaIdParse(req.query.problem_id) - 1];
-        } else problem_id = parseInt(req.query.problem_id);
+        let problem_id = parseInt(req.query.problem_id);
         let problem = await Problem.fromID(problem_id);
         if (!problem)
           throw new ErrorMessage("无此题目。");
@@ -100,8 +97,8 @@ app.get('/submissions', async (req, res) => {
           $eq: true,
         };
       }
-    } else {
-      if (req.query.problem_id) where.problem_id = parseInt(req.query.problem_id) || -1;
+    } else if (req.query.problem_id) {
+      where.problem_id = (inContest ? contestProblemsId[syzoj.utils.alphaIdParse(req.query.problem_id) - 1] : parseInt(req.query.problem_id)) || -1;
     }
 
     let isFiltered = !!(where.problem_id || where.user_id || where.score || where.language || where.status);
@@ -119,7 +116,7 @@ app.get('/submissions', async (req, res) => {
     let viewConfig = displayConfig;
     if (inContest) {
       viewConfig = JSON.parse(JSON.stringify(displayConfig));
-      viewConfig.pidMap = Object.fromEntries(contestProblemsId.map((x, idx) => [x, syzoj.utils.idToAlpha(idx)]));
+      viewConfig.pidMap = Object.fromEntries(contestProblemsId.map((x, idx) => [x, syzoj.utils.idToAlpha(idx + 1)]));
     }
 
     res.render('submissions', {
