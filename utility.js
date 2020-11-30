@@ -226,6 +226,19 @@ module.exports = {
       return { error: e };
     }
   },
+  idToAlpha(id) {
+    id = parseInt(id);
+    if (1 <= id && id <= 26)
+      return String.fromCharCode('A'.charCodeAt(0) + id - 1);
+    return id.toString();
+  },
+  alphaIdParse(alpha) {
+    if (typeof alpha !== 'string') return alpha;
+    if (/^[A-Za-z]$/.test(alpha)) {
+      return alpha.toLowerCase().charCodeAt(0) - 65 + 1;
+    }
+    return parseInt(alpha);
+  },
   ansiToHTML(s) {
     let Convert = require('ansi-to-html');
     let convert = new Convert({ escapeXML: true });

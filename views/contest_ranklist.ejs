@@ -51,8 +51,8 @@ if (special_ranklist) {
                 <% for (let i = 0; i < problems.length; i++) { %>
                 <th>
                 <% if (contest.type === 'acm' || contest.type === 'scc') { %>
-                  <a href="<%= syzoj.utils.makeUrl(['contest', contest.id, 'problem', i + 1]) %>" title="<%= syzoj.utils.removeTitleTag(problems[i].title) %>">
-                    <%= String.fromCharCode('A'.charCodeAt(0) + parseInt(i)) %>
+                  <a href="<%= syzoj.utils.makeUrl(['contest', contest.id, 'problem', i + 1]) %>" title="#<%= problems[i].id %>. <%= syzoj.utils.removeTitleTag(problems[i].title) %>">
+                    <%= syzoj.utils.idToAlpha(i) %>
                   </a>
                 <% } else { %>
                   <a href="<%= syzoj.utils.makeUrl(['contest', contest.id, i + 1]) %>">

@@ -891,7 +891,9 @@ app.get('/contest/:id/submissions', async (req, res) => {
       if (req.query.status) where.status = { $like: req.query.status + '%' };
     }
 
-    if (req.query.problem_id) where.problem_id = problems_id[parseInt(req.query.problem_id) - 1];
+    if (req.query.problem_id) {
+      where.problem_id = problems_id[syzoj.utils.alphaIdParse(req.query.problem_id) - 1];
+    }
     where.type = 1;
     where.type_info = contest_id;
 
@@ -1235,10 +1237,11 @@ app.post('/contest/:id/generate_resolve_json', async (req, res) => {
     i = 1;
     for (let problem of problems) {
       i++;
-      revProblem[problem.id] = String.fromCharCode('A'.charCodeAt(0) + parseInt(i) - 1);
+      let alphaId = syzoj.utils.idToAlpha(i);
+      revProblem[problem.id] = alphaId;
       createEvent('problems', {
-        id: String.fromCharCode('A'.charCodeAt(0) + parseInt(i) - 1),
-        label: String.fromCharCode('A'.charCodeAt(0) + parseInt(i) - 1),
+        id: alphaId,
+        label: alphaId,
         name: problem.title,
         ordinal: i,
         test_data_count: 1

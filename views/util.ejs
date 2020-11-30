@@ -28,7 +28,7 @@ this.isPending = (status) => {
 };
 
 this.alpha = number => {
-  if (number && parseInt(number) == number && parseInt(number) > 0) return String.fromCharCode('A'.charCodeAt(0) + parseInt(number) - 1);
+  if (number && parseInt(number) == number && parseInt(number) > 0) return syzoj.utils.idToAlpha(number);
 };
 
 this.icon = {

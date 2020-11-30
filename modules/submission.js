@@ -26,6 +26,7 @@ app.get('/submissions', async (req, res) => {
     let user = await User.fromName(req.query.submitter || '');
     let where = {};
     let inContest = false;
+    let contestProblemsId = null;
     let allowLangs = null;
     if (user) where.user_id = user.id;
     else if (req.query.submitter) where.user_id = -1;
@@ -46,6 +47,7 @@ app.get('/submissions', async (req, res) => {
         where.type = { $eq: 1 };
         where.type_info = { $eq: contestId };
         inContest = true;
+        contestProblemsId = contest.getProblems();
         if (contest.allow_languages) allowLangs = contest.allow_languages.split('|');
       } else {
         throw new Error("您暂时无权查看此比赛的详细评测信息。");
@@ -77,7 +79,10 @@ app.get('/submissions', async (req, res) => {
 
     if (!inContest && (!curUser || !await curUser.hasPrivilege('manage_problem'))) {
       if (req.query.problem_id) {
-        let problem_id = parseInt(req.query.problem_id);
+        let problem_id = 0;
+        if (inContest) {
+          problem_id = contestProblemsId[syzoj.utils.alphaIdParse(req.query.problem_id) - 1];
+        } else problem_id = parseInt(req.query.problem_id);
         let problem = await Problem.fromID(problem_id);
         if (!problem)
           throw new ErrorMessage("无此题目。");
@@ -106,7 +111,16 @@ app.get('/submissions', async (req, res) => {
 
     await judge_state.forEachAsync(async obj => {
       await obj.loadRelationships();
-    })
+      if (inContest) {
+        obj.problem.title = syzoj.utils.removeTitleTag(obj.problem.title);
+      }
+    });
+
+    let viewConfig = displayConfig;
+    if (inContest) {
+      viewConfig = JSON.parse(JSON.stringify(displayConfig));
+      viewConfig.pidMap = Object.fromEntries(contestProblemsId.map((x, idx) => [x, syzoj.utils.idToAlpha(idx)]));
+    }
 
     res.render('submissions', {
       // judge_state: judge_state,
@@ -123,7 +137,7 @@ app.get('/submissions', async (req, res) => {
       paginate: paginate,
       pushType: 'rough',
       form: req.query,
-      displayConfig: displayConfig,
+      displayConfig: viewConfig,
       isFiltered: isFiltered,
       allowLangs: allowLangs
     });
