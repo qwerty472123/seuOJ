@@ -34,7 +34,13 @@
     min-height: 0 !important;
     padding: 0 !important;
     border: 0 !important;
-    color: rgba(0, 0, 0, 0) !important;
+    resize: none !important;
+    color: transparent !important;
+    text-shadow: black 0px 0px 0px !important;
+}
+
+.editor.editor-with-border .monaco-editor .inputarea {
+    margin-left: 4px !important;
 }
 
 .monaco-editor-background.textAreaCover.line-numbers {
