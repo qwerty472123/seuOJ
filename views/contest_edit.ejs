@@ -115,8 +115,13 @@
             </div>
             <div class="field" id="ranking_group_info_div"<% if (!contest.need_secret) { %> style="display: none;"<% } %> >
                 <label>排行方式（格式：<code>[ { 选手分类码: [ "分类名称", "分类颜色" ] }, [ [ "排行表头", [ 选手分类码（为空代表全部） ], [ [ "基准线名称（前面的覆盖后面的）", 基准线为百分比取下整, 基准线值, "基准线颜色" ] ] ] ] ]</code>）</label>
-                <input type="text" name="ranking_group_info" value="<%= (contest.need_secret && contest.ranklist) ? JSON.stringify(contest.ranklist.ranking_group_info) : '[]' %>">
             </div>
+            </div>
+            <div id="ranking_group_info" class="editor editor-with-border" style="height: 100px; width: 100%; margin-bottom: 1em; ">
+              <%- this.showLoadingEditor(); %>
+            </div>
+            <input type="hidden" name="ranking_group_info">
+            <div class="ui form">
             <div class="inline field">
               <label class="ui header">进行封榜（仅 ICPC/SCC）</label>
               <div class="ui toggle checkbox">
@@ -161,15 +166,16 @@
         </form>
 <script>
 var editors = {
-  subtitle: { defaultValue: <%- serializejs(contest.subtitle) %> },
-  information: { defaultValue: <%- serializejs(contest.information) %> }
+  subtitle: { defaultValue: <%- serializejs(contest.subtitle) %>, lang: 'markdown' },
+  information: { defaultValue: <%- serializejs(contest.information) %>, lang: 'markdown' },
+  ranking_group_info: { defaultValue: <%- serializejs((contest.need_secret && contest.ranklist) ? JSON.stringify(contest.ranklist.ranking_group_info) : '[]') %>, lang: 'json' }
 };
 window.onEditorLoaded(function () {
   for (var name in editors) {
     var editor = editors[name];
     var editorElement = document.getElementById(name);
     var input = document.getElementsByName(name)[0];
-    editor.editor = window.createMarkdownEditor(editorElement, editor.defaultValue, input);
+    editor.editor = window.createMarkdownEditor(editorElement, editor.defaultValue, input, editor.lang);
   }
 
   $('#submit_button').removeClass('disabled');
