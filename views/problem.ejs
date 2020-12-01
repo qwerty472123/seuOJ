@@ -128,9 +128,9 @@ if (contest) {
 </div>
 </div>
 <div class="ui grid">
-  <div class="row" style="margin-top: -64px;pointer-events: none;">
+  <div class="row">
     <div class="column">
-      <div class="ui buttons right floated" style="pointer-events: auto;">
+      <div class="ui buttons">
         <% if (typeof contest !== 'undefined' && contest) { %>
           <% if (!contest.ended && !forceNoSubmit) { %>
             <a class="small ui primary button" href="#submit_code">提交</a>
@@ -160,12 +160,8 @@ if (contest) {
           </a>
         <% } %>
       </div>
-    </div>
-  </div>
       <% if (!contest) { %>
-        <div class="row" style="margin-top: -104px;pointer-events: none;">
-        <div class="column">
-        <div class="ui buttons right floated" style="pointer-events: auto;">
+        <div class="ui buttons right floated">
           <% if (problem.allowedEdit) { %>
             <a class="small ui button" href="<%= syzoj.utils.makeUrl(['problem', problem.id, 'edit']) %>">编辑</a>
             <a class="small ui button" href="<%= syzoj.utils.makeUrl(['problem', problem.id, 'manage']) %>">管理</a>
@@ -200,9 +196,10 @@ if (contest) {
             <div class="small ui red button" onclick="$('#modal-delete').modal('show')">删除</div>
           <% } %>
         </div>
-        </div>
-        </div>
       <% } %>
+    </div>
+  </div>
+      
       <% if (language_limit && language_limit === 'Undetermined') { %>
       <div class="ui basic modal" id="modal-submit-lang">
         <div class="ui icon header">

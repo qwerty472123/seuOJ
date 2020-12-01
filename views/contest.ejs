@@ -44,6 +44,8 @@
             <% } %>
             <% if (allowReleaseRank) { %>
               <a class="ui small red button" href-post="<%= syzoj.utils.makeUrl(['contest', contest.id, 'release_ranklist']) %>">释放榜单</a>
+            <% } else if (havingUnpublicProblems) { %>
+              <a class="ui small red button" href-post="<%= syzoj.utils.makeUrl(['contest', contest.id, 'public_problems']) %>">公开全部题目</a>
             <% } %>
           <% } %>
         </div>

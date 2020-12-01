@@ -5,10 +5,13 @@ const Problem = syzoj.model('problem');
 const JudgeState = syzoj.model('judge_state');
 const User = syzoj.model('user');
 const Secret = syzoj.model('secret');
+const ProblemTagMap = syzoj.model('problem_tag_map');
+const ProblemTag = syzoj.model('problem_tag');
+
 const randomstring = require('randomstring');
 const xlsx = require('xlsx');
-
 const jwt = require('jsonwebtoken');
+
 const { getSubmissionInfo, getRoughResult, processOverallResult } = require('../libs/submissions_process');
 
 app.get('/contests', async (req, res) => {
@@ -50,14 +53,31 @@ app.get('/contest/:id/edit', async (req, res) => {
       await contest.loadRelationships();
     }
 
-    let problems = [], admins = [];
-    if (contest.problems) problems = await contest.problems.split('|').mapAsync(async id => await Problem.fromID(id));
+    let problems = [], admins = [], tags = [];
+    if (contest.problems) {
+      problems = await contest.problems.split('|').mapAsync(async id => await Problem.fromID(id));
+      if (problems.length > 0) {
+        let problemsTags = await problems.mapAsync(async problem => (await ProblemTagMap.findAll({
+          where: {
+            problem_id: problem.id
+          }
+        })).map(map => map.tag_id));
+        let comm = problemsTags[0].filter(id => !problemsTags.some(x => !x.includes(id)));
+        tags = await comm.mapAsync(async id => {
+          return ProblemTag.fromID(id);
+        });
+        tags.sort((a, b) => {
+          return a.color > b.color ? 1 : -1;
+        });
+      }
+    }
     if (contest.admins) admins = await contest.admins.split('|').mapAsync(async id => await User.fromID(id));
 
     res.render('contest_edit', {
-      contest: contest,
-      problems: problems,
-      admins: admins
+      contest,
+      problems,
+      admins,
+      tags
     });
   } catch (e) {
     syzoj.log(e);
@@ -153,7 +173,9 @@ app.post('/contest/:id/edit', async (req, res) => {
     if (!Array.isArray(req.body.admins)) req.body.admins = [req.body.admins];
     let fixedPids = [];
     for (let pid of req.body.problems) fixedPids.push(pid.startsWith('P') ? pid.slice(1) : pid);
-    contest.problems = fixedPids.join('|');
+    let problems = await fixedPids.mapAsync(async x => Problem.fromID(parseInt(x)));
+    problems = problems.filter(x => !!x);
+    contest.problems = problems.map(x => x.id).join('|');
     contest.admins = req.body.admins.join('|');
     contest.information = req.body.information;
     contest.start_time = syzoj.utils.parseDate(req.body.start_time);
@@ -193,6 +215,31 @@ app.post('/contest/:id/edit', async (req, res) => {
     }
 
     await contest.save();
+
+    let prevTags = [], newTags = [];
+    if (req.body.common_tags) {
+      if (Array.isArray(req.body.common_tags)) {
+        newTags = req.body.common_tags;
+      } else {
+        newTags = [req.body.common_tags];
+      }
+      newTags = newTags.map(x => parseInt(x));
+    }
+    if (req.body.previous_common_tags && req.body.previous_common_tags.length > 0) {
+      prevTags = req.body.previous_common_tags.split('|').map(x => x.trim()).filter(x => x.length > 0).map(x => parseInt(x));
+    }
+    let removeIds = prevTags.filter(x => !newTags.includes(x));
+    let addIds = newTags.filter(x => !prevTags.includes(x));
+    if (removeIds.length > 0 || addIds.length > 0) {
+      for (let problem of problems) {
+        let newTagIDs = Array.from(new Set((await ProblemTagMap.findAll({
+          where: {
+            problem_id: problem.id
+          }
+        })).map(map => map.tag_id).filter(id => !removeIds.includes(id)).concat(addIds)));
+        await problem.setTags(newTagIDs);
+      }
+    }
 
     res.redirect(syzoj.utils.makeUrl(['contest', contest.id]));
   } catch (e) {
@@ -674,20 +721,23 @@ app.get('/contest/:id', async (req, res) => {
       }
     }
     let allowReleaseRank = false;
-    if (isSupervisior && contest.ended && contest.freeze_time) {
-      if (contest.ranklist.freeze_ranking && contest.ranklist.freeze_ranking.length == 1) allowReleaseRank = true;
+    let havingUnpublicProblems = false;
+    if (isSupervisior && contest.ended) {
+      if (contest.freeze_time && contest.ranklist.freeze_ranking && contest.ranklist.freeze_ranking.length == 1) allowReleaseRank = true;
+      if (!allowReleaseRank && problems.some(x => !x.problem.is_public)) havingUnpublicProblems = true;
     }
     res.render('contest', {
-      contest: contest,
-      problems: problems,
-      hasStatistics: hasStatistics,
-      isSupervisior: isSupervisior,
+      contest,
+      problems,
+      hasStatistics,
+      isSupervisior,
       needSecret: !await contest.allowedSecret(req, res),
       isLogin: !!curUser,
       needBan: contest.ban_count && !!curUser && contest.isRunning() && (!player || !player.ban_problems_id || player.ban_problems_id.split('|').length < contest.ban_count),
       banIds: (contest.ban_count && !!curUser && !!player && !!player.ban_problems_id && player.ban_problems_id.split('|').length === contest.ban_count) 
               ? player.ban_problems_id.split('|').map(x => parseInt(x)) : null,
-      allowReleaseRank: allowReleaseRank
+      allowReleaseRank,
+      havingUnpublicProblems
     });
   } catch (e) {
     syzoj.log(e);
@@ -1155,6 +1205,31 @@ app.post('/contest/:id/release_ranklist', async (req, res) => {
     await contest.loadRelationships();
     contest.ranklist.freeze_ranking = [];
     await contest.ranklist.save();
+
+    res.redirect(syzoj.utils.makeUrl(['contest', id]));
+  } catch (e) {
+    syzoj.log(e);
+    res.render('error', {
+      err: e
+    });
+  }
+});
+
+app.post('/contest/:id/public_problems', async (req, res) => {
+  try {
+    let id = parseInt(req.params.id);
+    if (syzoj.config.cur_vip_contest && id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
+    let contest = await Contest.fromID(id);
+    if (!contest) throw new ErrorMessage('无此比赛。');
+    if (!await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('权限不足！');
+    if (!contest.isEnded()) throw new ErrorMessage('比赛未结束！');
+    
+    let problems_id = await contest.getProblems();
+    let problems = await problems_id.mapAsync(async id => await Problem.fromID(id));
+
+    for (let problem of problems.filter(x => !x.is_public)) {
+      await problem.setPublic(true, res.locals.user);
+    }
 
     res.redirect(syzoj.utils.makeUrl(['contest', id]));
   } catch (e) {

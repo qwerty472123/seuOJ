@@ -147,6 +147,15 @@
               <% } %>
               </select>
           </div>
+          <div class="field">
+            <label>公共题目标签</label>
+            <select class="ui fluid search dropdown" multiple="" id="common_tags" name="common_tags">
+              <% for (let tag of tags) { %>
+                <option value="<%= tag.id %>" selected><%= tag.name %></option>
+              <% } %>
+            </select>
+            <input type="hidden" name="previous_common_tags" value="<%= tags.map(x => x.id).join('|') %>" />
+          </div>
             <div style="text-align: center; "><button id="submit_button" type="submit" class="ui disabled labeled icon blue button"><i class="ui edit icon"></i>提交</button></div>
           </div>
         </form>
@@ -203,6 +212,20 @@ $(function () {
           var a = $('#search_languages').val();
           if (response.results) {
             response.results = response.results.filter(function(x){ return !a.includes(x.value)});
+          }
+          return response;
+        },
+        cache: false
+      }
+    });
+    $('#common_tags')
+    .dropdown({
+      apiSettings: {
+        url: '/api/v2/search/tags/{query}',
+        onResponse: function (response) {
+          var a = $('#common_tags').val().map(function (x) { return parseInt(x) });
+          if (response.results) {
+            response.results = response.results.filter(function(x) { return !a.includes(parseInt(x.value));});
           }
           return response;
         },

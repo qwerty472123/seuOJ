@@ -582,18 +582,7 @@ async function setPublic(req, res, is_public) {
     let problem = await Problem.fromID(id);
     if (!problem) throw new ErrorMessage('无此题目。');
 
-    let allowedManage = await problem.isAllowedManageBy(res.locals.user);
-    if (!allowedManage) throw new ErrorMessage('您没有权限进行此操作。');
-
-    problem.is_public = is_public;
-    problem.publicizer_id = res.locals.user.id;
-    problem.publicize_time = new Date();
-    await problem.save();
-
-    JudgeState.model.update(
-      { is_public: is_public },
-      { where: { problem_id: id } }
-    );
+    await problem.setPublic(is_public, res.locals.user);
 
     if (req.query.type === 'json') {
       res.send({success: true});

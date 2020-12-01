@@ -614,6 +614,22 @@ class Problem extends Model {
     }
   }
 
+  async setPublic(is_public, user) {
+    const JudgeState = syzoj.model('judge_state');
+    let allowedManage = await this.isAllowedManageBy(user);
+    if (!allowedManage) throw new ErrorMessage('您没有权限进行此操作。');
+
+    this.is_public = is_public;
+    this.publicizer_id = user.id;
+    this.publicize_time = new Date();
+    await this.save();
+
+    JudgeState.model.update(
+      { is_public: is_public },
+      { where: { problem_id: this.id } }
+    );
+  }
+
   async changeID(id) {
     id = parseInt(id);
     await db.query('UPDATE `problem`         SET `id`         = ' + id + ' WHERE `id`         = ' + this.id);
