@@ -109,7 +109,7 @@
             <div class="inline field">
               <label class="ui header">需要准入码</label>
               <div class="ui toggle checkbox">
-                <input type="checkbox"<% if (contest.need_secret) { %> checked<% } %> name="need_secret" onchange="$('#ranking_group_info_div').slideToggle();">
+                <input type="checkbox"<% if (contest.need_secret) { %> checked<% } %> name="need_secret" onchange="$('#ranking_group_info_div,#ranking_group_info').slideToggle();">
                 <label><span style="visibility: hidden; ">　</span></label>
               </div>
             </div>
@@ -153,7 +153,7 @@
               </select>
           </div>
           <div class="field">
-            <label>公共题目标签</label>
+            <label>公共题目标签（有且仅有对本条的更改将对提交后的题目列表中的题目生效）</label>
             <select class="ui fluid search dropdown" multiple="" id="common_tags" name="common_tags">
               <% for (let tag of tags) { %>
                 <option value="<%= tag.id %>" selected><%= tag.name %></option>
