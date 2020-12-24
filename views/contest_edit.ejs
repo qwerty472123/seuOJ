@@ -117,7 +117,14 @@
                 <label>排行方式（格式：<code>[ { 选手分类码: [ "分类名称", "分类颜色" ] }, [ [ "排行表头", [ 选手分类码（为空代表全部） ], [ [ "基准线名称（前面的覆盖后面的）", 基准线为百分比取下整, 基准线值, "基准线颜色" ] ] ] ] ]</code>）</label>
             </div>
             </div>
-            <div id="ranking_group_info" class="editor editor-with-border" style="height: 100px; width: 100%; margin-bottom: 1em; " <% if (!contest.need_secret) { %> style="display: none;"<% } %> >
+            <% if (!contest.need_secret) { %>
+            <style>
+              #ranking_group_info {
+                display: none;
+              }
+            </style>
+            <% } %>
+            <div id="ranking_group_info" class="editor editor-with-border" style="height: 100px; width: 100%; margin-bottom: 1em; ">
               <%- this.showLoadingEditor(); %>
             </div>
             <input type="hidden" name="ranking_group_info">
