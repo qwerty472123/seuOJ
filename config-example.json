@@ -88,7 +88,9 @@
     "nodejs",
     "ruby",
     "haskell",
-    "kotlin"
+    "kotlin",
+    "go",
+    "rust"
   ],
   "filter_enabled_languages": [
     "cpp",
@@ -108,7 +110,10 @@
     "nodejs",
     "ruby",
     "haskell",
-    "kotlin"
+    "kotlin",
+    "go",
+    "rust",
+    "fsharp"
   ],
   "links": [
     {

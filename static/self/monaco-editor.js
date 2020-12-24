@@ -598,6 +598,58 @@ require(['vs/editor/editor.main'], function () {
       }
 
       $.getScript(window.pathSelfLib + "monaco-editor-tomorrow.js", function () {
+        function insertTextIntoEditor(editor, text) {
+          var pos = editor.getPosition();
+          var model = editor.getModel();
+          model.pushEditOperations([], [{
+            range: {
+              startLineNumber: pos.lineNumber,
+              startColumn: pos.column,
+              endLineNumber: pos.lineNumber,
+              endColumn: pos.column
+            },
+            text: text,
+          }]);
+        }
+
+        function dragDrop(element, editor, lang) {
+          element.addEventListener('dragover', function (event) {
+            event.preventDefault();
+          });
+
+          element.addEventListener('drop', function (event) {
+            event.preventDefault();
+            var data = event.dataTransfer;
+            
+            if (lang == 'markdown') {
+              if (FileReader) {
+                var files = data.files;
+                var found = false;
+                for (var i = 0; i < files.length; i++) {
+                  var file = files[i];
+                  if (file.type.startsWith('image/')) {
+                    var reader = new FileReader();
+                    reader.onload = function() {
+                      insertTextIntoEditor(editor, '![image](' + this.result + ')');
+                      editor.focus();
+                    };
+
+                    reader.readAsDataURL(file);
+                    found = true;
+                  }
+                }
+                
+                if (found) return;
+              }
+            }
+            var text = data.getData("text/plain");
+            if (text) {
+              insertTextIntoEditor(editor, text);
+            }
+            editor.focus();
+          });
+        }
+
         window.createCodeEditor = function (editorElement, langauge, content) {
           editorElement.innerHTML = '';
           var editor = monaco.editor.create(editorElement, {
@@ -616,6 +668,8 @@ require(['vs/editor/editor.main'], function () {
             hideCursorInOverviewRuler: true,
             wordWrap: true
           });
+
+          dragDrop(editorElement, editor, langauge);
 
           autoLayout(editor);
           return editor;
@@ -642,6 +696,8 @@ require(['vs/editor/editor.main'], function () {
             hideCursorInOverviewRuler: true,
             wordWrap: true
           });
+
+          dragDrop(wrapperElement, editor, lang);
 
           input.form.addEventListener('submit', function () {
             input.value = editor.getValue();

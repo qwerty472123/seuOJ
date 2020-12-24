@@ -29,3 +29,9 @@ alter table contest_secret add column type int(11) DEFAULT NULL after secret;
 update contest_secret set type=0;
 RENAME TABLE contest_secret TO secret;
 ```
+
+## 2020/12/1 更新
+
+需同步升级 judge。
+
+在 sandbox 中 `apt install golang rustc fsharp`。

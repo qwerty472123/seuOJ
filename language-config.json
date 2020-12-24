@@ -65,8 +65,14 @@
   "csharp": {
     "show": "C#",
     "highlight": "csharp",
-    "version": "Mono 5.16.0.220",
+    "version": "Mono 6.12.0.90",
     "editor": "csharp"
+  },
+  "fsharp": {
+    "show": "F#",
+    "highlight": "fsharp",
+    "version": "Mono 6.12.0.90",
+    "editor": "fsharp"
   },
   "vala": {
     "show": "Vala",
@@ -140,7 +146,7 @@
   "vbnet": {
     "show": "Visual Basic",
     "highlight": "vbnet",
-    "version": "Mono 4.7",
+    "version": "Mono 6.12.0.90",
     "editor": "vbscript"
   },
   "kotlin": {
@@ -148,5 +154,17 @@
     "highlight": "kotlin",
     "version": "Kotlin 1.3.31",
     "editor": "kotlin"
+  },
+  "go": {
+    "show": "Go",
+    "highlight": "go",
+    "version": "Go 1.10.4",
+    "editor": "go"
+  },
+  "rust": {
+    "show": "Rust",
+    "highlight": "rust",
+    "version": "Rust 1.43.0",
+    "editor": "rust"
   }
 }

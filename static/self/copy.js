@@ -1,7 +1,7 @@
 $(function (){
-    $("pre").prepend("<a class=\"copy-button ui tiny button\" style=\"position: absolute;top: -1px;right: -7px;border-top-left-radius: 0px;border-bottom-right-radius: 0px\">复制</a>");
+    $(".ui.segment > pre").parent().prepend("<a class=\"copy-button ui tiny button\" style=\"position: absolute;top: 0;right: -4px;border-top-left-radius: 0px;border-bottom-right-radius: 0px\">复制</a>");
     $(".copy-button").click(function() {
-        var element = $(this).siblings("code");
+        var element = $(this).siblings("pre").find("code");
         var text = $(element).text();
         if (navigator.clipboard) {
             navigator.clipboard.writeText(text);
@@ -12,10 +12,9 @@ $(function (){
             document.execCommand("copy");
             $temp.remove();
         }
-        $(this).text("复制成功");
-        var e = this;
+        var e = $(this).addClass('green').text('成功');
         setTimeout(function() {
-            $(e).text("复制");
+            e.removeClass('green').text('复制');
         }, 500);
     });
 });
