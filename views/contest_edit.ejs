@@ -109,7 +109,7 @@
             <div class="inline field">
               <label class="ui header">需要准入码</label>
               <div class="ui toggle checkbox">
-                <input type="checkbox"<% if (contest.need_secret) { %> checked<% } %> name="need_secret" onchange="$('#ranking_group_info_div,#ranking_group_info').slideToggle();">
+                <input type="checkbox"<% if (contest.need_secret) { %> checked<% } %> name="need_secret" onchange="$('#ranking_group_info_div,#ranking_group_info').slideToggle();window.dispatchEvent(new Event('resize'));">
                 <label><span style="visibility: hidden; ">　</span></label>
               </div>
             </div>
