@@ -343,7 +343,8 @@ module.exports = {
         if (y.startsWith('#')) y += '\n';
         return y;
       }).join('').length; 
-    } else if (isJava) return code.split('\n').map(x => x.trim()).join('').length; 
-    else return code.length; // Like Python/Kotlin/Nodejs
+    } else if (isJava) return code.split('\n').map(x => x.trim()).join('').length;
+    else if (lang.startsWith('py')) return code.length * 2; // 2021 Python special rule
+    else return code.length; // Like Kotlin/Nodejs
   }
 };
