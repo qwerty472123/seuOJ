@@ -263,7 +263,7 @@ app.get('/contest/:id/secret', async (req, res) => {
     const sort = req.query.sort || syzoj.config.sorting.secret.field;
     const order = req.query.order || syzoj.config.sorting.secret.order;
     let searchData = {};
-    if (!['secret', 'extra_info', 'classify_code', 'user_id'].includes(sort) || !['asc', 'desc'].includes(order)) {
+    if (!['secret', 'extra_info', 'classify_code', 'user_id', 'email'].includes(sort) || !['asc', 'desc'].includes(order)) {
       throw new ErrorMessage('错误的排序参数。');
     }
     let where = {
@@ -276,6 +276,8 @@ app.get('/contest/:id/secret', async (req, res) => {
     if (req.query.extra_info) where.extra_info = { $like: `%${req.query.extra_info}%` };
     searchData.classify_code = req.query.classify_code || '';
     if (req.query.classify_code) where.classify_code = req.query.classify_code;
+    searchData.email = req.query.email || '';
+    if (req.query.email) where.email = req.query.email;
     searchData.user = [];
     if (req.query.user_ids) {
       if (!Array.isArray(req.query.user_ids)) req.query.user_ids = [req.query.user_ids];
@@ -337,6 +339,7 @@ app.post('/contest/:id/secret/apply', async (req, res) => {
     rec.user_id = user_id;
     rec.extra_info = req.body.extra_info;
     rec.classify_code = req.body.classify_code;
+    rec.email = req.body.email;
     await rec.save();
 
     res.send({ success: true });
@@ -386,6 +389,7 @@ app.post('/contest/:id/secret/delete_all', async (req, res) => {
     if (req.body.secret) where.secret = req.body.secret;
     if (req.body.extra_info) where.extra_info = { $like: `%${req.body.extra_info}%` };
     if (req.body.classify_code) where.classify_code = req.body.classify_code;
+    if (req.body.email) where.email = req.body.email;
     if (req.body.user_ids) {
       if (!Array.isArray(req.body.user_ids)) req.body.user_ids = [req.body.user_ids];
       let cond = [];
@@ -445,13 +449,13 @@ app.get('/contest/:id/secret/export', async (req, res) => {
 
     await secrets.forEachAsync(async v => await v.loadRelationships());
 
-    let table = [['准入码', '绑定信息', '分类码', '用户 ID', '用户名', '排名', '得分']];
+    let table = [['准入码', '绑定信息', '分类码', '用户 ID', '用户名', '邮箱', '排名', '得分']];
 
     if (contest.type !== 'scc') table[0].push(contest.type === 'acm' ? '罚时' : '最后一次提交时间');
     
     for (let secret of secrets) {
       let player = playersMap[secret.user_id];
-      let row = [secret.secret, secret.extra_info, secret.classify_code, secret.user_id, secret.user_desc];
+      let row = [secret.secret, secret.extra_info, secret.classify_code, secret.user_id, secret.user_desc, secret.email];
       if (player) {
         if (contest.type !== 'scc') {
           row.push(playersRank[secret.user_id], player.score);
@@ -487,6 +491,7 @@ const importColumn = {
   1: { desc: '绑定信息', column: 'extra_info', selected: true, required: true },
   2: { desc: '准入码', column: 'secret', default: () => randomstring.generate(16) },
   3: { desc: '用户 ID', column: 'user_id', default: () => '-1', parse: parseInt, match: /^\-?\d+$/ },
+  4: { desc: '邮箱', column: 'email', default: () => '', match: /^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$|^$/ },
 };
 
 app.get('/contest/:id/secret/import', async (req, res) => {

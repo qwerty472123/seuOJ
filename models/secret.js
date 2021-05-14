@@ -4,12 +4,13 @@ let db = syzoj.db;
 let model = db.define('secret', {
   id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
   secret: { type: Sequelize.STRING(120) },
-  // 0 for contest secret, 1 for domain secret
+  // 0 for contest secret, 1 for domain secret - not impl yet
   type: { type: Sequelize.INTEGER },
   type_id: { type: Sequelize.INTEGER },
   user_id: { type: Sequelize.INTEGER },
   extra_info: { type: Sequelize.TEXT },
-  classify_code: { type: Sequelize.INTEGER }
+  classify_code: { type: Sequelize.INTEGER },
+  email: { type: Sequelize.TEXT }
 }, {
     timestamps: false,
     tableName: 'secret',
@@ -38,7 +39,8 @@ class Secret extends Model {
       type_id: 0,
       user_id: -1,
       extra_info: '',
-      classify_code: 0
+      classify_code: 0,
+      email: ''
     }, val)));
   }
 

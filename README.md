@@ -5,6 +5,12 @@ SYZOJ(https://github.com/syzoj/syzoj) 修改版
 
 # 升级须知
 
+## 2021/5/4 更新
+
+```sql
+alter table secret add column email text after classify_code;
+```
+
 ## 2020/10/8 更新
 
 ```sql
