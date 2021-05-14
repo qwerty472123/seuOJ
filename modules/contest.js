@@ -1705,6 +1705,8 @@ app.post('/contest/:id/secret/send_mail', async (req, res) => {
 
     if (parseInt(req.query.number) !== await Secret.count(where)) throw new ErrorMessage('数目不匹配，请刷新重试');
 
+    const errMails = [];
+
     const secrets = await Secret.findAll({ where });
     for (const secret of secrets) {
       if (!secret.email) continue;
@@ -1712,11 +1714,22 @@ app.post('/contest/:id/secret/send_mail', async (req, res) => {
         ['extra_info', secret.extra_info],
         ['secret', secret.secret]
       ];
-      await Email.send(secret.email,
-        templateReplace(req.body.title, replacers),
-        templateReplace(req.body.content, replacers),
-        syzoj.config.agency_name
-      );
+      try {
+        await Email.send(secret.email,
+          templateReplace(req.body.title, replacers),
+          templateReplace(req.body.content, replacers),
+          syzoj.config.agency_name
+        );
+      } catch (e) {
+        errMails.push([secret.secret, secret.extra_info, secret.email, e.message].join('|'));
+      }
+    }
+
+    if (errMails.length !== 0) {
+      res.render('error', {
+        err: new ErrorMessage('部分发信失败，列表如下：', {}, errMails.join(';'))
+      });
+      return;
     }
     
     res.redirect(syzoj.utils.makeUrl(['contest', contest.id, 'secret']));
