@@ -8,8 +8,13 @@ const Secret = syzoj.model('secret');
 const ProblemTagMap = syzoj.model('problem_tag_map');
 const ProblemTag = syzoj.model('problem_tag');
 
+const Email = require('../libs/email');
+
 const randomstring = require('randomstring');
 const xlsx = require('xlsx');
+const fs = require('fs');
+const fsp = fs.promises;
+const path = require('path');
 const jwt = require('jsonwebtoken');
 
 const { getSubmissionInfo, getRoughResult, processOverallResult } = require('../libs/submissions_process');
@@ -1497,6 +1502,224 @@ app.post('/contest/:id/generate_resolve_json', async (req, res) => {
     result.push('');
     res.setHeader('Content-Type', 'application/json');
     res.send(result.join('\n'));
+  } catch (e) {
+    syzoj.log(e);
+    res.render('error', {
+      err: e
+    });
+  }
+});
+
+const mailTemplate = `<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>{contest_name} - 准入码发放</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, Helvetica Neue, PingFang SC, Microsoft YaHei, Source Han Sans SC, Noto Sans CJK SC, WenQuanYi Micro Hei, sans-serif
+        }
+    </style>
+</head>
+
+<body>
+
+    <style>
+        .awl a {
+            color: #FFFFFF;
+            text-decoration: none;
+        }
+
+        .abml a {
+            color: #000000;
+            font-family: Roboto-Medium, Helvetica, Arial, sans-serif;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .adgl a {
+            color: rgba(0, 0, 0, 0.87);
+            text-decoration: none;
+        }
+
+        .afal a {
+            color: #b0b0b0;
+            text-decoration: none;
+        }
+
+        _media screen and (min-width: 600px) {
+            .v2sp {
+                padding: 6px 30px 0px;
+            }
+
+            .v2rsp {
+                padding: 0px 10px;
+            }
+        }
+
+        _media screen and (min-width: 600px) {
+            .mdv2rw {
+                padding: 40px 40px;
+            }
+        }
+    </style>
+    <table width="100%" height="100%" style="min-width: 348px;" border="0" cellspacing="0" cellpadding="0" lang="en">
+        <tr height="32" style="height: 32px;">
+            <td></td>
+        </tr>
+        <tr align="center">
+            <td>
+                <table border="0" cellspacing="0" cellpadding="0"
+                    style="padding-bottom: 20px; max-width: 516px; min-width: 220px;">
+                    <tr>
+                        <td width="8" style="width: 8px;"></td>
+                        <td>
+                            <div style="border-style: solid; border-width: thin; border-color:#dadce0; border-radius: 8px; padding: 40px 20px;"
+                                align="center" class="mdv2rw"><img src="{logo_url}" width="{logo_width}"
+                                    height="{logo_height}" aria-hidden="true" style="margin-bottom: 16px;">
+                                <div
+                                    style="font-family: 'Google Sans',Roboto,RobotoDraft,Helvetica,Arial,sans-serif;border-bottom: thin solid #dadce0; color: rgba(0,0,0,0.87); line-height: 32px; padding-bottom: 24px;text-align: center; word-break: break-word;">
+                                    <div style="font-size: 24px;">{contest_name}</div>
+                                </div>
+                                <div
+                                    style="font-family: Roboto-Regular,Helvetica,Arial,sans-serif; font-size: 14px; color: rgba(0,0,0,0.87); line-height: 20px;padding-top: 20px; text-align: left;">
+                                    <p>您收到本邮件是因为您报名参加了 <b>{contest_name}</b>。</p>
+                                    <p>您的参赛信息为 <b>{extra_info}</b>，请核对，如有误请向赛事组织人员提出。</p>
+                                    <p>您的准入码为：</p>
+                                    <p style="font-size: 32px; text-align: center; user-select: all;">{secret}</p>
+                                    <p>在参赛前，您将被要求提供此准入码以认证身份，请牢记。</p>
+                                    <p>现在，请点击下面的按钮获取比赛的详细信息并按时参赛：</p>
+                                    <div style="text-align: center;"><a href="{contest_url}" target="_blank"
+                                            link-id="main-button-link"
+                                            style="font-family: 'Google Sans',Roboto,RobotoDraft,Helvetica,Arial,sans-serif; line-height: 16px; color: #ffffff; font-weight: 400; text-decoration: none;font-size: 14px;display:inline-block;padding: 10px 24px;background-color: #4184F3; border-radius: 5px; min-width: 90px;">参加比赛</a>
+                                    </div>
+                                </div>
+                                <div
+                                    style="padding-top: 20px; font-size: 12px; line-height: 16px; color: #5f6368; letter-spacing: 0.3px; text-align: center">
+                                    您也可以手动通过以下网址参加比赛：<br><a
+                                        style="color: rgba(0, 0, 0, 0.87);text-decoration: inherit;">{contest_url}</a>
+                                </div>
+                            </div>
+                            <div style="text-align: left;">
+                                <div
+                                    style="font-family: Roboto-Regular,Helvetica,Arial,sans-serif;color: rgba(0,0,0,0.54); font-size: 11px; line-height: 18px; padding-top: 12px; text-align: center;">
+                                    <div>如果您并未参加上述比赛，请忽略这封邮件。由此造成的不便敬请谅解。</div>
+                                    <div>{agency_name} {cur_date}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td width="8" style="width: 8px;"></td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr height="32" style="height: 32px;">
+            <td></td>
+        </tr>
+    </table>
+
+</body>
+
+</html>`;
+
+function templateReplace(template, replacers) {
+  for (let [name, value] of replacers) {
+    name = '{' + name + '}';
+    while (template.includes(name)) {
+      template = template.replace(name, value);
+    }
+  }
+  return template;
+}
+
+app.get('/contest/:id/secret/send_mail', async (req, res) => {
+  try {
+    let contest_id = parseInt(req.params.id);
+    if (syzoj.config.cur_vip_contest && contest_id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
+    let contest = await Contest.fromID(contest_id);
+    if (!contest) throw new ErrorMessage('无此比赛');
+    if (!contest.need_secret) throw new ErrorMessage('比赛不需要准入码');
+    if (!await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('权限不足！');
+
+    const currentProto = req.get("X-Forwarded-Proto") || req.protocol;
+    const host = currentProto + '://' + req.get('host');
+    const contestUrl = host + syzoj.utils.makeUrl(['contest', contest_id]);
+    let logo = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NTkuMjEgNzgxLjY4MiIgaGVpZ2h0PSI4MzMuNzk1IiB3aWR0aD0iNzAzLjE1NyI+PGcgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjQuNDQiPjxwYXRoIGQ9Ik00MzUuNDEgMTM1LjAwNmwtMTM4LjYwMiA5Ny4wNDktODMuOTUgNTguNzcxLTQxLjk4NSAyOS40MDggNDEuOTg1IDI5LjQwN0w0MzUuNDEgNTA1LjQ4M3YtMzEuMzM3TDI1Ny42NDIgMzQ5LjY2M2wtNDIuMDA4LTI5LjQwNyA0Mi4wMDgtMjkuNDA4IDgzLjk1LTU4Ljc3MSA5My44MTctNjUuNzEyeiIvPjxwYXRoIGQ9Ik0zNDYuMjczIDI3Ni4xOTlsMTM4LjYwMSA5Ny4wNDkgODMuOTUgNTguNzcxIDQxLjk4NiAyOS40MDgtNDEuOTg2IDI5LjQwNy0yMjIuNTUgMTU1Ljg0MlY2MTUuMzRMNTI0LjA0IDQ5MC44NTZsNDIuMDA4LTI5LjQwOC00Mi4wMDgtMjkuNDA3LTgzLjk1LTU4Ljc3Mi05My44MTctNjUuNzF6Ii8+PC9nPjwvc3ZnPg';
+    let logoWidth = 72, logoHeight = 72;
+    if (syzoj.config.logo.file) {
+      logoWidth = syzoj.config.logo.width * 3;
+      logoHeight = syzoj.config.logo.height * 3;
+      let logoExt = path.extname(syzoj.config.logo.file).slice(1).toLowerCase();
+      if (logoExt === 'jpg') logoExt = 'jpeg'; else if (logoExt === 'svg') logoExt = 'svg+xml';
+      logo = 'data:image/' + logoExt + ';base64,' + await fsp.readFile(syzoj.config.logo.file, 'base64');
+    }
+
+    res.render('secret_send_mail', {
+      curType: 'contest',
+      curTitle: contest.title,
+      curTypeDesc: '比赛',
+      curTypeId: contest.id,
+      contentTemplate: templateReplace(mailTemplate, [
+        ['contest_name', contest.title],
+        ['contest_url', contestUrl],
+        ['agency_name', syzoj.config.agency_name],
+        ['cur_date', require('moment')().format('YYYY-MM-DD')],
+        ['logo_url', logo],
+        ['logo_width', logoWidth],
+        ['logo_height', logoHeight]
+      ]),
+      titleTemplate: '{extra_info} 的 ' + contest.title + '准入码发放邮件'
+    });
+  } catch (e) {
+    syzoj.log(e);
+    res.render('error', {
+      err: e
+    });
+  }
+});
+
+app.post('/contest/:id/secret/send_mail', async (req, res) => {
+  try {
+    let contest_id = parseInt(req.params.id);
+    if (syzoj.config.cur_vip_contest && contest_id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
+    let contest = await Contest.fromID(contest_id);
+    if (!contest) throw new ErrorMessage('无此比赛');
+    if (!contest.need_secret) throw new ErrorMessage('比赛不需要准入码');
+    if (!await contest.isSupervisior(res.locals.user)) throw new ErrorMessage('权限不足！');
+
+    let where = {
+      type: 0,
+      type_id: contest.id
+    };
+    if (req.query.secret) where.secret = req.query.secret;
+    if (req.query.extra_info) where.extra_info = { $like: `%${req.query.extra_info}%` };
+    if (req.query.classify_code) where.classify_code = req.query.classify_code;
+    if (req.query.email) where.email = req.query.email;
+    if (req.query.user_ids) {
+      if (!Array.isArray(req.query.user_ids)) req.query.user_ids = [req.query.user_ids];
+      let cond = [];
+      for(let id of req.query.user_ids) cond.push({ $eq: id });
+      where.user_id = { $or: cond };
+    }
+
+    if (parseInt(req.query.number) !== await Secret.count(where)) throw new ErrorMessage('数目不匹配，请刷新重试');
+
+    const secrets = await Secret.findAll({ where });
+    for (const secret of secrets) {
+      if (!secret.email) continue;
+      const replacers = [
+        ['extra_info', secret.extra_info],
+        ['secret', secret.secret]
+      ];
+      await Email.send(secret.email,
+        templateReplace(req.body.title, replacers),
+        templateReplace(req.body.content, replacers),
+        syzoj.config.agency_name
+      );
+    }
+    
+    res.redirect(syzoj.utils.makeUrl(['contest', contest.id, 'secret']));
   } catch (e) {
     syzoj.log(e);
     res.render('error', {

@@ -5,10 +5,15 @@ const nodemailer = require('nodemailer');
 
 let doSendEmail;
 
+function getAlias(alias) {
+    if (!alias) alias = syzoj.config.title;
+    return alias;
+}
+
 if (syzoj.config.email.method === "sendmail") {
-    doSendEmail = async function send_sendmail(to, subject, body) {
+    doSendEmail = async function send_sendmail(to, subject, body, alias) {
         await sendmail({
-            from: `${syzoj.config.title} <${syzoj.config.email.options.address}>`,
+            from: `${getAlias(alias)} <${syzoj.config.email.options.address}>`,
             to: to,
             type: 'text/html',
             subject: subject,
@@ -20,13 +25,13 @@ if (syzoj.config.email.method === "sendmail") {
         AccessKeyId: syzoj.config.email.options.AccessKeyId,
         AccessKeySecret: syzoj.config.email.options.AccessKeySecret
     });
-    doSendEmail = async function send_aliyundm(to, subject, body) {
+    doSendEmail = async function send_aliyundm(to, subject, body, alias) {
         const result = await dm.singleSendMail({
             AccountName: syzoj.config.email.options.AccountName,
             AddressType: 1,
             ReplyToAddress: false,
             ToAddress: to,
-            FromAlias: syzoj.config.title,
+            FromAlias: getAlias(alias),
             Subject: subject,
             HtmlBody: body
         });
@@ -49,9 +54,9 @@ if (syzoj.config.email.method === "sendmail") {
     };
     const transporter = Bluebird.promisifyAll(nodemailer.createTransport(smtpConfig));
 
-    doSendEmail = async function send_smtp(to, subject, body) {
+    doSendEmail = async function send_smtp(to, subject, body, alias) {
         await transporter.sendMailAsync({
-            from: `"${syzoj.config.title}" <${syzoj.config.email.options.username}>`,
+            from: `"${getAlias(alias)}" <${syzoj.config.email.options.username}>`,
             to: to,
             subject: subject,
             html: body

@@ -1,5 +1,6 @@
 {
   "title": "SYZOJ",
+  "agency_name": "OJ 提供者",
   "hostname": "127.0.0.1",
   "port": "5283",
   "db": {
@@ -11,7 +12,8 @@
   "logo": {
     "url": null,
     "width": null,
-    "height": null
+    "height": null,
+    "file": null
   },
   "register_mail": false,
   "email": {
