@@ -72,14 +72,14 @@ Vue.component('submission-item', {
   <% if (active === 'submissions') { %>
   <td><a :href="submissionLink"><b><status-label :status="statusString" :progress="progress"></status-label></b></a></td>
   <% } else { %>
-  <td><b><status-label :status="statusString" :progress="progress"></status-label></b></td>
+  <td><a v-if="(curUser == data.info.userId)" :href="submissionLink"><b><status-label :status="statusString" :progress="progress"></status-label></b></a><b v-else><status-label :status="statusString" :progress="progress"></status-label></b></td>
   <% } %>
 
   <template v-if="data.result">
   <% if (active === 'submissions') { %>
   <td v-if="config.showScore"><a :href="submissionLink"><span class="score" :class="scoreClass">{{ Math.floor(data.result.score || 0) }}</span></a></td>
   <% } else { %>
-  <td v-if="config.showScore"><span class="score" :class="scoreClass">{{ Math.floor(data.result.score || 0) }}</span></td>
+  <td v-if="config.showScore"><a v-if="(curUser == data.info.userId)" :href="submissionLink"><span class="score" :class="scoreClass">{{ Math.floor(data.result.score || 0) }}</span></a><span v-else class="score" :class="scoreClass">{{ Math.floor(data.result.score || 0) }}</span></td>
   <% } %>
   <td v-if="config.showUsage">{{ (data.result.time || 0).toString() + ' ms' }}</td>
 
@@ -90,7 +90,7 @@ Vue.component('submission-item', {
   <% } %>
 
   </template> <template v-else>
-  <td v-if="config.showScore"><a :href="submissionLink"><span class="score score_0">0</span></a></td>
+  <td v-if="config.showScore"><a v-if="(<%- ((active === 'submissions')).toString() %> || curUser == data.info.userId)" :href="submissionLink"><span class="score score_0">0</span></a><span v-else class="score score_0">0</span></td>
   <td v-if="config.showUsage">0 ms</td>
   <td v-if="config.showUsage">0 B</td>
   </template>
@@ -99,7 +99,7 @@ Vue.component('submission-item', {
     <% if (active === 'submissions') { %>
     <span v-if="data.info.language"><a :href="submissionLink"><b>{{ data.info.language }}</b></a> / </span>
     <% } else { %>
-    <span v-if="data.info.language"><b>{{ data.info.language }}</b> / </span>
+    <span v-if="data.info.language"><a v-if="(curUser == data.info.userId)" :href="submissionLink"><b>{{ data.info.language }}</b></a><b v-else>{{ data.info.language }}</b> / </span>
     <% } %>
     {{ formatSize(data.info.codeSize, 1) }}
   </td>
