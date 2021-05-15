@@ -189,6 +189,11 @@ app.get('/submissions/diff/:a_id/:b_id', async (req, res) => {
       throw new Error("不是受支持的格式。");
     }
 
+    let contest = null;
+    if (a_judge.type === 1 && b_judge.type === 1 && a_judge.type_info === b_judge.type_info) {
+      contest = await Contest.fromID(a_judge.type_info);
+    }
+
     res.render('submissions_diff', {
       items: [a_judge, b_judge].map(x => ({
         info: getSubmissionInfo(x, displayConfig),
@@ -204,7 +209,8 @@ app.get('/submissions/diff/:a_id/:b_id', async (req, res) => {
       displayConfig: displayConfig,
       a_code: a_judge.code, b_code: b_judge.code,
       a_lang: syzoj.languages[a_judge.language].editor,
-      b_lang: syzoj.languages[b_judge.language].editor
+      b_lang: syzoj.languages[b_judge.language].editor,
+      contest
     });
   } catch (e) {
     syzoj.log(e);

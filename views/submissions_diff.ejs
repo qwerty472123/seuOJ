@@ -2,6 +2,9 @@
 <% include header %>
 <% include util %>
 <script src="<%- lib('textfit/2.3.1/textFit.min.js') %>"></script>
+<% if (contest) { %>
+<h1 style="text-align: center;"><a href="<%= syzoj.utils.makeUrl(['contest', contest.id]) %>"><%= contest.title %></a></h1>
+<% } %>
 <div class="padding">
     <style>
       .nopaddingfields > .field.ui {
