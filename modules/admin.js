@@ -423,7 +423,7 @@ app.post('/admin/rejudge', async (req, res) => {
       async function getExtraInfo(userId) {
         if (extraInfoMap.has(userId)) return extraInfoMap.get(userId);
         const secret = await Secret.find({ type: 0, type_id: contest.id, user_id: userId });
-        const info = secret.extra_info;
+        const info = secret ? secret.extra_info : '(空)';
         extraInfoMap.set(userId, info);
         return info;
       }
@@ -431,7 +431,7 @@ app.post('/admin/rejudge', async (req, res) => {
       async function getUsername(userId) {
         if (usernameMap.has(userId)) return usernameMap.get(userId);
         const user = await User.fromID(userId);
-        const name = user.username;
+        const name = user ? user.username : '(空)';
         usernameMap.set(userId, name);
         return name;
       }
