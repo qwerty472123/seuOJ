@@ -391,6 +391,7 @@ app.post('/admin/rejudge', async (req, res) => {
         await submission.rejudge();
       }
     } else if (req.body.type === 'sim') {
+      if (!sim.supportedTypes(req.body.lex_type)) throw new ErrorMessage('请选择查重词法分析方式。');
       let submissions = await JudgeState.query(null, where);
       let wb = xlsx.utils.book_new();
       let codes = new Map();
