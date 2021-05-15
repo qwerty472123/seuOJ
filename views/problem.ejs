@@ -409,7 +409,7 @@ if (contest) {
     window.editor = editor;
   });
   var lastSubmitted = '';
-  function submit_code() {
+  function submit_code(lang_checked) {
     if (!$('#submit_code input[name=answer]').val().trim() && !editor.getValue().trim()) return false;
     <% if (language_limit && language_limit === 'Undetermined') { %>
       if (!lang_checked) {
