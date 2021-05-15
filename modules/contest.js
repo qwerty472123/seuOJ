@@ -461,7 +461,7 @@ app.get('/contest/:id/secret/export', async (req, res) => {
     }
 
     let ws = xlsx.utils.aoa_to_sheet(table);
-    ws['!autofilter'] = { ref: 'A1:' + (contest.type !== 'scc' ? 'H' : 'G') + (1 + secrets.length) };
+    ws['!autofilter'] = { ref: 'A1:' + (contest.type !== 'scc' ? 'I' : 'H') + (1 + secrets.length) };
     ws['!cols'] = [];
     for(let i = 0; i < table[0].length; i++) {
       let maxCh = syzoj.utils.countTextWCH(table[0][i].toString(), 2) + 2;
