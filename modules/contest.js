@@ -412,17 +412,6 @@ app.post('/contest/:id/secret/delete_all', async (req, res) => {
   }
 });
 
-function countTextWCH(str, cnWCH) {
-  let wch = 0;
-  for (let i = 0; i < str.length; i++) {
-    if ((/[\x00-\xff]/g).test(str.charAt(i)))
-      wch += 1;
-    else
-      wch += cnWCH;
-  }
-  return wch;
-}
-
 app.get('/contest/:id/secret/export', async (req, res) => {
   try {
     let contest_id = parseInt(req.params.id);
@@ -475,8 +464,8 @@ app.get('/contest/:id/secret/export', async (req, res) => {
     ws['!autofilter'] = { ref: 'A1:' + (contest.type !== 'scc' ? 'H' : 'G') + (1 + secrets.length) };
     ws['!cols'] = [];
     for(let i = 0; i < table[0].length; i++) {
-      let maxCh = countTextWCH(table[0][i].toString(), 2) + 2;
-      for (let row of table) if (row[i]) maxCh = Math.max(maxCh, countTextWCH(row[i].toString(), 2));
+      let maxCh = syzoj.utils.countTextWCH(table[0][i].toString(), 2) + 2;
+      for (let row of table) if (row[i]) maxCh = Math.max(maxCh, syzoj.utils.countTextWCH(row[i].toString(), 2));
       ws['!cols'].push({ wch: maxCh });
     }
     xlsx.utils.book_append_sheet(wb, ws, '准入码信息');

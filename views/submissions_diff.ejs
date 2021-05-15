@@ -1,0 +1,107 @@
+<% this.title = '提交对比' %>
+<% include header %>
+<% include util %>
+<script src="<%- lib('textfit/2.3.1/textFit.min.js') %>"></script>
+<div class="padding">
+    <style>
+      .nopaddingfields > .field.ui {
+        padding-right: 0!important;
+      }
+    </style>
+
+  <table id="vueAppFuckSafari" class="ui very basic center aligned table" style="white-space: nowrap; " id="table">
+    <thead>
+      <tr>
+        <th>编号</th>
+        <th>题目</th>
+        <th>状态</th>
+        <th v-if="displayConfig.showScore">分数</th>
+        <th v-if="displayConfig.showUsage">总时间</th>
+        <th v-if="displayConfig.showUsage">内存</th>
+        <th v-if="displayConfig.showCode">代码 / 答案文件</th>
+        <th>提交者</th>
+        <th>提交时间</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="item in items" :config="displayConfig" :show-rejudge="false" :data="item" is='submission-item' :rough="true">
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<script src="<%- lib('vue/2.5.21/vue.min.js') %>"></script>
+<script src="<%- lib('socket.io/2.2.0/socket.io.js') %>"></script>
+
+<% include submissions_item %>
+
+<script>
+$(function () {
+  $('#select_language').dropdown();
+  $('#select_status').dropdown();
+});
+const itemList = <%- serializejs(items) %>;
+const socketUrl = "/rough";
+const displayConfig = <%- serializejs(displayConfig) %>;
+
+const vueApp = new Vue({
+  el: '#vueAppFuckSafari',
+  data: {
+    items: itemList,
+    displayConfig: displayConfig
+  },
+});
+
+if (itemList.some(function(t) {return t.token != null;})) {
+  const socket = io(socketUrl);
+  socket.on('connect', function () {
+    for (let x of itemList.filter(function(x) {return x.token != null;})){
+      const getItem = function (id){ return itemList.find(function(x){ return x.info.taskId === id; })};
+      socket.on('start', function (data) {
+        getItem(data.taskId).running = true;
+      });
+
+      socket.on('finish', function (data) {
+        getItem(data.taskId).running = false;
+        getItem(data.taskId).result = data.result;
+        if (itemList.every(function(x){ return x.result; })) {
+          socket.close();
+        }
+      });
+
+      socket.emit('join', x.token, function (data) {
+        if (data && data.ok) {
+          if (data.running) {
+            x.running = true;
+          } else if (data.finished) {
+            x.running = false;
+            x.result = data.result;
+          }
+        } else {
+          alert("ERROR: " + JSON.stringify(data));
+        }
+      });
+    }
+  })
+}
+</script>
+<% include monaco-editor %>
+<div style="display: flex; justify-content: center; margin-bottom: 20px;">
+  <div class="ui checkbox">
+    <input name="is_splited" type="checkbox">
+    <label>分栏模式</label>
+  </div>
+</div>
+<div id="editor" class="editor" style="border: 1px solid #D4D4D5; height: 500px; margin-bottom: 20px; " >
+  <%- this.showLoadingEditor(); %>
+</div>
+<script>
+window.onEditorLoaded(function () {
+  var editor;
+  window.editor = editor = window.createDiffEditor(document.getElementById("editor"), <%- serializejs(a_code) %>, <%- serializejs(a_lang) %>, <%- serializejs(b_code) %>, <%- serializejs(b_lang) %>);
+  editor.updateOptions({readOnly: true});
+});
+
+$('[name=is_splited]').change(function(){editor.updateOptions({renderSideBySide: $(this).is(':checked')})})
+</script>
+<% include footer %>

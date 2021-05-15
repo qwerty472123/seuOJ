@@ -5,6 +5,7 @@ let Contest = syzoj.model('contest');
 let Problem = syzoj.model('problem');
 
 const jwt = require('jsonwebtoken');
+const { judge } = require('../libs/judger');
 const { getSubmissionInfo, getRoughResult, processOverallResult } = require('../libs/submissions_process');
 
 const displayConfig = {
@@ -137,6 +138,73 @@ app.get('/submissions', async (req, res) => {
       displayConfig: viewConfig,
       isFiltered: isFiltered,
       allowLangs: allowLangs
+    });
+  } catch (e) {
+    syzoj.log(e);
+    res.render('error', {
+      err: e
+    });
+  }
+});
+
+app.get('/submissions/diff/:a_id/:b_id', async (req, res) => {
+  try {
+    const curUser = res.locals.user;
+    const a_id = parseInt(req.params.a_id);
+    const b_id = parseInt(req.params.b_id);
+    const a_judge = await JudgeState.fromID(a_id);
+    const b_judge = await JudgeState.fromID(b_id);
+    if (!a_judge || !b_judge) throw new ErrorMessage("提交记录 ID 不正确。");
+    if (!await a_judge.isAllowedVisitBy(curUser) || !await b_judge.isAllowedVisitBy(curUser)) throw new ErrorMessage('您没有权限进行此操作。');
+
+    if (a_judge.type === 1) {
+      let contest = await Contest.fromID(a_judge.type_info);
+      if (syzoj.config.cur_vip_contest && a_judge.type_info !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
+      contest.ended = contest.isEnded();
+
+      if ((!contest.ended || !contest.is_public) &&
+        !(await a_judge.problem.isAllowedEditBy(res.locals.user) || await contest.isSupervisior(curUser))) {
+        throw new Error("比赛未结束或未公开。");
+      }
+    } else {
+      if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
+    }
+    if (b_judge.type === 1) {
+      let contest = await Contest.fromID(b_judge.type_info);
+      if (syzoj.config.cur_vip_contest && b_judge.type_info !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
+      contest.ended = contest.isEnded();
+
+      if ((!contest.ended || !contest.is_public) &&
+        !(await b_judge.problem.isAllowedEditBy(res.locals.user) || await contest.isSupervisior(curUser))) {
+        throw new Error("比赛未结束或未公开。");
+      }
+    } else {
+      if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
+    }
+
+    await a_judge.loadRelationships();
+    await b_judge.loadRelationships();
+
+    if (a_judge.problem.type === 'submit-answer' || b_judge.problem.type === 'submit-answer') {
+      throw new Error("不是受支持的格式。");
+    }
+
+    res.render('submissions_diff', {
+      items: [a_judge, b_judge].map(x => ({
+        info: getSubmissionInfo(x, displayConfig),
+        token: (x.pending && x.task_id != null) ? jwt.sign({
+          taskId: x.task_id,
+          type: 'rough',
+          displayConfig: displayConfig
+        }, syzoj.config.session_secret) : null,
+        result: getRoughResult(x, displayConfig, true),
+        running: false,
+      })),
+      pushType: 'rough',
+      displayConfig: displayConfig,
+      a_code: a_judge.code, b_code: b_judge.code,
+      a_lang: syzoj.languages[a_judge.language].editor,
+      b_lang: syzoj.languages[b_judge.language].editor
     });
   } catch (e) {
     syzoj.log(e);

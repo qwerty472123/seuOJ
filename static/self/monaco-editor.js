@@ -675,6 +675,38 @@ require(['vs/editor/editor.main'], function () {
           return editor;
         };
 
+        window.createDiffEditor = function (editorElement, content_a, lang_a, content_b, lang_b) {
+          var originalModel = monaco.editor.createModel(content_a, lang_a);
+          var modifiedModel = monaco.editor.createModel(content_b, lang_b);
+          editorElement.innerHTML = '';
+          var editor = monaco.editor.createDiffEditor(editorElement, {
+            multicursorModifier: 'ctrlCmd',
+            cursorWidth: 1,
+            theme: 'tomorrow',
+            lineHeight: 22,
+            fontSize: 14,
+            fontFamily: "'Fira Mono', 'Bitstream Vera Sans Mono', 'Menlo', 'Consolas', 'Lucida Console', 'Source Han Sans SC', 'Noto Sans CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft Yahei', monospace",
+            lineNumbersMinChars: 4,
+            glyphMargin: false,
+            renderFinalNewline: true,
+            overviewRulerBorder: false,
+            hideCursorInOverviewRuler: true,
+            wordWrap: true,
+            enableSplitViewResizing: false,
+	          renderSideBySide: false
+          });
+
+          editor.setModel({
+            original: originalModel,
+            modified: modifiedModel
+          });          
+
+          dragDrop(editorElement, editor, 'diff');
+
+          autoLayout(editor);
+          return editor;
+        };
+
         window.createMarkdownEditor = function (wrapperElement, content, input, lang) {
           lang = lang || 'markdown';
           wrapperElement.innerHTML = '';

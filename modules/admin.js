@@ -2,12 +2,16 @@ const Problem = syzoj.model('problem');
 const JudgeState = syzoj.model('judge_state');
 const Article = syzoj.model('article');
 const Contest = syzoj.model('contest');
+const Secret = syzoj.model('secret');
 const User = syzoj.model('user');
 const UserPrivilege = syzoj.model('user_privilege');
 const RatingCalculation = syzoj.model('rating_calculation');
 const RatingHistory = syzoj.model('rating_history');
 const ContestPlayer = syzoj.model('contest_player');
 const calcRating = require('../libs/rating');
+
+const xlsx = require('xlsx');
+const sim = require('@4qwerty7/sim-node');
 
 let db = syzoj.db;
 
@@ -168,7 +172,6 @@ app.get('/admin/rating', async (req, res) => {
     if (!res.locals.user || !res.locals.user.is_admin) throw new ErrorMessage('您没有权限进行此操作。');
     const contests = await Contest.query(null, {}, [['start_time', 'desc']]);
     const calcs = await RatingCalculation.query(null, {}, [['id', 'desc']]);
-    const util = require('util');
     for (const calc of calcs) await calc.loadRelationships();
 
     res.render('admin_rating', {
@@ -260,9 +263,14 @@ app.get('/admin/rejudge', async (req, res) => {
   try {
     if (!res.locals.user || !res.locals.user.is_admin) throw new ErrorMessage('您没有权限进行此操作。');
 
+    const contests = await Contest.query(null, {}, [['start_time', 'desc']]);
+    const simTypes = sim.supportedTypes;
+
     res.render('admin_rejudge', {
       form: {},
-      count: null
+      count: null,
+      contests,
+      simTypes
     });
   } catch (e) {
     syzoj.log(e);
@@ -364,6 +372,15 @@ app.post('/admin/rejudge', async (req, res) => {
       else if (req.body.language === 'non-submit-answer') where.language = { $not: '' };
       else where.language = req.body.language;
     }
+    if (req.body.contest) {
+      let val = parseInt(req.body.contest);
+      if (val === -1) where.type = 0;
+      else if (val === -2) where.type = 1;
+      else {
+        where.type = 1;
+        where.type_info = val;
+      }
+    }
     if (req.body.status) where.status = { $like: req.body.status + '%' };
     if (req.body.problem_id) where.problem_id = parseInt(req.body.problem_id) || -1;
 
@@ -373,11 +390,96 @@ app.post('/admin/rejudge', async (req, res) => {
       for (let submission of submissions) {
         await submission.rejudge();
       }
+    } else if (req.body.type === 'sim') {
+      let submissions = await JudgeState.query(null, where);
+      let wb = xlsx.utils.book_new();
+      let codes = new Map();
+      let submissionMap = new Map();
+      for (let submission of submissions) {
+        submissionMap.set(submission.id, submission);
+        codes.set(submission.id, submission.code);
+      }
+      const diffs = await sim(req.body.lex_type, codes);
+      let contest = null;
+      if (req.body.contest) {
+        let val = parseInt(req.body.contest);
+        if (val > 0) {
+          contest = await Contest.fromID(val);
+        }
+      }
+
+      let table = [['A 的提交ID', 'A 的题目ID', 'A 的用户ID', 'A 的用户名', 'A 的绑定信息', 'B 的提交ID', 'B 的题目ID', 'B 的用户ID', 'B 的用户名', 'B 的绑定信息', '相似度', '比较网址', '相同用户', '相同题目']];
+
+      let secret = contest && contest.need_secret;
+      if (!secret) {
+        table[0] = table[0].filter(x => !x.includes('绑定信息'));
+      }
+
+      let lineno = 1;
+      const currentProto = req.get("X-Forwarded-Proto") || req.protocol;
+      const host = currentProto + '://' + req.get('host');
+      const extraInfoMap = new Map();
+      async function getExtraInfo(userId) {
+        if (extraInfoMap.has(userId)) return extraInfoMap.get(userId);
+        const secret = await Secret.find({ type: 0, type_id: contest.id, user_id: userId });
+        const info = secret.extra_info;
+        extraInfoMap.set(userId, info);
+        return info;
+      }
+      const usernameMap = new Map();
+      async function getUsername(userId) {
+        if (usernameMap.has(userId)) return usernameMap.get(userId);
+        const user = await User.fromID(userId);
+        const name = user.username;
+        usernameMap.set(userId, name);
+        return name;
+      }
+      for (let [a_id, b_id, rate] of diffs) {
+        lineno++;
+        let a = submissionMap.get(a_id);
+        let b = submissionMap.get(b_id);
+        let row = [];
+        row.push(a.id, a.problem_id, a.user_id);
+        row.push(await getUsername(a.user_id));
+        if (secret) row.push(await getExtraInfo(a.user_id));
+        row.push(b.id, b.problem_id, b.user_id);
+        row.push(await getUsername(b.user_id));
+        if (secret) row.push(await getExtraInfo(b.user_id));
+        row.push(rate);
+        const url = host + syzoj.utils.makeUrl(['submissions', 'diff', a.id, b.id]);
+        row.push({ t: 's', l: { Target: url, Tooltip: "比较具体内容" }, v: url });
+        if (secret) {
+          row.push({ t: 's', f: `C${lineno}=H${lineno}`, toString: () => (a.user_id === b.user_id).toString().toUpperCase() });
+          row.push({ t: 's', f: `B${lineno}=G${lineno}`, toString: () => (a.user_id === b.user_id).toString().toUpperCase() });
+        } else {
+          row.push({ t: 's', f: `C${lineno}=G${lineno}`, toString: () => (a.user_id === b.user_id).toString().toUpperCase() });
+          row.push({ t: 's', f: `B${lineno}=F${lineno}`, toString: () => (a.user_id === b.user_id).toString().toUpperCase() });
+        }
+        table.push(row);
+      }
+
+      let ws = xlsx.utils.aoa_to_sheet(table);
+      ws['!autofilter'] = { ref: 'A1:' + (secret ? 'N' : 'L') + (1 + diffs.length) };
+      ws['!cols'] = [];
+      for(let i = 0; i < table[0].length; i++) {
+        let maxCh = syzoj.utils.countTextWCH(table[0][i].toString(), 2) + 2;
+        for (let row of table) if (row[i]) maxCh = Math.max(maxCh, syzoj.utils.countTextWCH(row[i].toString(), 2));
+        ws['!cols'].push({ wch: maxCh });
+      }
+      xlsx.utils.book_append_sheet(wb, ws, '查重结果');
+      res.writeHead(200, [['Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'], ['Content-Disposition', require('content-disposition')((contest ? contest.title + '_' : '') + '查重结果.xlsx')]]);
+      res.end(xlsx.write(wb, { bookType: 'xlsx', bookSST: false, type: 'buffer' }));
+      return;
     }
+
+    const contests = await Contest.query(null, {}, [['start_time', 'desc']]);
+    const simTypes = sim.supportedTypes;
 
     res.render('admin_rejudge', {
       form: req.body,
-      count: count
+      count: count,
+      contests,
+      simTypes
     });
   } catch (e) {
     syzoj.log(e);

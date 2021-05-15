@@ -332,6 +332,16 @@ module.exports = {
       attempt();
     });
   },
+  countTextWCH(str, cnWCH) {
+    let wch = 0;
+    for (let i = 0; i < str.length; i++) {
+      if ((/[\x00-\xff]/g).test(str.charAt(i)))
+        wch += 1;
+      else
+        wch += cnWCH;
+    }
+    return wch;
+  },
   calcCodeLength(code, lang) { // Only support Java/C/Python/Kotlin/Nodejs
     lang = lang.toLowerCase();
     let isC = lang.startsWith('c');
