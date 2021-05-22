@@ -94,6 +94,9 @@ if (itemList.some(function(t) {return t.token != null;})) {
     <input name="is_splited" type="checkbox">
     <label>分栏模式</label>
   </div>
+  <% if (rate) { %>
+    <span style="margin-left: 20px;">相似度: <%= rate %>%</span>
+  <% } %>
 </div>
 <div id="editor" class="editor" style="border: 1px solid #D4D4D5; height: 500px; margin-bottom: 20px; " >
   <%- this.showLoadingEditor(); %>
@@ -103,8 +106,8 @@ window.onEditorLoaded(function () {
   var editor;
   window.editor = editor = window.createDiffEditor(document.getElementById("editor"), <%- serializejs(a_code) %>, <%- serializejs(a_lang) %>, <%- serializejs(b_code) %>, <%- serializejs(b_lang) %>);
   editor.updateOptions({readOnly: true});
+  $('[name=is_splited]').change(function(){editor.updateOptions({renderSideBySide: $(this).is(':checked')})});
+  $('[name=is_splited]').click();
 });
-
-$('[name=is_splited]').change(function(){editor.updateOptions({renderSideBySide: $(this).is(':checked')})})
 </script>
 <% include footer %>

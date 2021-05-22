@@ -5,7 +5,7 @@ let Contest = syzoj.model('contest');
 let Problem = syzoj.model('problem');
 
 const jwt = require('jsonwebtoken');
-const { judge } = require('../libs/judger');
+const sim = require('@4qwerty7/sim-node');
 const { getSubmissionInfo, getRoughResult, processOverallResult } = require('../libs/submissions_process');
 
 const displayConfig = {
@@ -194,6 +194,18 @@ app.get('/submissions/diff/:a_id/:b_id', async (req, res) => {
       contest = await Contest.fromID(a_judge.type_info);
     }
 
+    let rate = null;
+    if (req.query.rate && res.locals.user && res.locals.user.is_admin) {
+      let type = syzoj.languages[a_judge.language].sim;
+      if (!type) type = 'c++';
+      try {
+        const diffs = await sim(type, { a: a_judge.code, b: b_judge.code });
+        if (diffs.length > 0) rate = diffs[0][2];
+      } catch (err) {
+        // error
+      }
+    }
+
     res.render('submissions_diff', {
       items: [a_judge, b_judge].map(x => ({
         info: getSubmissionInfo(x, displayConfig),
@@ -210,7 +222,8 @@ app.get('/submissions/diff/:a_id/:b_id', async (req, res) => {
       a_code: a_judge.code, b_code: b_judge.code,
       a_lang: syzoj.languages[a_judge.language].editor,
       b_lang: syzoj.languages[b_judge.language].editor,
-      contest
+      contest,
+      rate
     });
   } catch (e) {
     syzoj.log(e);
