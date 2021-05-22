@@ -195,11 +195,13 @@ app.get('/submissions/diff/:a_id/:b_id', async (req, res) => {
     }
 
     let rate = null;
+    let simType = syzoj.languages[a_judge.language].sim;
+    if (!simType) simType = 'c++';
+    if (req.query.rate && sim.supportedTypes.includes(req.query.rate)) simType = req.query.rate;
+    if (!sim.supportedTypes.includes(simType)) simType = sim.supportedTypes[0];
     if (req.query.rate && res.locals.user && res.locals.user.is_admin) {
-      let type = syzoj.languages[a_judge.language].sim;
-      if (!type) type = 'c++';
       try {
-        const diffs = await sim(type, { a: a_judge.code, b: b_judge.code });
+        const diffs = await sim(simType, { a: a_judge.code, b: b_judge.code });
         if (diffs.length > 0) rate = diffs[0][2];
       } catch (err) {
         // error
@@ -219,11 +221,13 @@ app.get('/submissions/diff/:a_id/:b_id', async (req, res) => {
       })),
       pushType: 'rough',
       displayConfig: displayConfig,
+      a_id: a_judge.id, b_id: b_judge.id,
       a_code: a_judge.code, b_code: b_judge.code,
       a_lang: syzoj.languages[a_judge.language].editor,
       b_lang: syzoj.languages[b_judge.language].editor,
       contest,
-      rate
+      rate, simType,
+      can_rate: !req.query.rate && res.locals.user && res.locals.user.is_admin
     });
   } catch (e) {
     syzoj.log(e);

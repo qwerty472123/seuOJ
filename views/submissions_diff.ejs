@@ -89,13 +89,15 @@ if (itemList.some(function(t) {return t.token != null;})) {
 }
 </script>
 <% include monaco-editor %>
-<div style="display: flex; justify-content: center; margin-bottom: 20px;">
+<div style="display: flex; justify-content: center; margin-bottom: 20px; align-items: baseline;">
   <div class="ui checkbox">
     <input name="is_splited" type="checkbox">
     <label>分栏模式</label>
   </div>
   <% if (rate) { %>
-    <span style="margin-left: 20px;">相似度: <%= rate %>%</span>
+    <span style="margin-left: 20px;">相似度: <b><%= rate %>%</b> 词法分析方式: <b><%= simType %></b></span>
+  <% } else if (can_rate) { %>
+    <a style="margin-left: 20px;" href="<%= syzoj.utils.makeUrl(['submissions', 'diff', a_id, b_id], { rate: simType }) %>" class="ui green labeled icon mini button"><i class="ui code icon"></i>显示相似度</a>
   <% } %>
 </div>
 <div id="editor" class="editor" style="border: 1px solid #D4D4D5; height: 500px; margin-bottom: 20px; " >
