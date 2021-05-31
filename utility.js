@@ -152,7 +152,7 @@ module.exports = {
     });
   },
   gravatar(email, size, useLocalLibs) {
-    return gravatar.url(email, { s: size, d: 'mm' }).replace('//www.gravatar.com/avatar', useLocalLibs ? syzoj.config.local_gravatar_url : syzoj.config.gravatar_url);
+    return gravatar.url(email, { s: size, d: 'mm' }).replace('//www.gravatar.com/avatar', useLocalLibs ? (syzoj.config.local_gravatar_url === 'inner' ? '/gravatar' : syzoj.config.local_gravatar_url) : syzoj.config.gravatar_url);
   },
   async parseTestdata(dir, submitAnswer) {
     if (!await syzoj.utils.isDir(dir)) return null;

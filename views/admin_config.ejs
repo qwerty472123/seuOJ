@@ -9,7 +9,7 @@ function showTitle(title) {
 function showStringItem(name, text, val) {
   %>
   <div class="ui fluid input inline field">
-    <label style="line-height: 37.8px; font-weight: normal; "><%= text %></label>
+    <label style="line-height: 37.8px; font-weight: normal; "><%- text %></label>
     <input type="text" name="<%= name %>" value="<%= val %>">
   </div>
   <%
@@ -18,7 +18,7 @@ function showStringItem(name, text, val) {
 function showNumberItem(name, text, val) {
   %>
   <div class="ui fluid input inline field">
-    <label style="line-height: 37.8px; font-weight: normal; "><%= text %></label>
+    <label style="line-height: 37.8px; font-weight: normal; "><%- text %></label>
     <input type="number" name="<%= name %>" value="<%= val %>">
   </div>
   <%
@@ -29,7 +29,7 @@ function showBooleanItem(name, text, val) {
   <div class="inline field">
     <div class="ui toggle checkbox">
       <input name="<%= name %>" type="checkbox" class=""<% if (val) { %> checked<% } %>>
-      <label><%= text %></label>
+      <label><%- text %></label>
     </div>
   </div>
   <%

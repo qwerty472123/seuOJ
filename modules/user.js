@@ -5,6 +5,8 @@ const Contest = syzoj.model('contest');
 const ContestPlayer = syzoj.model('contest_player');
 const Secret = syzoj.model('secret');
 
+const proxy = require('express-http-proxy');
+
 // Ranklist
 app.get('/ranklist', async (req, res) => {
   try {
@@ -235,3 +237,43 @@ app.post('/user/:id/edit', async (req, res) => {
     });
   }
 });
+
+app.use('/gravatar', proxy(() => {
+  try {
+    return new URL(syzoj.config.gravatar_url).origin;
+  } catch (err) {
+    return 'https://www.gravatar.com';
+  }
+}, {
+  filter(req, res) {
+    return res.locals.useLocalLibs && syzoj.config.local_gravatar_url === 'inner' && req.method === 'GET';
+  },
+  memoizeHost: false,
+  parseReqBody: false,
+  proxyReqPathResolver(req) {
+    try {
+      return new URL(syzoj.config.gravatar_url).pathname + req.url;
+    } catch (err) {
+      return '/avatar' + req.url;
+    }
+  },
+  proxyReqOptDecorator(proxyReqOpts) {
+    const allows = ['cache-control', 'if-match', 'if-modified-since', 'if-none-match', 'if-unmodified-since', 'user-agent'];
+    const map = new Map(Object.entries(proxyReqOpts.headers).map(([key, value]) => [key.toLowerCase(), value]));
+    const res = {};
+    for (let key of allows) if (map.has(key)) {
+      res[key] = map.get(key);
+    }
+    proxyReqOpts.headers = res;
+    return proxyReqOpts;
+  },
+  userResHeaderDecorator(headers) {
+    const allows = ['cache-control', 'expires', 'last-modified', 'etag', 'content-disposition', 'content-length', 'link', 'date', 'content-type', 'pragma', 'vary', 'age'];
+    const map = new Map(Object.entries(headers).map(([key, value]) => [key.toLowerCase(), value]));
+    const res = {};
+    for (let key of allows) if (map.has(key)) {
+      res[key] = map.get(key);
+    }
+    return res;
+  }
+}));

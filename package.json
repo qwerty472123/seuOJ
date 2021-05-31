@@ -37,6 +37,7 @@
     "download": "^7.1.0",
     "ejs": "^2.6.1",
     "express": "^4.16.3",
+    "express-http-proxy": "^1.6.2",
     "express-session": "^1.15.6",
     "file-size": "^1.0.0",
     "fs-extra": "^7.0.1",
