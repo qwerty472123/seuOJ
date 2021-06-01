@@ -177,5 +177,17 @@
     "highlight": "rust",
     "version": "Rustc 1.47.0",
     "editor": "rust"
+  },
+  "scala": {
+    "show": "Scala",
+    "highlight": "scala",
+    "version": "Scala 2.13.6",
+    "editor": "scala"
+  },
+  "swift": {
+    "show": "Swift",
+    "highlight": "swift",
+    "version": "Swift 5.4.1",
+    "editor": "swift"
   }
 }

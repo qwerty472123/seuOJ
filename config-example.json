@@ -92,7 +92,10 @@
     "haskell",
     "kotlin",
     "go",
-    "rust"
+    "rust",
+    "fsharp",
+    "scala",
+    "swift"
   ],
   "filter_enabled_languages": [
     "cpp",
@@ -115,7 +118,9 @@
     "kotlin",
     "go",
     "rust",
-    "fsharp"
+    "fsharp",
+    "scala",
+    "swift"
   ],
   "links": [
     {

@@ -135,6 +135,18 @@ async function getVersions() {
             let haskell = await execRed('ghc --version');
             let ver = haskell.includes('version') ? haskell.split('version').pop().split(',')[0] : haskell.split(',').pop();
             result['haskell'] = 'GHC ' + ver.trim();
+        },
+        async () => {
+            let scala = await execRed('scalac --version');
+            scala = scala.replace(/\n/g, ' ').split(' ').filter(x => x.length > 0);
+            let name = scala[0], version = scala.includes("version") ? scala[scala.indexOf("version") + 1] : (scala.length >= 4 ? scala[3] : '');
+            result['scala'] = [name, version].join(' ').trim();
+        },
+        async () => {
+            let swift = await execRed('swiftc --version');
+            swift = swift.replace(/\n/g, ' ').split(' ').filter(x => x.length > 0);
+            let name = swift[0], version = swift.includes("version") ? swift[swift.indexOf("version") + 1] : (swift.length >= 4 ? swift[3] : '');
+            result['swift'] = [name, version].join(' ').trim();
         }
     ].map(func => func()));
     return result;
