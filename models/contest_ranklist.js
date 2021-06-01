@@ -90,7 +90,7 @@ class ContestRanklist extends Model {
         let score = 0;
         for (let i in player.score_details) {
           if (player.score_details[i].accepted) {
-            player.score_details[i].score = Math.pow(100,Math.sqrt(minLength[i] / player.score_details[i].minLength));
+            player.score_details[i].score = syzoj.utils.getSccRule(contest.scc_rule)[2](player.score_details[i].minLength, minLength[i]);
             score += player.score_details[i].score;
           } else player.score_details[i].score = 0;
         }

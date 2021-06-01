@@ -78,11 +78,17 @@ app.get('/contest/:id/edit', async (req, res) => {
     }
     if (contest.admins) admins = await contest.admins.split('|').mapAsync(async id => await User.fromID(id));
 
+    if ((!contest.id || contest.type === 'scc') && !contest.scc_rule) {
+      // Set latest to default
+      contest.scc_rule = Array.from(syzoj.utils.sccRules.keys()).pop();
+    }
+
     res.render('contest_edit', {
       contest,
       problems,
       admins,
-      tags
+      tags,
+      sccRules: Array.from(syzoj.utils.sccRules.entries())
     });
   } catch (e) {
     syzoj.log(e);
@@ -116,6 +122,13 @@ app.post('/contest/:id/edit', async (req, res) => {
     } else {
       await contest.loadRelationships();
       ranklist = contest.ranklist;
+    }
+
+    if (contest.type === 'scc') {
+      contest.scc_rule = req.body.scc_rule;
+      if (!syzoj.utils.sccRules.has(contest.scc_rule)) throw new ErrorMessage('短码规则不存在。');
+    } else {
+      contest.scc_rule = '';
     }
 
     try {
@@ -725,6 +738,13 @@ app.get('/contest/:id', async (req, res) => {
       if (contest.freeze_time && contest.ranklist.freeze_ranking && contest.ranklist.freeze_ranking.length == 1) allowReleaseRank = true;
       if (!allowReleaseRank && problems.some(x => !x.problem.is_public)) havingUnpublicProblems = true;
     }
+    
+    let scc = null;
+    if (contest.type === 'scc') {
+      let detail = syzoj.utils.getSccRule(contest.scc_rule);
+      scc = { ruleName: detail[0], codeHTML: detail[3] };
+    }
+
     res.render('contest', {
       contest,
       problems,
@@ -736,7 +756,8 @@ app.get('/contest/:id', async (req, res) => {
       banIds: (contest.ban_count && !!curUser && !!player && !!player.ban_problems_id && player.ban_problems_id.split('|').length === contest.ban_count) 
               ? player.ban_problems_id.split('|').map(x => parseInt(x)) : null,
       allowReleaseRank,
-      havingUnpublicProblems
+      havingUnpublicProblems,
+      scc
     });
   } catch (e) {
     syzoj.log(e);

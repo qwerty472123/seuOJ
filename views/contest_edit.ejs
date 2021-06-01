@@ -60,6 +60,23 @@
                 </div>
               </div>
             </div>
+            <% if (!contest.id || contest.type === 'scc') { %>
+            <div class="field" id="scc_rules" style="display: <%= contest.type === 'scc' ? 'block' : 'none' %>">
+                <label>短码得分统计规则（<% if (contest.id) { %>修改需重测所有提交，<% } %>管理员可在 <code>./libs/scc_rules.js</code> 内添加更多规则）</label>
+                <input type="hidden" name="scc_rule" id="scc_rule" value="<%= contest.scc_rule %>">
+                <div class="ui top attached tabular menu">
+                  <% for (let [key, [desc]] of sccRules) { %>
+                  <a class="item<% if (contest.scc_rule === key) { %> active<% } %>" data-tab="<%= key %>"><%= desc %></a>
+                  <% } %>
+                </div>
+                <% for (let [key, [_desc, _calcLen, _calcScore, codeHTML]] of sccRules) { %>
+                <div class="ui bottom attached tab segment<% if (contest.scc_rule === key) { %> active<% } %>" data-tab="<%= key %>">
+                  <pre style="margin-top: 0; margin-bottom: 0; "><code><%- codeHTML %></code></pre>
+                </div>
+                <% } %>
+                <script src="<%- selfLib('copy.js') %>"></script>
+            </div>
+            <% } %>
             <div class="field">
                 <label>排行参数（格式：<code>{ "题目 ID": 分值倍数 }</code>）</label>
                 <input type="text" name="ranking_params" value="<%= contest.ranklist ? JSON.stringify(contest.ranklist.ranking_params) : '' %>">
@@ -189,6 +206,12 @@ window.onEditorLoaded(function () {
 });
 
 $(function () {
+  <% if (!contest.id) { %>
+  $("input[type=radio][name=type]").change(function(e){ $("#scc_rules")[this.value === 'scc' ? 'slideDown' : 'slideUp']() });
+  <% } %>
+  <% if (!contest.id || contest.type === 'scc') { %>
+  $('#scc_rules .tabular.menu .item').tab({onVisible: function(path){ $('#scc_rule').val(path); }});
+  <% } %>
   $('#search_admins')
     .dropdown({
       apiSettings: {

@@ -342,19 +342,10 @@ module.exports = {
     }
     return wch;
   },
-  calcCodeLength(code, lang) { // Only support Java/C/Python/Kotlin/Nodejs
-    lang = lang.toLowerCase();
-    let isC = lang.startsWith('c');
-    let isJava = lang.startsWith('j');
-    code = code.replace(/\r\n/g,'\n');
-    if (isC) {
-      return code.split('\n').map(x => {
-        let y = x.trim();
-        if (y.startsWith('#')) y += '\n';
-        return y;
-      }).join('').length; 
-    } else if (isJava) return code.split('\n').map(x => x.trim()).join('').length;
-    else if (lang.startsWith('py')) return code.length * 2; // 2021 Python special rule
-    else return code.length; // Like Kotlin/Nodejs
+  sccRules: new Map(),
+  getSccRule(name) {
+    if (this.sccRules.has(name)) return this.sccRules.get(name);
+    if (this.sccRules.size >= 0) return Array.from(this.sccRules.values()).pop();
+    throw new ErrorMessage('短码规则不存在！');
   }
 };

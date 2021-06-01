@@ -31,6 +31,41 @@
           <% if(seeRanklist) { %>
             <a class="ui small blue button" href="<%= syzoj.utils.makeUrl(['contest', contest.id, 'ranklist']) %>">排行榜</a>
           <% } %>
+          <% if (scc) { %>
+          <button class="ui small orange button" id="buttonForSCCRule">得分规则</button>
+          <div class="ui large modal" id="modalForSCCRule">
+            <div class="header">短码竞赛得分统计规则</div>
+            <div class="content">
+              <div class="ui one column divided grid">
+                <div class="row">
+                  <div class="column">
+                    <h4 class="ui header">规则名称</h4>
+                    <p><%= scc.ruleName %></p>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="column">
+                    <h4 class="ui header">规则实现</h4>
+                    <div class="ui segment">
+                        <pre style="margin-top: 0; margin-bottom: 0; "><code><%- scc.codeHTML %></code></pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="actions">
+              <div class="ui approve blue button">确认</div>
+            </div>
+          </div>
+          <script type="text/javascript">
+            $(function(){
+              $('#buttonForSCCRule').click(function() {
+                $('#modalForSCCRule').modal('show');
+              });
+            });
+          </script>
+          <script src="<%- selfLib('copy.js') %>"></script>
+          <% } %>
           <% let submissionsUrl = seeResult ?
             syzoj.utils.makeUrl(['submissions'], {contest: contest.id}) :
             syzoj.utils.makeUrl(['contest', contest.id, 'submissions']); %>

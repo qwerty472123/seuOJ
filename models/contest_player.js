@@ -199,7 +199,7 @@ class ContestPlayer extends Model {
         this.score_details[judge_state.problem_id].submissions[judge_state.id] = {
           judge_id: judge_state.id,
           accepted: judge_state.status === 'Accepted',
-          length: judge_state.problem.type !== 'submit-answer' ? syzoj.utils.calcCodeLength(judge_state.code, judge_state.language) : judge_state.code_length,
+          length: judge_state.problem.type !== 'submit-answer' ? syzoj.utils.getSccRule(this.contest.scc_rule)[1](judge_state.code, judge_state.language) : judge_state.code_length,
           is_waiting: judge_state.status === 'Unknown'
         };
 

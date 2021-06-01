@@ -1,7 +1,4 @@
 const fs = require('fs'),
-      path = require('path'),
-      util = require('util'),
-      http = require('http'),
       serializejs = require('serialize-javascript'),
       UUID = require('uuid'),
       commandLineArgs = require('command-line-args');
@@ -34,6 +31,18 @@ global.syzoj = {
     winstonLib.configureWinston(!syzoj.production);
 
     this.utils = require('./utility');
+
+    let sccRules = new Map(require('./libs/scc_rules'));
+    function codeTabsEmit(func) {
+      let lines = func.toString().split('\n');
+      let minLen = lines.slice(1).map(line => line.length - line.trimLeft().length).reduce((x, y) => Math.min(x, y));
+      return lines.map(line => line.slice(0, minLen).trim().length === 0 ? line.slice(minLen) : line).join('\n');
+    }
+    let ruleColorizeTask = Array.from(sccRules.values()).forEachAsync(async rule => {
+      let showCode = `// The following script is executed by Node.js ${process.version}.\n\n/**\n * Calculate the length of the submitted code being counted.\n * @param {string} code The content of submitted code.\n * @param {string} lang The abbr. of the language used by the code.\n * @returns {number} the length of the submitted code being counted\n */\n${codeTabsEmit(rule[1])}\n\n/**\n * Calculate the player's score for one problem.\n * @param {string} len The shortest code length of this problem for this player.\n * @param {string} minLen The shortest code length of this problem among all players.\n * @returns {number} The score of this problem for this player, can be float.\n */\n${codeTabsEmit(rule[2])}`;
+      rule.push(await this.utils.highlight(showCode, syzoj.languages['nodejs'].highlight));
+    });
+    this.utils.sccRules = sccRules;
 
     // Set assets dir
     app.use(Express.static(__dirname + '/static', { maxAge: syzoj.production ? '1y' : 0 }));
@@ -75,7 +84,7 @@ global.syzoj = {
     const redis = require('redis');
     this.redis = redis.createClient(this.config.redis);
 
-    if (!module.parent) {
+    if (require.main === module) {
       // Loaded by node CLI, not by `require()`.
 
       if (process.send) {
@@ -90,6 +99,8 @@ global.syzoj = {
       }
 
       await this.lib('judger').connect();
+
+      await ruleColorizeTask;
 
       app.server.listen(parseInt(syzoj.config.port), syzoj.config.hostname, () => {
         this.log(`SYZOJ is listening on ${syzoj.config.hostname}:${parseInt(syzoj.config.port)}...`);

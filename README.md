@@ -5,6 +5,12 @@ SYZOJ(https://github.com/syzoj/syzoj) 修改版
 
 # 升级须知
 
+## 2021/6/1 更新
+
+```sql
+alter table contest add column scc_rule text after rank_open_time;
+```
+
 ## 2021/5/4 更新
 
 ```sql
