@@ -1,5 +1,5 @@
 <% this.title = '排名 - ' + contest.title %>
-<% include header %>
+<%- include('header') -%>
 <%
 let special_ranklist = contest.need_secret && contest.ranklist.ranking_group_info instanceof Array && contest.ranklist.ranking_group_info.length > 0;
 let ranklists_cfg = null;
@@ -261,4 +261,4 @@ if (special_ranklist) {
 </div>
 <% } %>
 </div>
-<% include footer %>
+<%- include('footer') -%>

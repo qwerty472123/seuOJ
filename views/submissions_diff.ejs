@@ -1,6 +1,6 @@
 <% this.title = '提交对比' %>
-<% include header %>
-<% include util %>
+<%- include('header') -%>
+<%- include('util') -%>
 <script src="<%- lib('textfit/2.3.1/textFit.min.js') %>"></script>
 <% if (contest) { %>
 <h1 style="text-align: center;"><a href="<%= syzoj.utils.makeUrl(['contest', contest.id]) %>"><%= contest.title %></a></h1>
@@ -34,9 +34,9 @@
 </div>
 
 <script src="<%- lib('vue/2.5.21/vue.min.js') %>"></script>
-<script src="<%- lib('socket.io/2.2.0/socket.io.js') %>"></script>
+<script src="<%- lib('socket.io/4.0.1/socket.io.min.js') %>"></script>
 
-<% include submissions_item %>
+<%- include('submissions_item') -%>
 
 <script>
 $(function () {
@@ -88,7 +88,7 @@ if (itemList.some(function(t) {return t.token != null;})) {
   })
 }
 </script>
-<% include monaco-editor %>
+<%- include('monaco-editor') -%>
 <div style="display: flex; justify-content: center; margin-bottom: 20px; align-items: baseline;">
   <div class="ui checkbox">
     <input name="is_splited" type="checkbox">
@@ -112,4 +112,4 @@ window.onEditorLoaded(function () {
   $('[name=is_splited]').click();
 });
 </script>
-<% include footer %>
+<%- include('footer') -%>

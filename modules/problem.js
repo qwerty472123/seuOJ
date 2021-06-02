@@ -481,7 +481,7 @@ app.post('/problem/:id/import', async (req, res) => {
     try {
       let data = await download(req.body.url + (req.body.url.endsWith('/') ? 'testdata/download' : '/testdata/download'));
       await fs.writeFileAsync(tmpFile.path, data);
-      await problem.updateTestdata(tmpFile.path, await res.locals.user.hasPrivilege('manage_problem'));
+      await problem.updateTestdata(tmpFile.path, await res.locals.user.hasPrivilege('manage_problem'), false);
       if (json.obj.have_additional_file) {
         let additional_file = await download(req.body.url + (req.body.url.endsWith('/') ? 'download/additional_file' : '/download/additional_file'));
         await fs.writeFileAsync(tmpFile.path, additional_file);
@@ -556,7 +556,7 @@ app.post('/problem/:id/manage', app.multer.fields([{ name: 'testdata', maxCount:
     if (validateMsg) throw new ErrorMessage('无效的题目数据配置。', null, validateMsg);
 
     if (req.files['testdata']) {
-      await problem.updateTestdata(req.files['testdata'][0].path, await res.locals.user.hasPrivilege('manage_problem'));
+      await problem.updateTestdata(req.files['testdata'][0].path, await res.locals.user.hasPrivilege('manage_problem'), req.body.use_dos2unix === 'on');
     }
 
     if (req.files['additional_file']) {
@@ -564,6 +564,26 @@ app.post('/problem/:id/manage', app.multer.fields([{ name: 'testdata', maxCount:
     }
 
     await problem.save();
+
+    res.redirect(syzoj.utils.makeUrl(['problem', id, 'manage']));
+  } catch (e) {
+    syzoj.log(e);
+    res.render('error', {
+      err: e
+    });
+  }
+});
+
+app.post('/problem/:id/delete/additional_file', async (req, res) => {
+  try {
+    if (syzoj.config.cur_vip_contest && (!res.locals.user || !await res.locals.user.hasPrivilege('manage_problem'))) throw new ErrorMessage('比赛中！');
+    let id = parseInt(req.params.id);
+    let problem = await Problem.fromID(id);
+
+    if (!problem) throw new ErrorMessage('无此题目。');
+    if (!await problem.isAllowedEditBy(res.locals.user)) throw new ErrorMessage('您没有权限进行此操作。');
+
+    await problem.removeAdditionalFile();
 
     res.redirect(syzoj.utils.makeUrl(['problem', id, 'manage']));
   } catch (e) {
@@ -827,7 +847,7 @@ app.post('/problem/:id/testdata/upload', app.multer.array('file'), async (req, r
 
     if (req.files) {
       for (let file of req.files) {
-        await problem.uploadTestdataSingleFile(file.originalname, file.path, file.size, await res.locals.user.hasPrivilege('manage_problem'));
+        await problem.uploadTestdataSingleFile(file.originalname, file.path, file.size, await res.locals.user.hasPrivilege('manage_problem'), req.body.use_dos2unix === 'on');
       }
     }
 

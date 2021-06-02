@@ -1,6 +1,6 @@
 <% this.adminPage = 'raw'; %>
-<% include admin_header %>
-<% include monaco-editor %>
+<%- include('admin_header') -%>
+<%- include('monaco-editor') -%>
 
 <form method="post">
 <div id="editor" class="editor" style="border: 1px solid #D4D4D5; height: 500px; margin-bottom: 20px; " >
@@ -26,4 +26,4 @@
     $('#submit_button').removeClass('disabled');
   });
   </script>
-<% include admin_footer %>
+<%- include('admin_footer') -%>

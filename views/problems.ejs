@@ -1,5 +1,5 @@
 <% this.title = '题库' %>
-<% include header %>
+<%- include('header') -%>
 <%
 let tagIDs = [];
 if (typeof tags !== 'undefined') tagIDs = tags.map(x => x.id);
@@ -152,7 +152,7 @@ if (typeof tags !== 'undefined') tagIDs = tags.map(x => x.id);
 
   <% if (problems.length) { %>
   <div style="margin-bottom: 30px; ">
-    <% include page %>
+    <%- include('page') -%>
   </div>
   <table class="ui very basic center aligned table">
     <thead>
@@ -217,7 +217,7 @@ if (typeof tags !== 'undefined') tagIDs = tags.map(x => x.id);
     <% } %>
     </tbody>
   </table><br>
-  <% include page  %>
+  <%- include('page') -%>
   <% } else { %>
   <div class="ui placeholder segment">
     <div class="ui icon header">
@@ -273,4 +273,4 @@ $(function () {
 });
 </script>
 </div>
-<% include footer %>
+<%- include('footer') -%>

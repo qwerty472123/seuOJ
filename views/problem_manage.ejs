@@ -1,11 +1,11 @@
 <% this.title = '管理题目'; %>
-<% include header %>
+<%- include('header') -%>
 <div class="padding">
     <div class="ui grid">
     <div class="row">
       <div class="seven wide column">
         <form class="ui form" method="post" action=""></form>
-        <% include problem_testcases %>
+        <%- include('problem_testcases') -%>
       </div>
       <div class="nine wide column">
         <form class="ui form" method="post" enctype="multipart/form-data" onsubmit="return checkSubmit()">
@@ -89,6 +89,10 @@
           </div>
           <div class="field">
             <label for="testdata">上传测试数据（请使用 ZIP 格式）</label>
+            <div class="ui checkbox">
+              <input name="use_dos2unix" checked type="checkbox">
+              <label>使用 <code>dos2unix</code> 规范化数据</label>
+            </div>
             <input type="file" id="testdata" name="testdata">
           </div>
           <div class="field">
@@ -97,6 +101,28 @@
           </div>
           <button type="submit" class="ui labeled icon blue button"><i class="ui edit icon"></i>提交</button>
           <a href="<%= syzoj.utils.makeUrl(['problem', problem.id]) %>" class="ui labeled icon button"><i class="ui angle left icon"></i>返回</a>
+          <% if (problem.additional_file_id) { %>
+          <button type="button" class="ui labeled icon red button" onclick="$('#modal-delete-additional_file').modal('show');"><i class="ui trash icon"></i>删除附加文件</button>
+          <div class="ui basic modal" id="modal-delete-additional_file">
+            <div class="ui icon header">
+              <i class="trash icon"></i>
+              <p style="margin-top: 15px; ">删除附加文件</p>
+            </div>
+            <div class="content" style="text-align: center; ">
+              <p>确认删除附加文件吗？</p>
+            </div>
+            <div class="actions">
+              <div class="ui red basic cancel inverted button">
+                <i class="remove icon"></i>
+                否
+              </div>
+              <a class="ui green ok inverted button" href-post="<%= syzoj.utils.makeUrl(['problem', problem.id, 'delete', 'additional_file']) %>">
+                <i class="checkmark icon"></i>
+                是
+              </a>
+            </div>
+          </div>
+          <% } %>
         </form>
       </div>
   </div>
@@ -150,4 +176,4 @@ function checkSubmit() {
   }
 }
 </script>
-<% include footer %>
+<%- include('footer') -%>

@@ -3,7 +3,7 @@ let Article = syzoj.model('article');
 let Contest = syzoj.model('contest');
 let Problem = syzoj.model('problem');
 let TimeAgo = require('javascript-time-ago');
-let zh = require('../libs/timeago');
+let zh = require('javascript-time-ago/locale/zh');
 TimeAgo.locale(zh);
 const timeAgo = new TimeAgo('zh-CN');
 

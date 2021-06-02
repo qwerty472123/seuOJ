@@ -1,7 +1,7 @@
-const fs = require('fs'),
-      serializejs = require('serialize-javascript'),
-      UUID = require('uuid'),
-      commandLineArgs = require('command-line-args');
+const fs = require('fs');
+const serializejs = require('serialize-javascript');
+const { v4: UUID } = require('uuid');
+const commandLineArgs = require('command-line-args');
 
 const optionDefinitions = [
     { name: 'config', alias: 'c', type: String, defaultValue: './config.json' },
@@ -51,12 +51,11 @@ global.syzoj = {
     app.set('view engine', 'ejs');
 
     // Use body parser
-    let bodyParser = require('body-parser');
-    app.use(bodyParser.urlencoded({
+    app.use(Express.urlencoded({
       extended: true,
       limit: '50mb'
     }));
-    app.use(bodyParser.json({ limit: '50mb' }));
+    app.use(Express.json({ limit: '50mb' }));
 
     // Use cookie parser
     app.use(require('cookie-parser')());

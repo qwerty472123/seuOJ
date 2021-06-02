@@ -1,5 +1,5 @@
 <% this.title = contest.title + ' - 比赛' %>
-<% include header %>
+<%- include('header') -%>
 <style>
 .ui.label.pointing.below.left::before { left: 12%; }
 .ui.label.pointing.below.right::before { left: 88%; }
@@ -306,4 +306,4 @@ function key_secret(event) {
 }
 <% } %>
 </script>
-<% include footer %>
+<%- include('footer') -%>

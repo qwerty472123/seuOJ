@@ -1,6 +1,6 @@
 <% this.title = '修改资料'; %>
-<% include header %>
-<% include monaco-editor %>
+<%- include('header') -%>
+<%- include('monaco-editor') -%>
 <div class="padding">
     <div class="ui <% if (error_info === '') { %>success<% } else { %>error<% } %> message" id="error" <% if (error_info === null) { %>hidden<% } %>>
       <% if (error_info !== null) {
@@ -18,7 +18,7 @@
       <div class="field">
 	    	<label for="sex">性别</label>
 	    	<select class="ui dropdown" name="sex">
-          <option value="0" <%= edited_user.sex == 0 ? 'selected': '' %>>其它</option>
+          <option value="0" <%= edited_user.sex == 0 ? 'selected': '' %>>其它/保密</option>
           <option value="1" <%= edited_user.sex == 1 ? 'selected': '' %>>男</option>
           <option value="-1" <%= edited_user.sex == -1 ? 'selected': '' %>>女</option>
         </select>
@@ -93,7 +93,7 @@
 		</form>
 	</div>
 </div>
-<script src="<%- lib('blueimp-md5/2.10.0/js/md5.min.js') %>"></script>
+<script src="<%- lib('blueimp-md5/2.18.0/js/md5.min.js') %>"></script>
 <script type="text/javascript">
 var editors = {
   information: { defaultValue: <%- serializejs(edited_user.information) %> },
@@ -152,4 +152,4 @@ $(function () {
 	$('.ui.dropdown:not(.simple)').dropdown();
 });
 </script>
-<% include footer %>
+<%- include('footer') -%>

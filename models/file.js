@@ -45,12 +45,30 @@ class File extends Model {
       return fullPath;
     });
 
-    let p7zip = new (require('node-7z')), zipFile = await tmp.tmpName() + '.zip';
-    await p7zip.add(zipFile, filenames);
+    let p7zip = require('node-7z'), zipFile = await tmp.tmpName() + '.zip';
+    await new Promise((resolve, reject) => p7zip.add(zipFile, filenames).on('end', resolve).on('error', reject));
 
     await fs.removeAsync(dir.path);
 
     return zipFile;
+  }
+
+  static async getUnzipInfoFromPath(path) {
+    try {
+      let p7zip = require('node-7z');
+      let size = 0, count = 0;
+      let stream = p7zip.list(path);
+      stream.on('data', file => {
+        console.log(file);
+        count++;
+        size += file.size;
+      });
+      await new Promise((resolve, reject) => stream.on('end', resolve).on('error', reject));
+      console.log('7z', size, count)
+      return { size, count };
+    } catch (e) {
+      return { size: null, count: null };
+    }
   }
 
   static async upload(path, type, noLimit) {
@@ -60,15 +78,7 @@ class File extends Model {
 
     if (!noLimit && buf.length > syzoj.config.limit.data_size) throw new ErrorMessage('数据包太大。');
 
-    try {
-      let p7zip = new (require('node-7z'));
-      this.unzipSize = 0;
-      await p7zip.list(path).progress(files => {
-        for (let file of files) this.unzipSize += file.size;
-      });
-    } catch (e) {
-      this.unzipSize = null;
-    }
+    this.unzipSize = (await File.getUnzipInfoFromPath(path)).size;
 
     let key = syzoj.utils.md5(buf);
     await fs.moveAsync(path, File.resolvePath(type, key), { overwrite: true });
@@ -87,19 +97,17 @@ class File extends Model {
 
   async getUnzipSize() {
     if (this.unzipSize === undefined)  {
-      try {
-        let p7zip = new (require('node-7z'));
-        this.unzipSize = 0;
-        await p7zip.list(this.getPath()).progress(files => {
-          for (let file of files) this.unzipSize += file.size;
-        });
-      } catch (e) {
-        this.unzipSize = null;
-      }
+      this.unzipSize = (await File.getUnzipInfoFromPath(this.getPath())).size;
     }
 
     if (this.unzipSize === null) throw new ErrorMessage('无效的 ZIP 文件。');
     else return this.unzipSize;
+  }
+
+  async remove() {
+    let fs = require('fs-extra');
+    await fs.remove(this.getPath());
+    await this.destroy();
   }
 
   getModel() { return model; }

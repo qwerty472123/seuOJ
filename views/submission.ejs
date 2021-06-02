@@ -1,6 +1,6 @@
 <% this.title = '提交记录 #' + info.submissionId %>
-<% include util %>
-<% include header %>
+<%- include('util') -%>
+<%- include('header') -%>
 <script src="<%- lib('textfit/2.3.1/textFit.min.js') %>"></script>
 <style>
 .single-subtask {
@@ -125,10 +125,10 @@
   </div>
 </div>
 <script src="<%- lib('vue/2.5.21/vue.min.js') %>"></script>
-<script src="<%- lib('socket.io/2.2.0/socket.io.js') %>"></script>
-<script src="<%- lib('jsondiffpatch/0.2.5/jsondiffpatch.min.js') %>"></script>
+<script src="<%- lib('socket.io/4.0.1/socket.io.min.js') %>"></script>
+<script src="<%- selfLib('vendor/jsondiffpatch/0.4.1/jsondiffpatch.umd.min.js') %>"></script>
 
-<% include submissions_item %>
+<%- include('submissions_item') -%>
 
 <script type="text/x-template" id="codeBoxTemplate">
     <div style="margin-top: 0px; margin-bottom: 14px; " v-if="content != null && content !== ''">
@@ -373,4 +373,4 @@ if (token != null) {
   });
 </script>
 </span>
-<% include footer %>
+<%- include('footer') -%>

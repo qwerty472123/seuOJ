@@ -1,5 +1,5 @@
 <% this.title = '讨论' %>
-<% include header %>
+<%- include('header') -%>
 <div class="padding">
   <div class="ui grid">
     <div class="row">
@@ -88,7 +88,7 @@
     </tbody>
   </table>
   <br>
-  <% include page %>
+  <%- include('page') -%>
   <% } else { %>
   <div class="ui placeholder segment">
     <div class="ui icon header">
@@ -104,4 +104,4 @@
   </div>
   <% } %>
 </div>
-<% include footer %>
+<%- include('footer') -%>

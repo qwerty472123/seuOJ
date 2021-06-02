@@ -1,11 +1,11 @@
 <% this.title = '编辑题目'; %>
-<% include header %>
+<%- include('header') -%>
 <style type="text/css">
   .problem_header{
     text-align: center;
   }
 </style>
-<% include monaco-editor %>
+<%- include('monaco-editor') -%>
 <div class="padding">
     <form method="post" action="<%= syzoj.utils.makeUrl(['problem', req.params.id, 'edit']) %>">
       <div class="ui top attached tabular menu">
@@ -160,4 +160,4 @@ $(function () {
     });
 });
 </script>
-<% include footer %>
+<%- include('footer') -%>

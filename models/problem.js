@@ -310,28 +310,33 @@ class Problem extends Model {
     return syzoj.utils.resolvePath(syzoj.config.upload_dir, 'testdata-archive', this.id.toString() + '.zip');
   }
 
-  async updateTestdata(path, noLimit) {
+  async updateTestdata(zipPath, noLimit, useDos2Unix) {
     await syzoj.utils.lock(['Problem::Testdata', this.id], async () => {
-      let unzipSize = 0, unzipCount = 0;
-      let p7zip = new (require('node-7z'));
-      await p7zip.list(path).progress(files => {
-        unzipCount += files.length;
-        for (let file of files) unzipSize += file.size;
-      });
-      if (!noLimit && unzipCount > syzoj.config.limit.testdata_filecount) throw new ErrorMessage('数据包中的文件太多。');
-      if (!noLimit && unzipSize > syzoj.config.limit.testdata) throw new ErrorMessage('数据包太大。');
+      let info = await File.getUnzipInfoFromPath(zipPath);
+      if (!noLimit && info.count > syzoj.config.limit.testdata_filecount) throw new ErrorMessage('数据包中的文件太多。');
+      if (!noLimit && info.size > syzoj.config.limit.testdata) throw new ErrorMessage('数据包太大。');
 
       let dir = this.getTestdataPath();
       await fs.remove(dir);
       await fs.ensureDir(dir);
 
+      // Do not use node-7z here for security reason
       let execFileAsync = Promise.promisify(require('child_process').execFile);
-      await execFileAsync(__dirname + '/../bin/unzip', ['-j', '-o', '-d', dir, path]);
-      await fs.move(path, this.getTestdataArchivePath(), { overwrite: true });
+      await execFileAsync(__dirname + '/../bin/unzip', ['-j', '-o', '-d', dir, zipPath]);
+
+      if (useDos2Unix) {
+        let list = await this.listTestdata(), pathlist = list.files.map(file => path.join(dir, file.filename));
+        let execFileAsync = Promise.promisify(require('child_process').execFile);
+        try { await pathlist.mapAsync(path => execFileAsync('dos2unix', [path]).catch(() => null)); } catch (e) {}
+        await fs.remove(zipPath);
+        await fs.remove(this.getTestdataArchivePath());
+      } else {
+        await fs.move(zipPath, this.getTestdataArchivePath(), { overwrite: true });
+      }
     });
   }
 
-  async uploadTestdataSingleFile(filename, filepath, size, noLimit) {
+  async uploadTestdataSingleFile(filename, filepath, size, noLimit, useDos2Unix) {
     await syzoj.utils.lock(['Promise::Testdata', this.id], async () => {
       let dir = this.getTestdataPath();
       await fs.ensureDir(dir);
@@ -350,8 +355,10 @@ class Problem extends Model {
 
       await fs.move(filepath, path.join(dir, filename), { overwrite: true });
 
-      let execFileAsync = Promise.promisify(require('child_process').execFile);
-      try { await execFileAsync('dos2unix', [path.join(dir, filename)]); } catch (e) {}
+      if (useDos2Unix) {
+        let execFileAsync = Promise.promisify(require('child_process').execFile);
+        try { await execFileAsync('dos2unix', [path.join(dir, filename)]); } catch (e) {}
+      }
 
       await fs.remove(this.getTestdataArchivePath());
     });
@@ -369,12 +376,12 @@ class Problem extends Model {
       let dir = this.getTestdataPath();
       if (!await syzoj.utils.isDir(dir)) throw new ErrorMessage('无测试数据。');
 
-      let p7zip = new (require('node-7z'));
+      let p7zip = require('node-7z');
 
       let list = await this.listTestdata(), pathlist = list.files.map(file => path.join(dir, file.filename));
       if (!pathlist.length) throw new ErrorMessage('无测试数据。');
       await fs.ensureDir(path.resolve(this.getTestdataArchivePath(), '..'));
-      await p7zip.add(this.getTestdataArchivePath(), pathlist);
+      await new Promise((resolve, reject) => p7zip.add(this.getTestdataArchivePath(), pathlist).on('end', resolve).on('error', reject));
     });
   }
 
@@ -433,10 +440,20 @@ class Problem extends Model {
     let file = await File.upload(path, type, noLimit);
 
     if (type === 'additional_file') {
+      await this.removeAdditionalFile(false);
       this.additional_file_id = file.id;
     }
 
     await this.save();
+  }
+
+  async removeAdditionalFile(save = true) {
+    if (this.additional_file_id) {
+      let additionalFile = await File.fromID(this.additional_file_id);
+      await additionalFile.remove();
+      this.additional_file_id = null;
+    }
+    if (save) await this.save();
   }
 
   async validate() {

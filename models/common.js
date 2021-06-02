@@ -1,4 +1,5 @@
-let Sequelize = require('sequelize');
+const Sequelize = require('sequelize');
+const { v4: UUID } = require('uuid');
 
 class Model {
   constructor(record) {
@@ -126,7 +127,7 @@ class Model {
 }
 
 function getSqlFromFindAll(Model, options) {
-  let id = require('uuid')();
+  let id = UUID();
 
   return new Promise((resolve, reject) => {
     Model.addHook('beforeFindAfterOptions', id, options => {

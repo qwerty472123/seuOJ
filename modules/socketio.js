@@ -81,7 +81,9 @@ function forAllClients(ns, taskId, exec) {
     });
 }
 function initializeSocketIO(s) {
-    ioInstance = socketio(s);
+    ioInstance = socketio(s, {
+        maxHttpBufferSize: 1e8
+    });
     const initializeNamespace = (name, exec) => {
         if (debug) winston.debug('initializing socketIO', name);
         const newNamespace = ioInstance.of('/' + name);
@@ -307,6 +309,5 @@ function cleanupProgress(taskId) {
     setTimeout(() => { delete currentJudgeList[taskId]; }, 10000);
 }
 exports.cleanupProgress = cleanupProgress;
-//# sourceMappingURL=socketio.js.map
 
 syzoj.socketIO = initializeSocketIO(app.server);
