@@ -1,7 +1,7 @@
 require.config({
   paths: {
     vs: window.pathLib + "monaco-editor/0.21.2/min/vs",
-    tokenizer: window.pathSelfLib + 'vendor/tokenizer'
+    tokenizer: window.pathLib + "monaco-ace-tokenizer/0.1.1"
   },
   'vs/nls': { availableLanguages: { '*': "zh-cn" } }
 });

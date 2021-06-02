@@ -1,7 +1,7 @@
 <% this.title = '提交记录 #' + info.submissionId %>
 <%- include('util') -%>
 <%- include('header') -%>
-<script src="<%- lib('textfit/2.3.1/textFit.min.js') %>"></script>
+<script src="<%- lib('textfit/2.4.0/textFit.min.js') %>"></script>
 <style>
 .single-subtask {
     box-shadow: none !important;
@@ -126,7 +126,7 @@
 </div>
 <script src="<%- lib('vue/2.5.21/vue.min.js') %>"></script>
 <script src="<%- lib('socket.io/4.0.1/socket.io.min.js') %>"></script>
-<script src="<%- selfLib('vendor/jsondiffpatch/0.4.1/jsondiffpatch.umd.min.js') %>"></script>
+<script src="<%- lib('jsondiffpatch/0.4.1/jsondiffpatch.umd.min.js') %>"></script>
 
 <%- include('submissions_item') -%>
 

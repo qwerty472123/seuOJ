@@ -67,18 +67,18 @@ this.iconHidden = [
 ];
 
 this.lib = uri => {
-  if (useLocalLibs || !syzoj.config.cdnjs_url) {
-    return syzoj.utils.makeUrl(['cdnjs', uri]);
+  if (useLocalLibs || !syzoj.config.cdn_url) {
+    return syzoj.utils.makeUrl(['vendor', uri]);
   } else {
-    return syzoj.config.cdnjs_url + '/' + uri;
+    return syzoj.config.cdn_url + '/vendor/' + uri;
   }
 }
 
 this.selfLib = uri => {
-  if (useLocalLibs || !syzoj.config.self_cdn_url) {
+  if (useLocalLibs || !syzoj.config.cdn_url) {
     return syzoj.utils.makeUrl(['self', uri]);
   } else {
-    return syzoj.config.self_cdn_url + '/' + uri;
+    return syzoj.config.cdn_url + '/self/' + uri;
   }
 }
 
