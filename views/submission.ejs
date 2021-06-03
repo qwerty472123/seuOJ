@@ -51,17 +51,20 @@
     </tbody>
   </table>
 
-  <code-box no-escape v-bind:content="code">
-    <% if (formattedCode !== null) { %>
-      <a onclick="toggleFormattedCode()" class="ui button" style="position: absolute; top: 0px; right: -4px; border-top-left-radius: 0; border-bottom-right-radius: 0; ">
-        <template v-if="currentFormatted">
-          显示原始代码
-        </template>
-        <template v-if="!currentFormatted">
-          格式化代码
-        </template>
-      </a>
-    <% } %>
+  <code-box id="user_code_box" no-escape v-bind:content="code">
+    <span style="position: absolute; top: -1px; right: -4px;">
+      <% if (formattedCode !== null) { %>
+        <a onclick="toggleFormattedCode()" class="ui tiny button" style="border-top-left-radius: 0;border-bottom-right-radius: 0;border-top-right-radius: 0;margin-right: -3px;">
+          <template v-if="currentFormatted">
+            显示原始代码
+          </template>
+          <template v-if="!currentFormatted">
+            格式化代码
+          </template>
+        </a>
+      <% } %>
+      <a class="copy-button ui tiny button" style="border-top-left-radius: 0;border-bottom-right-radius: 0;border-bottom-left-radius: 0;" data-for="#user_code_box .ui.segment pre code">复制</a>
+    </span>
   </code-box>
   <code-box v-if="detailResult && detailResult.compile" no-escape title="编译信息" v-bind:content="detailResult.compile.message"></code-box>
   <code-box v-if="detailResult" title="系统信息" :escape="!(detailResult.systemMessage&&detailResult.systemMessage.startsWith('Error: ===== Special Judge Compilation Message ====='))" v-bind:content="detailResult.systemMessage"></code-box>
@@ -373,4 +376,5 @@ if (token != null) {
   });
 </script>
 </span>
+<script src="<%- selfLib('copy.js') %>"></script>
 <%- include('footer') -%>
