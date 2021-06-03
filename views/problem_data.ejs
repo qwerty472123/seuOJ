@@ -44,7 +44,7 @@ function getIcon(filename) {
     <div class="nine wide column">
       <h3 style="text-align: center; ">文件列表</h3>
       <% if (testdata) { %>
-        <table class="ui very basic center aligned table">
+        <table class="ui pink unstackable compact center aligned table">
           <thead>
             <tr>
               <th class="left aligned">文件名</th>
@@ -106,6 +106,11 @@ function getIcon(filename) {
             </tr>
             <% } %>
           </tbody>
+          <tfoot>
+            <tr>
+              <th colspan="<%= problem.allowedEdit ? 4 : 3 %>" class="left aligned">共 <%= testdata.files ? testdata.files.length : 0 %> 个文件，总大小 <%= syzoj.utils.formatSize(testdata.files ? testdata.files.reduce((x, y) => x + y.size, 0) : 0) %></th>
+            </tr>
+          </tfoot>
         </table>
       <% } else { %>
         <h4 style="text-align: center; ">无测试数据</h4>

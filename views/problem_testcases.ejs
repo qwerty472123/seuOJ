@@ -10,15 +10,13 @@ let subtaskType = {
 <%
 } else if (testcases) {
 %>
-  <% if (testcases.spj) { %>
-    <p>评测方式：Special Judge</p>
-  <% } else if (problem.type === 'interaction') { %>
-    <p>评测方式：交互</p>
-  <% } else { %>
-    <p>评测方式：文本比较</p>
-  <% } %>
-  <table class="ui celled table">
+  <table class="ui green unstackable compact celled table">
     <tbody>
+      <tr>
+        <td style="background-color: #F9FAFB" colspan="<%= problem.type === 'submit-answer' ? 3 : 2 %>">
+          评测方式：<b><%= testcases.spj ? 'Special Judge' : (problem.type === 'interaction' ? '交互' : '文本比较') %></b>
+        </th>  
+      </tr>
       <% let i = 0; %>
       <% for (let subtask of testcases) { %>
         <% if (testcases.length !== 1) { %>

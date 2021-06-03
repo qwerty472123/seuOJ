@@ -69,15 +69,12 @@ function processRoughResult(source, config) {
     };
 }
 function forAllClients(ns, taskId, exec) {
-    ns.in(taskId.toString()).clients((err, clients) => {
-        if (!err) {
-            clients.forEach(client => {
-                exec(client);
-            });
-        }
-        else {
-            if (debug) winston.warn(`Error while listing socketio clients in ${taskId}`, err);
-        }
+    ns.in(taskId.toString()).allSockets().then(ids => {
+        ids.forEach(client => {
+            exec(client);
+        });
+    }, err => {
+        if (debug) winston.warn(`Error while listing socketio clients in ${taskId}`, err);
     });
 }
 function initializeSocketIO(s) {
@@ -251,7 +248,7 @@ function updateProgress(taskId, data) {
                 const original = clientDetailProgressList[client].content;
                 const updated = processOverallResult(currentJudgeList[taskId], clientDisplayConfigList[client]);
                 const version = clientDetailProgressList[client].version;
-                detailProgressNamespace.sockets[client].emit('update', {
+                detailProgressNamespace.sockets.get(client).emit('update', {
                     taskId: taskId,
                     from: version,
                     to: version + 1,
@@ -287,7 +284,7 @@ function updateResult(taskId, data) {
     finishedJudgeList[taskId] = roughResult;
     forAllClients(roughProgressNamespace, taskId, (client) => {
         if (debug) winston.debug(`Pushing rough result to ${client}`);
-        roughProgressNamespace.sockets[client].emit('finish', {
+        roughProgressNamespace.sockets.get(client).emit('finish', {
             taskId: taskId,
             result: processRoughResult(finishedJudgeList[taskId], clientDisplayConfigList[client])
         });
@@ -295,7 +292,7 @@ function updateResult(taskId, data) {
     forAllClients(detailProgressNamespace, taskId, (client) => {
         if (clientDisplayConfigList[client]) {
             if (debug) winston.debug(`Pushing detail result to ${client}`);
-            detailProgressNamespace.sockets[client].emit('finish', {
+            detailProgressNamespace.sockets.get(client).emit('finish', {
                 taskId: taskId,
                 result: processOverallResult(currentJudgeList[taskId], clientDisplayConfigList[client]),
                 roughResult: processRoughResult(finishedJudgeList[taskId], clientDisplayConfigList[client])

@@ -59,12 +59,10 @@ class File extends Model {
       let size = 0, count = 0;
       let stream = p7zip.list(path);
       stream.on('data', file => {
-        console.log(file);
         count++;
         size += file.size;
       });
       await new Promise((resolve, reject) => stream.on('end', resolve).on('error', reject));
-      console.log('7z', size, count)
       return { size, count };
     } catch (e) {
       return { size: null, count: null };
