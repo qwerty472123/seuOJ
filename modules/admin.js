@@ -20,7 +20,7 @@ app.get('/admin/info', async (req, res) => {
     if (!res.locals.user || !res.locals.user.is_admin) throw new ErrorMessage('您没有权限进行此操作。');
 
     let allSubmissionsCount = await JudgeState.count();
-    let todaySubmissionsCount = await JudgeState.count({ submit_time: { $gte: syzoj.utils.getCurrentDate(true) } });
+    let todaySubmissionsCount = await JudgeState.count({ submit_time: { [syzoj.db.Op.gte]: syzoj.utils.getCurrentDate(true) } });
     let problemsCount = await Problem.count();
     let articlesCount = await Article.count();
     let contestsCount = await Contest.count();
@@ -230,7 +230,7 @@ app.post('/admin/rating/add', async (req, res) => {
 app.post('/admin/rating/delete', async (req, res) => {
   try {
     if (!res.locals.user || !res.locals.user.is_admin) throw new ErrorMessage('您没有权限进行此操作。');
-    const calcList = await RatingCalculation.query(null, { id: { $gte: req.body.calc_id } }, [['id', 'desc']]);
+    const calcList = await RatingCalculation.query(null, { id: { [syzoj.db.Op.gte]: req.body.calc_id } }, [['id', 'desc']]);
     if (calcList.length === 0) throw new ErrorMessage('ID 不正确');
 
     for (let i = 0; i < calcList.length; i++) {
@@ -335,9 +335,9 @@ app.post('/admin/rejudge', async (req, res) => {
     if (isNaN(maxID)) maxID = 2147483647;
 
     where.id = {
-      $and: {
-        $gte: parseInt(minID),
-        $lte: parseInt(maxID)
+      [syzoj.db.Op.and]: {
+        [syzoj.db.Op.gte]: parseInt(minID),
+        [syzoj.db.Op.lte]: parseInt(maxID)
       }
     };
 
@@ -348,9 +348,9 @@ app.post('/admin/rejudge', async (req, res) => {
 
     if (!(minScore === 0 && maxScore === 100)) {
       where.score = {
-        $and: {
-          $gte: parseInt(minScore),
-          $lte: parseInt(maxScore)
+        [syzoj.db.Op.and]: {
+          [syzoj.db.Op.gte]: parseInt(minScore),
+          [syzoj.db.Op.lte]: parseInt(maxScore)
         }
       };
     }
@@ -361,15 +361,15 @@ app.post('/admin/rejudge', async (req, res) => {
     if (isNaN(maxTime)) maxTime = 2147483647;
 
     where.submit_time = {
-      $and: {
-        $gte: parseInt(minTime),
-        $lte: parseInt(maxTime)
+      [syzoj.db.Op.and]: {
+        [syzoj.db.Op.gte]: parseInt(minTime),
+        [syzoj.db.Op.lte]: parseInt(maxTime)
       }
     };
 
     if (req.body.language) {
-      if (req.body.language === 'submit-answer') where.language = { $or: [{ $eq: '',  }, { $eq: null }] };
-      else if (req.body.language === 'non-submit-answer') where.language = { $not: '' };
+      if (req.body.language === 'submit-answer') where.language = { [syzoj.db.Op.or]: [{ [syzoj.db.Op.eq]: '',  }, { [syzoj.db.Op.eq]: null }] };
+      else if (req.body.language === 'non-submit-answer') where.language = { [syzoj.db.Op.not]: '' };
       else where.language = req.body.language;
     }
     if (req.body.contest) {
@@ -381,7 +381,7 @@ app.post('/admin/rejudge', async (req, res) => {
         where.type_info = val;
       }
     }
-    if (req.body.status) where.status = { $like: req.body.status + '%' };
+    if (req.body.status) where.status = { [syzoj.db.Op.like]: req.body.status + '%' };
     if (req.body.problem_id) where.problem_id = parseInt(req.body.problem_id) || -1;
 
     let count = await JudgeState.count(where);

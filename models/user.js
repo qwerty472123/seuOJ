@@ -93,7 +93,7 @@ class User extends Model {
           user_id: this.id,
           status: 'Accepted',
           type: {
-            $ne: 1 // Not a contest submission
+            [syzoj.db.Op.ne]: 1 // Not a contest submission
           }
         }
       });
@@ -101,7 +101,7 @@ class User extends Model {
       this.submit_num = await JudgeState.count({
         user_id: this.id,
         type: {
-          $ne: 1 // Not a contest submission
+          [syzoj.db.Op.ne]: 1 // Not a contest submission
         }
       });
 
@@ -118,7 +118,7 @@ class User extends Model {
         user_id: this.id,
         status: 'Accepted',
         type: {
-          $ne: 1 // Not a contest submissio
+          [syzoj.db.Op.ne]: 1 // Not a contest submissio
         }
       },
       order: [["problem_id", "ASC"]]
@@ -133,7 +133,7 @@ class User extends Model {
     let all = await Article.model.findAll({
       attributes: ['id', 'title', 'public_time'],
       where: {
-        contest_id: { $eq: null },
+        contest_id: { [syzoj.db.Op.eq]: null },
         user_id: this.id
       }
     });

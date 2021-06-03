@@ -36,7 +36,7 @@ app.get('/submissions', async (req, res) => {
       if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) {
         res.redirect(syzoj.utils.makeUrl(['contest', syzoj.config.cur_vip_contest, 'submissions']));
       }
-      where.type = { $eq: 0 };
+      where.type = { [syzoj.db.Op.eq]: 0 };
     } else {
       const contestId = Number(req.query.contest);
       if (syzoj.config.cur_vip_contest && contestId !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
@@ -45,8 +45,8 @@ app.get('/submissions', async (req, res) => {
       if ((contest.ended && contest.is_public) || // If the contest is ended and is not hidden
         (curUser && await contest.isSupervisior(curUser)) // Or if the user have the permission to check
       ) {
-        where.type = { $eq: 1 };
-        where.type_info = { $eq: contestId };
+        where.type = { [syzoj.db.Op.eq]: 1 };
+        where.type_info = { [syzoj.db.Op.eq]: contestId };
         inContest = true;
         contestProblemsId = await contest.getProblems();
         if (contest.allow_languages) allowLangs = contest.allow_languages.split('|');
@@ -63,20 +63,20 @@ app.get('/submissions', async (req, res) => {
       if (isNaN(maxScore)) maxScore = 100;
       if (!(minScore === 0 && maxScore === 100)) {
         where.score = {
-          $and: {
-            $gte: parseInt(minScore),
-            $lte: parseInt(maxScore)
+          [syzoj.db.Op.and]: {
+            [syzoj.db.Op.gte]: parseInt(minScore),
+            [syzoj.db.Op.lte]: parseInt(maxScore)
           }
         };
       }
     }
 
     if (req.query.language) {
-      if (req.query.language === 'submit-answer') where.language = { $or: [{ $eq: '',  }, { $eq: null }] };
-      else if (req.query.language === 'non-submit-answer') where.language = { $not: '' };
+      if (req.query.language === 'submit-answer') where.language = { [syzoj.db.Op.or]: [{ [syzoj.db.Op.eq]: '',  }, { [syzoj.db.Op.eq]: null }] };
+      else if (req.query.language === 'non-submit-answer') where.language = { [syzoj.db.Op.not]: '' };
       else where.language = req.query.language;
     }
-    if (req.query.status) where.status = { $like: req.query.status + '%' };
+    if (req.query.status) where.status = { [syzoj.db.Op.like]: req.query.status + '%' };
 
     if (!inContest && (!curUser || !await curUser.hasPrivilege('manage_problem'))) {
       if (req.query.problem_id) {
@@ -86,8 +86,8 @@ app.get('/submissions', async (req, res) => {
           throw new ErrorMessage("无此题目。");
         if (await problem.isAllowedUseBy(res.locals.user)) {
           where.problem_id = {
-            $and: [
-              { $eq: where.problem_id = problem_id }
+            [syzoj.db.Op.and]: [
+              { [syzoj.db.Op.eq]: where.problem_id = problem_id }
             ]
           };
         } else {
@@ -95,7 +95,7 @@ app.get('/submissions', async (req, res) => {
         }
       } else {
         where.is_public = {
-          $eq: true,
+          [syzoj.db.Op.eq]: true,
         };
       }
     } else if (req.query.problem_id) {

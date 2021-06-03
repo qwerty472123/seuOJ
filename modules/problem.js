@@ -31,7 +31,7 @@ app.get('/problems', async (req, res) => {
     if (!res.locals.user || !await res.locals.user.hasPrivilege('manage_problem')) {
       if (res.locals.user) {
         where = {
-          $or: {
+          [syzoj.db.Op.or]: {
             is_public: 1,
             user_id: res.locals.user.id
           }
@@ -78,8 +78,8 @@ app.get('/problems/search', async (req, res) => {
     }
 
     let where = {
-      $or: {
-        title: { $like: `%${req.query.keyword}%` },
+      [syzoj.db.Op.or]: {
+        title: { [syzoj.db.Op.like]: `%${req.query.keyword}%` },
         id: id
       }
     };
@@ -87,10 +87,10 @@ app.get('/problems/search', async (req, res) => {
     if (!res.locals.user || !await res.locals.user.hasPrivilege('manage_problem')) {
       if (res.locals.user) {
         where = {
-          $and: [
+          [syzoj.db.Op.and]: [
             where,
             {
-              $or: {
+              [syzoj.db.Op.or]: {
                 is_public: 1,
                 user_id: res.locals.user.id
               }
@@ -99,7 +99,7 @@ app.get('/problems/search', async (req, res) => {
         };
       } else {
         where = {
-          $and: [
+          [syzoj.db.Op.and]: [
             where,
             {
               is_public: 1
@@ -233,7 +233,7 @@ app.get('/problem/:id', async (req, res) => {
 
     let testcases = await syzoj.utils.parseTestdata(problem.getTestdataPath(), problem.type === 'submit-answer');
 
-    let discussionCount = await Article.count({ contest_id: { $eq: null }, problem_id: id });
+    let discussionCount = await Article.count({ contest_id: { [syzoj.db.Op.eq]: null }, problem_id: id });
 
     res.render('problem', {
       problem: problem,

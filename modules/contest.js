@@ -296,7 +296,7 @@ app.get('/contest/:id/secret', async (req, res) => {
     searchData.secret = req.query.secret || '';
     if (req.query.secret) where.secret = req.query.secret;
     searchData.extra_info = req.query.extra_info || '';
-    if (req.query.extra_info) where.extra_info = { $like: `%${req.query.extra_info}%` };
+    if (req.query.extra_info) where.extra_info = { [syzoj.db.Op.like]: `%${req.query.extra_info}%` };
     searchData.classify_code = req.query.classify_code || '';
     if (req.query.classify_code) where.classify_code = req.query.classify_code;
     searchData.email = req.query.email || '';
@@ -306,7 +306,7 @@ app.get('/contest/:id/secret', async (req, res) => {
       if (!Array.isArray(req.query.user_ids)) req.query.user_ids = [req.query.user_ids];
       let cond = [];
       for(let id of req.query.user_ids) {
-        cond.push({ $eq: id });
+        cond.push({ [syzoj.db.Op.eq]: id });
         if (id == '-1') {
           searchData.user.push({ id: -1, name: '暂未绑定' });
           continue;
@@ -314,7 +314,7 @@ app.get('/contest/:id/secret', async (req, res) => {
         let user = await User.fromID(id);
         if (user) searchData.user.push({ id, name: user.username });
       }
-      where.user_id = { $or: cond };
+      where.user_id = { [syzoj.db.Op.or]: cond };
     }
     paginate = syzoj.utils.paginate(await Secret.count(where), req.query.page, syzoj.config.page.secret);
     secrets = await Secret.query(paginate, where, [[sort, order]]);
@@ -355,7 +355,7 @@ app.post('/contest/:id/secret/apply', async (req, res) => {
         req.body.secret = randomstring.generate(16);
       } while(await Secret.find({ type: 0, type_id: contest.id, secret: req.body.secret }));
     } else rec = await Secret.find({ type: 0, type_id: contest.id, secret: req.body.secret });
-    if (user_id != -1 && await Secret.find({type: 0, type_id: contest.id, user_id, secret: { $ne: req.body.secret }}))
+    if (user_id != -1 && await Secret.find({type: 0, type_id: contest.id, user_id, secret: { [syzoj.db.Op.ne]: req.body.secret }}))
       throw new ErrorMessage('一个用户只能绑定一个准入码');
     if (!rec) rec = await Secret.create({ type: 0, type_id: contest.id, secret: req.body.secret });
 
@@ -410,14 +410,14 @@ app.post('/contest/:id/secret/delete_all', async (req, res) => {
       type_id: contest.id
     };
     if (req.body.secret) where.secret = req.body.secret;
-    if (req.body.extra_info) where.extra_info = { $like: `%${req.body.extra_info}%` };
+    if (req.body.extra_info) where.extra_info = { [syzoj.db.Op.like]: `%${req.body.extra_info}%` };
     if (req.body.classify_code) where.classify_code = req.body.classify_code;
     if (req.body.email) where.email = req.body.email;
     if (req.body.user_ids) {
       if (!Array.isArray(req.body.user_ids)) req.body.user_ids = [req.body.user_ids];
       let cond = [];
-      for(let id of req.body.user_ids) cond.push({ $eq: id });
-      where.user_id = { $or: cond };
+      for(let id of req.body.user_ids) cond.push({ [syzoj.db.Op.eq]: id });
+      where.user_id = { [syzoj.db.Op.or]: cond };
     }
 
     if (parseInt(req.body.number) !== await Secret.count(where)) throw new ErrorMessage('数目不匹配，请刷新重试');
@@ -614,7 +614,7 @@ app.post('/contest/:id/secret/import', app.multer.fields([{ name: 'file', maxCou
 
     await syzoj.db.transaction(async trans => {
       for (let rec of records) {
-        if (rec.user_id != -1 && await Secret.find({type: 0, type_id: contest.id, user_id: rec.user_id, secret: { $ne: rec.secret }}))
+        if (rec.user_id != -1 && await Secret.find({type: 0, type_id: contest.id, user_id: rec.user_id, secret: { [syzoj.db.Op.ne]: rec.secret }}))
           throw new ErrorMessage('用户 ID 冲突');
         if (rec.secretNew && await Secret.find({type: 0, type_id: contest.id, secret: rec.secret })) {
           if (!rec.secretGen) throw new ErrorMessage('准入码冲突');
@@ -925,7 +925,7 @@ app.get('/contest/:id/submissions', async (req, res) => {
 
     let user = req.query.submitter && await User.fromName(req.query.submitter);
     let where = {
-      submit_time: { $gte: contest.start_time, $lte: contest.end_time }
+      submit_time: { [syzoj.db.Op.gte]: contest.start_time, [syzoj.db.Op.lte]: contest.end_time }
     };
     if (displayConfig.showOthers) {
       if (user) {
@@ -948,9 +948,9 @@ app.get('/contest/:id/submissions', async (req, res) => {
         if (isNaN(maxScore)) maxScore = 100;
         if (!(minScore === 0 && maxScore === 100)) {
           where.score = {
-            $and: {
-              $gte: parseInt(minScore),
-              $lte: parseInt(maxScore)
+            [syzoj.db.Op.and]: {
+              [syzoj.db.Op.gte]: parseInt(minScore),
+              [syzoj.db.Op.lte]: parseInt(maxScore)
             }
           };
         }
@@ -963,7 +963,7 @@ app.get('/contest/:id/submissions', async (req, res) => {
     }
 
     if (displayConfig.showResult) {
-      if (req.query.status) where.status = { $like: req.query.status + '%' };
+      if (req.query.status) where.status = { [syzoj.db.Op.like]: req.query.status + '%' };
     }
 
     if (req.query.problem_id) {
@@ -1708,14 +1708,14 @@ app.post('/contest/:id/secret/send_mail', async (req, res) => {
       type_id: contest.id
     };
     if (req.query.secret) where.secret = req.query.secret;
-    if (req.query.extra_info) where.extra_info = { $like: `%${req.query.extra_info}%` };
+    if (req.query.extra_info) where.extra_info = { [syzoj.db.Op.like]: `%${req.query.extra_info}%` };
     if (req.query.classify_code) where.classify_code = req.query.classify_code;
     if (req.query.email) where.email = req.query.email;
     if (req.query.user_ids) {
       if (!Array.isArray(req.query.user_ids)) req.query.user_ids = [req.query.user_ids];
       let cond = [];
-      for(let id of req.query.user_ids) cond.push({ $eq: id });
-      where.user_id = { $or: cond };
+      for(let id of req.query.user_ids) cond.push({ [syzoj.db.Op.eq]: id });
+      where.user_id = { [syzoj.db.Op.or]: cond };
     }
 
     if (parseInt(req.query.number) !== await Secret.count(where)) throw new ErrorMessage('数目不匹配，请刷新重试');

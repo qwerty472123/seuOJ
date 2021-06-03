@@ -18,9 +18,9 @@ app.get('/discussion/:type?', async (req, res) => {
 
     let where;
     if (in_problems) {
-      where = { contest_id: { $eq: null }, problem_id: { $not: null } };
+      where = { contest_id: { [syzoj.db.Op.eq]: null }, problem_id: { [syzoj.db.Op.not]: null } };
     } else {
-      where = { contest_id: { $eq: null }, problem_id: { $eq: null } };
+      where = { contest_id: { [syzoj.db.Op.eq]: null }, problem_id: { [syzoj.db.Op.eq]: null } };
     }
     let paginate = syzoj.utils.paginate(await Article.count(where), req.query.page, syzoj.config.page.discussion);
     let articles = await Article.query(paginate, where, [['sort_time', 'desc']]);
@@ -57,7 +57,7 @@ app.get('/discussion/problem/:pid', async (req, res) => {
       throw new ErrorMessage('您没有权限进行此操作。');
     }
 
-    let where = { contest_id: { $eq: null }, problem_id: pid };
+    let where = { contest_id: { [syzoj.db.Op.eq]: null }, problem_id: pid };
     let paginate = syzoj.utils.paginate(await Article.count(where), req.query.page, syzoj.config.page.discussion);
     let articles = await Article.query(paginate, where, [['sort_time', 'desc']]);
 
