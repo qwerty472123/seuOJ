@@ -543,7 +543,7 @@ app.post('/contest/:id/secret/import', app.multer.fields([{ name: 'file', maxCou
 
     if (req.files['file']) {
       let fs = Promise.promisifyAll(require('fs'));
-      let wb = xlsx.read(await fs.readFileAsync(req.files['file'][0].path), { type: 'buffer' });
+      let wb = xlsx.read(await fs.readFileAsync(req.files['file'][0].path));
       let activeTab = 0;
       if (wb.Workbook && wb.Workbook.WBView && wb.Workbook.WBView.length > 0 && wb.Workbook.WBView[0].activeTab) activeTab = wb.Workbook.WBView[0].activeTab;
       let ws = wb.Sheets[wb.SheetNames[activeTab]];

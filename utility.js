@@ -33,7 +33,6 @@ let moment = require('moment');
 let url = require('url');
 let querystring = require('querystring');
 let gravatar = require('gravatar');
-let filesize = require('file-size');
 let AsyncLock = require('async-lock');
 let renderer = require('./libs/renderer');
 
@@ -129,6 +128,13 @@ module.exports = {
       d.setMilliseconds(0);
     }
     return parseInt(+d / 1000);
+  },
+  selfLibHashs: new Map(),
+  selfLibHash(position) {
+    if (this.selfLibHashs.has(position)) return this.selfLibHashs.get(position);
+    const hash = this.md5(fs.readFileSync(path.resolve(__dirname, 'static', 'self', position)));
+    this.selfLibHashs.set(position, hash);
+    return hash;
   },
   makeUrl(req_params, form) {
     let res = '';
@@ -317,7 +323,7 @@ module.exports = {
   },
   async saveConfig() {
     let fs = require('fs-extra');
-    fs.writeFileAsync(syzoj.configDir, JSON.stringify(syzoj.config, null, 2));
+    await fs.writeFileAsync(syzoj.configDir, JSON.stringify(syzoj.config, null, 2));
   },
   withTimeoutRetry(func) {
     let attemptCount = 0;

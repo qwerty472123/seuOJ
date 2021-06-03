@@ -75,10 +75,11 @@ this.lib = uri => {
 }
 
 this.selfLib = uri => {
+  let append = uri ? '?' + syzoj.utils.selfLibHash(uri) : '';
   if (useLocalLibs || !syzoj.config.cdn_url) {
-    return syzoj.utils.makeUrl(['self', uri]);
+    return syzoj.utils.makeUrl(['self', uri]) + append;
   } else {
-    return syzoj.config.cdn_url + '/self/' + uri;
+    return syzoj.config.cdn_url + '/self/' + uri + append;
   }
 }
 
