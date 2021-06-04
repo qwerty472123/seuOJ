@@ -94,8 +94,8 @@ if (itemList.some(function(t) {return t.token != null;})) {
     <input name="is_splited" type="checkbox">
     <label>分栏模式</label>
   </div>
-  <% if (rate) { %>
-    <span style="margin-left: 20px;">相似度: <b><%= rate %>%</b> 词法分析方式: <b><%= simType %></b></span>
+  <% if (rate !== null) { %>
+    <span style="margin-left: 20px;"><% if (rate === 'err') { %>查重出错<% } else if (rate === 0) { %>未检测到相似片段<% } else { %>相似度: <b><%= rate %>%</b><% } %> 词法分析方式: <b><%= simType %></b></span>
   <% } else if (can_rate) { %>
     <a style="margin-left: 20px;" href="<%= syzoj.utils.makeUrl(['submissions', 'diff', a_id, b_id], { rate: simType }) %>" class="ui green labeled icon mini button"><i class="ui code icon"></i>显示相似度</a>
   <% } %>

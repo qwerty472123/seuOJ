@@ -203,8 +203,10 @@ app.get('/submissions/diff/:a_id/:b_id', async (req, res) => {
       try {
         const diffs = await sim(simType, { a: a_judge.code, b: b_judge.code });
         if (diffs.length > 0) rate = diffs[0][2];
+        else rate = 0;
       } catch (err) {
         // error
+        rate = 'err';
       }
     }
 
