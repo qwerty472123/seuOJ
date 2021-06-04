@@ -5,6 +5,7 @@ let db = syzoj.db;
 let User = syzoj.model('user');
 let Problem = syzoj.model('problem');
 let Contest = syzoj.model('contest');
+let Secret = syzoj.model('secret');
 
 let Judger = syzoj.lib('judger');
 
@@ -106,6 +107,12 @@ class JudgeState extends Model {
     if (!this.problem) {
       if (this.problem_id) this.problem = await Problem.fromID(this.problem_id);
     }
+  }
+
+  async loadSecret(contest) {
+    if (this.type !== 1 || this.type_info !== contest.id) return;
+    if (!contest.need_secret) return;
+    this.secret = await Secret.find({ type: 0, type_id: contest.id, user_id: this.user_id });
   }
 
   async isAllowedVisitBy(user) {

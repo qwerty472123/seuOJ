@@ -977,6 +977,7 @@ app.get('/contest/:id/submissions', async (req, res) => {
 
     await judge_state.forEachAsync(async obj => {
       await obj.loadRelationships();
+      await obj.loadSecret(contest);
       obj.problem_id = problems_id.indexOf(obj.problem_id) + 1;
       obj.problem.title = syzoj.utils.removeTitleTag(obj.problem.title);
     });
@@ -1031,6 +1032,7 @@ app.get('/contest/submission/:id', async (req, res) => {
     displayConfig.showCode = true;
 
     await judge.loadRelationships();
+    await judge.loadSecret(contest);
     const problems_id = await contest.getProblems();
     judge.problem_id = problems_id.indexOf(judge.problem_id) + 1;
     judge.problem.title = syzoj.utils.removeTitleTag(judge.problem.title);

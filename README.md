@@ -9,7 +9,10 @@ SYZOJ(https://github.com/syzoj/syzoj) 修改版
 
 ```sql
 alter table contest add column scc_rule text after rank_open_time;
+alter table user drop column nameplate;
 ```
+
+BRAEAKING: Configure for secret classify code's color should be changed.
 
 ## 2021/5/4 更新
 

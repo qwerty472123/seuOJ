@@ -32,6 +32,7 @@ app.get('/submissions', async (req, res) => {
     if (user) where.user_id = user.id;
     else if (req.query.submitter) where.user_id = -1;
 
+    let contest = null;
     if (!req.query.contest) {
       if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) {
         res.redirect(syzoj.utils.makeUrl(['contest', syzoj.config.cur_vip_contest, 'submissions']));
@@ -40,7 +41,7 @@ app.get('/submissions', async (req, res) => {
     } else {
       const contestId = Number(req.query.contest);
       if (syzoj.config.cur_vip_contest && contestId !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
-      const contest = await Contest.fromID(contestId);
+      contest = await Contest.fromID(contestId);
       contest.ended = contest.isEnded();
       if ((contest.ended && contest.is_public) || // If the contest is ended and is not hidden
         (curUser && await contest.isSupervisior(curUser)) // Or if the user have the permission to check
@@ -110,6 +111,7 @@ app.get('/submissions', async (req, res) => {
     await judge_state.forEachAsync(async obj => {
       await obj.loadRelationships();
       if (inContest) {
+        await obj.loadSecret(contest);
         obj.problem.title = syzoj.utils.removeTitleTag(obj.problem.title);
       }
     });
@@ -137,7 +139,8 @@ app.get('/submissions', async (req, res) => {
       form: req.query,
       displayConfig: viewConfig,
       isFiltered: isFiltered,
-      allowLangs: allowLangs
+      allowLangs: allowLangs,
+      contest,
     });
   } catch (e) {
     syzoj.log(e);
@@ -157,8 +160,10 @@ app.get('/submissions/diff/:a_id/:b_id', async (req, res) => {
     if (!a_judge || !b_judge) throw new ErrorMessage("提交记录 ID 不正确。");
     if (!await a_judge.isAllowedVisitBy(curUser) || !await b_judge.isAllowedVisitBy(curUser)) throw new ErrorMessage('您没有权限进行此操作。');
 
+    let contest_a = null;
     if (a_judge.type === 1) {
       let contest = await Contest.fromID(a_judge.type_info);
+      contest_a = contest;
       if (syzoj.config.cur_vip_contest && a_judge.type_info !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
       contest.ended = contest.isEnded();
 
@@ -166,11 +171,12 @@ app.get('/submissions/diff/:a_id/:b_id', async (req, res) => {
         !(await a_judge.problem.isAllowedEditBy(res.locals.user) || await contest.isSupervisior(curUser))) {
         throw new Error("比赛未结束或未公开。");
       }
+      await a_judge.loadSecret(contest);
     } else {
       if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
     }
     if (b_judge.type === 1) {
-      let contest = await Contest.fromID(b_judge.type_info);
+      let contest = (contest_a && contest_a.id === b_judge.type_info) ? contest_a : await Contest.fromID(b_judge.type_info);
       if (syzoj.config.cur_vip_contest && b_judge.type_info !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
       contest.ended = contest.isEnded();
 
@@ -178,6 +184,7 @@ app.get('/submissions/diff/:a_id/:b_id', async (req, res) => {
         !(await b_judge.problem.isAllowedEditBy(res.locals.user) || await contest.isSupervisior(curUser))) {
         throw new Error("比赛未结束或未公开。");
       }
+      await b_judge.loadSecret(contest);
     } else {
       if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
     }
@@ -191,7 +198,7 @@ app.get('/submissions/diff/:a_id/:b_id', async (req, res) => {
 
     let contest = null;
     if (a_judge.type === 1 && b_judge.type === 1 && a_judge.type_info === b_judge.type_info) {
-      contest = await Contest.fromID(a_judge.type_info);
+      contest = contest_a;
     }
 
     let rate = null;
@@ -247,7 +254,7 @@ app.get('/submission/:id', async (req, res) => {
     const curUser = res.locals.user;
     if (!await judge.isAllowedVisitBy(curUser)) throw new ErrorMessage('您没有权限进行此操作。');
 
-    let contest;
+    let contest = null;;
     if (judge.type === 1) {
       contest = await Contest.fromID(judge.type_info);
       if (syzoj.config.cur_vip_contest && judge.type_info !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
@@ -257,6 +264,7 @@ app.get('/submission/:id', async (req, res) => {
         !(await judge.problem.isAllowedEditBy(res.locals.user) || await contest.isSupervisior(curUser))) {
         throw new Error("比赛未结束或未公开。");
       }
+      await judge.loadSecret(contest);
     } else {
       if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
     }
@@ -293,6 +301,7 @@ app.get('/submission/:id', async (req, res) => {
         displayConfig: displayConfig
       }, syzoj.config.session_secret) : null,
       displayConfig: displayConfig,
+      contest
     });
   } catch (e) {
     syzoj.log(e);

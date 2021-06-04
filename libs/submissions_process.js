@@ -10,6 +10,7 @@ const getSubmissionInfo = (s, displayConfig) => ({
     language: displayConfig.showCode ? ((s.language != null && s.language !== '') ? syzoj.languages[s.language].show : null) : null,
     codeSize: displayConfig.showCode ? s.code_length : null,
     submitTime: syzoj.utils.formatDate(s.submit_time),
+    secretInfo: s.secret && s.secret.extra_info
 });
 
 const getRoughResult = (x, displayConfig, roughOnly) => {

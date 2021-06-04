@@ -9,7 +9,6 @@ let model = db.define('user', {
   password: { type: Sequelize.STRING(120) },
 
   nickname: { type: Sequelize.STRING(80) },
-  nameplate: { type: Sequelize.TEXT },
   information: { type: Sequelize.TEXT },
 
   ac_num: { type: Sequelize.INTEGER },
