@@ -62,7 +62,13 @@ let model = db.define('judge_state', {
       },
       {
         fields: ['id', 'is_public', 'type_info', 'type']
-      }
+      },
+      {
+        fields: ['problem_id', 'type', 'pending', 'score']
+      },
+      {
+        fields: ['problem_id', 'type', 'status', 'user_id']
+      },
     ]
   });
 

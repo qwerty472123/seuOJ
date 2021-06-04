@@ -1,4 +1,12 @@
 let statisticsStatements = {
+  count:
+  '\
+SELECT \
+	COUNT(DISTINCT(`user_id`)) as `stat_count` \
+FROM `judge_state` `outer_table` \
+WHERE  \
+	`problem_id` = __PROBLEM_ID__ AND `status` = "Accepted" AND `type` = 0 \
+',
   fastest:
   '\
 SELECT \
@@ -521,12 +529,8 @@ class Problem extends Model {
     if (this.type === 'submit-answer' && statisticsCodeOnly.includes(type)) {
       return null;
     }
-
-    let statement = statisticsStatements[type];
-    if (!statement) return null;
-
-    statement = statement.replace('__PROBLEM_ID__', this.id);
-    return await db.countQuery(statement);
+    if (!statisticsStatements[type]) return null;
+    return (await db.query(statisticsStatements.count.replace('__PROBLEM_ID__', this.id)))[0][0]['stat_count'];
   }
 
   // type: fastest / slowest / shortest / longest / earliest
