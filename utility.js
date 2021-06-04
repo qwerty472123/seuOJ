@@ -63,6 +63,18 @@ module.exports = {
         }
       }
 
+      for (let li of Array.from($('li.task-list-item'))) {
+        if (li.tagName.toUpperCase() !== "LI") return;
+
+        const input = li.children[0];
+        if (!input || input.tagName.toUpperCase() !== "INPUT" || input.attribs.type.toLowerCase() !== "checkbox" || input.attribs.class !== "task-list-item-checkbox") return;
+
+        const checked = 'checked' in input.attribs;
+
+        li.children.shift();
+        $(li).html(`<div class="ui checkbox"><input type="checkbox"${checked ? ' checked' : ''}><label>${$(li).html()}</label></div>`);
+      }
+
       return body.html();
     };
     return new Promise((resolve, reject) => {

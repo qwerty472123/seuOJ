@@ -4,6 +4,8 @@ const xssWhiteList = Object.assign({}, require('xss/lib/default').whiteList);
 delete xssWhiteList.audio;
 delete xssWhiteList.video;
 
+xssWhiteList.input = ["type", "disabled", "checked"];
+
 for (const tag in xssWhiteList) {
   xssWhiteList[tag] = xssWhiteList[tag].concat(['style', 'class']);
 }
@@ -43,7 +45,11 @@ async function markdown(markdownCode) {
     return html;
   };
 
-  return await renderer.markdown(markdownCode, redisCache, filter);
+  return await renderer.markdown(markdownCode, redisCache, filter, {
+    markdownItMentions(username) {
+      return '/user/name/' + username;
+    }
+  });
 }
 
 process.on('message', async msg => {

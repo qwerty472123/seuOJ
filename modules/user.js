@@ -142,6 +142,21 @@ app.get('/user/:id', async (req, res) => {
   }
 });
 
+app.get('/user/name/:name', async (req, res) => {
+  try {
+    let username = req.params.name;
+    let user = await User.fromName(username);
+    if (!user) throw new ErrorMessage('无此用户。');
+
+    res.redirect(syzoj.utils.makeUrl(['user', user.id]));
+  } catch (e) {
+    syzoj.log(e);
+    res.render('error', {
+      err: e
+    });
+  }
+});
+
 app.get('/user/:id/edit', async (req, res) => {
   try {
     let id = parseInt(req.params.id);

@@ -312,3 +312,17 @@ code {
   padding-left: 0.8rem !important;
   padding-right: 0 !important;
 }
+
+ul.contains-task-list li.task-list-item {
+	list-style-type: none;
+  margin-left: -18.5px;
+}
+ol.contains-task-list li.task-list-item {
+	padding-left: 0.3em;
+}
+li.task-list-item {
+	margin-top: 6px;
+}
+li.task-list-item .ui.checkbox {
+  pointer-events: none;
+}

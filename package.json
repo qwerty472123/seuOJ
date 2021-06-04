@@ -24,7 +24,7 @@
   "homepage": "https://github.com/syzoj/syzoj#readme",
   "dependencies": {
     "@4qwerty7/sim-node": "^3.2.9",
-    "@4qwerty7/syzoj-renderer": "^1.1.0",
+    "@4qwerty7/syzoj-renderer": "^1.2.0",
     "ansi-to-html": "^0.6.9",
     "async-lock": "^1.1.3",
     "bluebird": "^3.7.2",
