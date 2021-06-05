@@ -3,6 +3,11 @@ SYZOJ(https://github.com/syzoj/syzoj) 修改版
 # 部署
 参考原版 [部署指南](https://github.com/syzoj/syzoj/wiki/%E9%83%A8%E7%BD%B2%E6%8C%87%E5%8D%97)。
 
+# Vendor 内容删改
+
+- `semantic-ui` 删除 `@import url(https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic&subset=latin);`
+- `blueimp-md5` 删除对 AMD `define` 的支持以解决与 `monaco-editor` 的冲突。
+
 # 升级须知
 
 ## 2021/6/1 更新

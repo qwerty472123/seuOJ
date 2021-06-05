@@ -13,11 +13,11 @@
       <div class="ui form">
       <div class="field">
 	    	<label for="username">用户名</label>
-	    	<input type="text" id="username" name="username" value="<%= edited_user.username %>"<% if (!user.allowedManage) { %> readonly<% } %>>
+	    	<input type="text" autocomplete="username" id="username" name="username" value="<%= edited_user.username %>"<% if (!user.allowedManage) { %> readonly<% } %>>
 	    </div>
       <div class="field">
 	    	<label for="sex">性别</label>
-	    	<select class="ui dropdown" name="sex">
+	    	<select class="ui dropdown" autocomplete="sex" name="sex">
           <option value="0" <%= edited_user.sex == 0 ? 'selected': '' %>>其它/保密</option>
           <option value="1" <%= edited_user.sex == 1 ? 'selected': '' %>>男</option>
           <option value="-1" <%= edited_user.sex == -1 ? 'selected': '' %>>女</option>
@@ -25,7 +25,7 @@
 	    </div>
 	    <div class="field">
 	    	<label for="email">Email</label>
-	    	<input class="font-content" type="email" id="email" name="email" value="<%= edited_user.email %>"<% if (!user.allowedManage) { %> readonly<% } %>>
+	    	<input class="font-content" autocomplete="email" type="email" id="email" name="email" value="<%= edited_user.email %>"<% if (!user.allowedManage) { %> readonly<% } %>>
 	    </div>
       <div class="inline field">
         <label class="ui header">公开 Email</label>
@@ -53,14 +53,14 @@
       <div class="ui form">
       <div class="field">
       <label class="ui header">密码</label>
-        <input type="password" placeholder="原密码（留空则不修改）" name="old_password" id="old_password">
+        <input type="password" autocomplete="current-password" placeholder="原密码（留空则不修改）" name="old_password" id="old_password">
       </div>
       <div class="two fields" id="new_password_field">
         <div class="field">
-          <input type="password" placeholder="新密码" name="new_password" id="password1">
+          <input type="password" autocomplete="new-password" placeholder="新密码" name="new_password" id="password1">
         </div>
         <div class="field">
-          <input type="password" placeholder="确认密码" id="password2">
+          <input type="password" autocomplete="new-password" placeholder="确认密码" id="password2">
         </div>
       </div>
       <%
@@ -146,8 +146,6 @@ function check() {
 
 	return true;
 }
-</script>
-<script>
 $(function () {
 	$('.ui.dropdown:not(.simple)').dropdown();
 });

@@ -2,22 +2,33 @@
 this.adminPage = 'links';
 %>
 <%- include('admin_header') -%>
+<div class="ui form">
+
 <table class="ui center aligned celled table">
 <thead>
   <tr>
     <th>名称</th>
     <th>链接</th>
-    <th width="50px">删除</th>
+    <th class="center aligned" width="50px">操作</th>
   </tr>
 </thead>
 
 <tbody>
+  <tr>
+    <td>
+      <input type="text" id="add_title">
+    </td>
+    <td>
+      <input type="text" id="add_url">
+    </td>
+    <td><a id="add_button" style="color: #000; " title="添加友链" href="#"><i class="fitted add icon"></i></a></td>
+  </tr>
   <% for (let i = 0; i < links.length; i++) { %>
     <tr>
       <td><%= links[i].title %></td>
       <td><a href="<%= links[i].url %>"><%= links[i].url %></a></td>
       <td>
-        <a onclick="$('#modal-remove-<%= i %>').modal('show');" style="color: #000; " href="#"><i class="remove icon"></i></a>
+        <a onclick="$('#modal-remove-<%= i %>').modal('show');" style="color: #000; " href="#"><i class="fitted remove icon"></i></a>
         <div class="ui basic modal" id="modal-remove-<%= i %>">
           <div class="ui icon header">
             <i class="remove icon"></i>
@@ -42,19 +53,6 @@ this.adminPage = 'links';
   <% } %>
 </tbody>
 </table>
-
-<div class="ui form">
-  <div class="two fields">
-    <div class="field">
-      <label>名称</label>
-      <input type="text" id="add_title">
-    </div>
-    <div class="field">
-      <label>链接</label>
-      <input type="text" id="add_url">
-    </div>
-  </div>
-  <div style="text-align: center; "><div id="add_button" class="ui submit blue labeled icon button"><i class="ui add icon"></i>添加</a></div>
 </div>
 
 <form method="post" id="submit_form">

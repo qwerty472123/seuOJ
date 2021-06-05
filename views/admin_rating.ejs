@@ -14,19 +14,25 @@
       </div>
     </div>
   </div>
-  <button class="ui blue labeled icon button" name="type" value="doit" type="submit"><i class="ui calculator icon"></i>计算此比赛的积分</button>
+  <p>
+    <button class="ui blue labeled icon button" name="type" value="doit" type="submit"><i class="ui calculator icon"></i>计算此比赛的积分</button>
+  </p>
 </form>
-
+<p>
 注意：如果删除一个比赛的积分，则该比赛之上的所有比赛也将被删除，积分将还原至该比赛之前的状态！
+</p>
 <form action="<%= syzoj.utils.makeUrl(['admin', 'rating', 'delete']) %>" method="POST">
-  <div class="ui relaxed divided list">
+  <table class="ui blue unstackable compact center aligned table">
+    <thead><tr><th>比赛</th><th>操作</th></tr></thead>
+    <tbody>
     <% for (const calc of calcs) { %>
-      <div class="item">
-        <%= calc.contest.title %>
-        <button name="calc_id" value="<%= calc.id %>" type="submit" style="color: #000; padding: 0; border: none; background: none;"><i class="remove icon"></i></button>
-      </div>
+      <tr>
+        <td class="left aligned"><i class="calendar text outline icon"></i><%= calc.contest.title %></td>
+        <td><button name="calc_id" value="<%= calc.id %>" type="submit" style="color: #000; padding: 0; border: none; background: none;"><i class="remove icon"></i></button></td>
+      </tr>
     <% } %>
-  </div>
+  </tbody>
+  </table>
 </div>
 </form>
 <%- include('admin_footer') -%>
