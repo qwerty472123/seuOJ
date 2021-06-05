@@ -12,13 +12,13 @@
     <% if (contest) { %>
       <div class="section"><a href="<%= syzoj.utils.makeUrl(['contests']) %>">比赛</a></div>
       <i class="right angle icon divider"></i>
-      <a href="<%= syzoj.utils.makeUrl(['contest', contest.id, 'qa']) %>" class="active section"><%= contest.title %></a>
+      <a href="<%= syzoj.utils.makeUrl(['discussion', 'contest', contest.id]) %>" class="active section"><%= contest.title %></a>
     <% } else if (problem) { %>
       <div class="section"><a href="<%= syzoj.utils.makeUrl(['discussion', 'problems']) %>">题目</a></div>
       <i class="right angle icon divider"></i>
       <a href="<%= syzoj.utils.makeUrl(['discussion', 'problem', problem.id]) %>" class="active section"><%= problem.title %></a>
     <% } else { %>
-      <a href="<%= syzoj.utils.makeUrl(['discussion', 'global']) %>" class="section">全局板块</a>
+      <a href="<%= syzoj.utils.makeUrl(['discussion', 'global']) %>" class="section"><b>综合</b></a>
     <% } %>
   </div>
   <h1><%= article.title %></h1>

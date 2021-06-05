@@ -9,7 +9,7 @@ let User = syzoj.model('user');
 app.get('/discussion/:type?', async (req, res) => {
   try {
     if (syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) {
-      res.redirect(syzoj.utils.makeUrl(['contest', syzoj.config.cur_vip_contest, 'qa']));
+      res.redirect(syzoj.utils.makeUrl(['discussion', 'contest', syzoj.config.cur_vip_contest]));
     }
     if (!['global', 'problems'].includes(req.params.type)) {
       res.redirect(syzoj.utils.makeUrl(['discussion', 'global']));
@@ -78,7 +78,7 @@ app.get('/discussion/problem/:pid', async (req, res) => {
   }
 });
 
-app.get('/contest/:id/qa', async (req, res) => {
+app.get('/discussion/contest/:id', async (req, res) => {
   try {
     let contest_id = parseInt(req.params.id);
     if (syzoj.config.cur_vip_contest && contest_id !== syzoj.config.cur_vip_contest && (!res.locals.user || !res.locals.user.is_admin)) throw new ErrorMessage('比赛中！');
@@ -87,7 +87,7 @@ app.get('/contest/:id/qa', async (req, res) => {
     if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入准入码。');
     let where;
     if (res.locals.user) where = (await contest.isSupervisior(res.locals.user)) ? { contest_id: contest_id } : { contest_id: contest_id, [Sequelize.Op.or]: [{is_notice: true}, {user_id: res.locals.user.id}] };
-    else where = { contest_id: contest_id, is_notice: true};
+    else where = { contest_id: contest_id, is_notice: true };
     if (contest.isEnded()) where = { contest_id: contest_id };
     let paginate = syzoj.utils.paginate(await Article.count(where), req.query.page, syzoj.config.page.discussion);
     let articles = await Article.query(paginate, where, [['is_notice' ,'desc'], ['sort_time', 'desc']]);
@@ -99,7 +99,8 @@ app.get('/contest/:id/qa', async (req, res) => {
       paginate: paginate,
       problem: null,
       in_problems: false,
-      in_contest: contest
+      in_contest: contest,
+      contest
     });
   } catch (e) {
     syzoj.log(e);
@@ -295,7 +296,7 @@ app.post('/article/:id/delete', async (req, res) => {
 
     await article.destroy();
     
-    if(contest) res.redirect(syzoj.utils.makeUrl(['contest', contest.id, 'qa']));
+    if(contest) res.redirect(syzoj.utils.makeUrl(['discussion', 'contest', contest.id]));
     else res.redirect(syzoj.utils.makeUrl(['discussion', 'global']));
   } catch (e) {
     syzoj.log(e);

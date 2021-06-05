@@ -70,8 +70,13 @@
             syzoj.utils.makeUrl(['submissions'], {contest: contest.id}) :
             syzoj.utils.makeUrl(['contest', contest.id, 'submissions']); %>
           <a class="ui small positive button" href="<%= submissionsUrl %>">提交记录</a>
-          <% let qaUrl = syzoj.utils.makeUrl(['contest', contest.id, 'qa']); %>
-          <a class="ui small brown button" href="<%= qaUrl %>">问答</a>
+          <% let qaUrl = syzoj.utils.makeUrl(['discussion', 'contest', contest.id]); %>
+          <a class="ui small brown button" style="position: relative;" href="<%= qaUrl %>">
+            问答
+            <% if (discussionCount) { %>
+              <div class="floating ui red tiny circular label" style="background-color: #8c5633 !important; top: -0.6em; "><%= discussionCount %></div>
+            <% } %>
+          </a>
           <% if (isSupervisior) { %>
             <a class="ui small button" href="<%= syzoj.utils.makeUrl(['contest', contest.id, 'edit']) %>">编辑比赛</a>
             <% if (contest.need_secret) { %>

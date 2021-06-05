@@ -7,6 +7,7 @@ const User = syzoj.model('user');
 const Secret = syzoj.model('secret');
 const ProblemTagMap = syzoj.model('problem_tag_map');
 const ProblemTag = syzoj.model('problem_tag');
+const Article = syzoj.model('article');
 
 const Email = require('../libs/email');
 
@@ -750,6 +751,12 @@ app.get('/contest/:id', async (req, res) => {
       scc = { ruleName: detail[0], codeHTML: detail[3] };
     }
 
+    if (res.locals.user) where = isSupervisior ? { contest_id: contest_id } : { contest_id: contest_id, [Sequelize.Op.or]: [{is_notice: true}, {user_id: res.locals.user.id}] };
+    else where = { contest_id: contest_id, is_notice: true };
+    if (contest.ended) where = { contest_id: contest_id };
+
+    let discussionCount = await Article.count(where);
+
     res.render('contest', {
       contest,
       problems,
@@ -762,7 +769,8 @@ app.get('/contest/:id', async (req, res) => {
               ? player.ban_problems_id.split('|').map(x => parseInt(x)) : null,
       allowReleaseRank,
       havingUnpublicProblems,
-      scc
+      scc,
+      discussionCount
     });
   } catch (e) {
     syzoj.log(e);
