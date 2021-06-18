@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta content="IE=edge" http-equiv="X-UA-Compatible">
     <meta name="renderer" content="webkit">
-    <% if (syzoj.config.logo.url) { %>
+    <% if (syzoj.config.logo.url && !localResource) { %>
     <link rel="icon" href="<%= syzoj.config.logo.url %>">
     <% } %>
     <meta name="viewport" content="width=1200">
@@ -50,6 +50,11 @@
 <%- html %>
 </div>
 </div>
+<% if (runPrint) { %>
+<script type="text/javascript">
+  print();
+</script>
+<% } %>
 </body>
 </html>
 

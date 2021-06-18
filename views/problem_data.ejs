@@ -56,6 +56,16 @@ function getIcon(filename) {
             </tr>
           </thead>
           <tbody>
+            <% if (problem.is_public) { %>
+            <tr>
+              <td class="left aligned"><i class="file file alternate outline icon"></i> 题目描述</td>
+              <td><i class="minus icon"></i></td>
+              <td><a style="color: #000; " target="_blank" href="<%= syzoj.utils.makeUrl(['problem', problem.id, 'export', 'html'], {'print': 1}) %>"><i class="print icon"></i></td>
+              <% if (problem.allowedEdit) { %>
+                <td><i class="minus icon"></i></td>
+              <% } %>
+            </tr>
+            <% } %>
             <% if (testdata.zip) { %>
             <tr>
               <td class="left aligned"><i class="file archive outline icon"></i> 完整数据包</td>

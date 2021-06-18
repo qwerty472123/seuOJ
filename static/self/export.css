@@ -1,6 +1,5 @@
-pre{word-wrap:break-word;white-space:prewrap;}
-body{font-family: 'Open Sans', 'Source Han Sans SC', 'Noto Sans CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft Yahei', sans-serif;}
-p.header, body, pre{font-family: Courier, monospace;}
+pre{word-wrap:break-word;white-space:pre-wrap;}
+body{font-family: 'Open Sans', 'Source Han Sans SC', 'Noto Sans CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft Yahei', sans-serif;font-size: 14px;}
 table.highlight, .highlight tr, .highlight td { border-spacing: 0; border-collapse: separate; padding: 0 }
 .highlight pre { white-space: pre-wrap; line-height: normal }
 table.highlight td.lineno { vertical-align: top; padding-left: 10px; padding-right: 10px; user-select: none; -webkit-user-select: none }

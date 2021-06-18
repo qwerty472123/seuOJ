@@ -357,7 +357,8 @@ ${problem.limit_and_hint}`;
     res.render('problem_export', {
       html: content.article,
       title,
-      localResource: !!req.query.local
+      localResource: !!req.query.local,
+      runPrint: !!req.query.print
     });
   } catch (e) {
     syzoj.log(e);
