@@ -918,7 +918,7 @@ app.get('/contest/:id/submissions', async (req, res) => {
     if (!await contest.allowedSecret(req, res)) throw new ErrorMessage('您尚未输入准入码。');
 
     if (contest.isEnded()) {
-      res.redirect(syzoj.utils.makeUrl(['submissions'], { contest: contest_id }));
+      res.redirect(syzoj.utils.makeUrl(['submissions'], Object.assign({ contest: contest_id }, req.query)));
       return;
     }
 
