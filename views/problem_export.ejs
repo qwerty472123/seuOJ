@@ -1,0 +1,55 @@
+<%- include('util') -%>
+<!DOCTYPE html>
+<html lang="zh-CN" style="width: 100%;">
+<head>
+    <meta charset="utf-8">
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta name="renderer" content="webkit">
+    <% if (syzoj.config.logo.url) { %>
+    <link rel="icon" href="<%= syzoj.config.logo.url %>">
+    <% } %>
+    <meta name="viewport" content="width=1200">
+    <title><%= title %></title>
+    <% if (localResource) { %>
+        <link href="./resource/self/tomorrow.css" rel="stylesheet">
+        <link href="./resource/self/math.css" rel="stylesheet">
+        <link href="./resource/self/style.css" rel="stylesheet">
+        <link href="./resource/self/export.css" rel="stylesheet">
+        <link href="./resource/vendor/KaTeX/0.13.11/katex.min.css" rel="stylesheet">
+    <% } else { %>
+        <link href="<%- selfLib('tomorrow.css') %>" rel="stylesheet">
+        <link href="<%- selfLib('math.css') %>" rel="stylesheet">
+        <link href="<%- selfLib('style.css') %>" rel="stylesheet">
+        <link href="<%- selfLib('export.css') %>" rel="stylesheet">
+        <link href="<%- lib('KaTeX/0.13.11/katex.min.css') %>" rel="stylesheet">
+    <% } %>
+    <% if (localResource) { %>
+        <link href="./resource/google-fonts/fira-mono.css" rel="stylesheet">
+        <link href="./resource/google-fonts/lato.css" rel="stylesheet">
+        <link href="./resource/google-fonts/open-sans.css" rel="stylesheet">
+        <link href="./resource/google-fonts/exo-2.css" rel="stylesheet">
+    <% } else if (useLocalLibs || !syzoj.config.google_fonts || !syzoj.config.google_fonts.url || !['like-google-fonts', 'like-local'].includes(syzoj.config.google_fonts.type)) { %>
+      <link href="<%- syzoj.utils.makeUrl(['google-fonts', 'fira-mono.css']) %>" rel="stylesheet">
+      <link href="<%- syzoj.utils.makeUrl(['google-fonts', 'lato.css']) %>" rel="stylesheet">
+      <link href="<%- syzoj.utils.makeUrl(['google-fonts', 'open-sans.css']) %>" rel="stylesheet">
+      <link href="<%- syzoj.utils.makeUrl(['google-fonts', 'exo-2.css']) %>" rel="stylesheet">
+    <% } else if (syzoj.config.google_fonts.type === 'like-local') { %>
+      <link href="<%- syzoj.config.google_fonts.url %>/google-fonts/fira-mono.css" rel="stylesheet">
+      <link href="<%- syzoj.config.google_fonts.url %>/google-fonts/lato.css" rel="stylesheet">
+      <link href="<%- syzoj.config.google_fonts.url %>/google-fonts/open-sans.css" rel="stylesheet">
+      <link href="<%- syzoj.config.google_fonts.url %>/google-fonts/exo-2.css" rel="stylesheet">
+    <% } else { %>
+      <link href="<%- syzoj.config.google_fonts.url %>/css?family=Fira+Mono" rel="stylesheet">
+      <link href="<%- syzoj.config.google_fonts.url %>/css?family=Lato:400,700,400italic,700italic&subset=latin" rel="stylesheet">
+      <link href="<%- syzoj.config.google_fonts.url %>/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i,800,800i&amp;subset=latin-ext" rel="stylesheet">
+      <link href="<%- syzoj.config.google_fonts.url %>/css?family=Exo+2:600" rel="stylesheet">
+    <% } %>
+</head>
+<body style="height: 100%;">
+<div class="ui main container">
+<%- html %>
+</div>
+</div>
+</body>
+</html>
+

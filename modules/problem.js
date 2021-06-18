@@ -288,6 +288,83 @@ app.get('/problem/:id/export', async (req, res) => {
   }
 });
 
+app.get('/problem/:id/export/html', async (req, res) => {
+  try {
+    if (syzoj.config.cur_vip_contest && (!res.locals.user || !await res.locals.user.hasPrivilege('manage_problem'))) throw new ErrorMessage('比赛中！');
+    let id = parseInt(req.params.id);
+    let problem = await Problem.fromID(id);
+    if (!problem || !problem.is_public) throw new ErrorMessage('无此题目。');
+
+    let tags = await problem.getTags();
+
+    let tagsDesc = tags.map(tag => tag.name).join(', ');
+
+    let prop = [];
+    if (problem.type !== 'submit-anwser') {
+      if (problem.type === 'traditional') {
+        prop.push(
+          `* 输入文件：${!problem.file_io ? '标准输入流' : problem.file_io_input_name}`,
+          `* 输出文件：${!problem.file_io ? '标准输出流' : problem.file_io_output_name}`
+        );
+      }
+      prop.push(
+        `* 时间限制：${problem.time_limit} ms`,
+        `* 空间限制：${problem.memory_limit} MiB`
+      );
+    }
+    prop.unshift(`* 题目类型：${problem.type.replace('traditional', '传统').replace('submit-answer', '提交答案').replace('interaction', '交互')}`);
+    prop.push(`* 题目标签：${tagsDesc}`);
+    if (problem.additional_file_id != null) prop.push('* 存在附加文件');
+
+    let article = `## ${syzoj.config.title}${id} - ${problem.title}
+
+${prop.join('\n')}
+
+### 题目描述
+
+${problem.description}
+
+### 输入格式
+
+${problem.input_format}
+
+### 输出格式
+
+${problem.output_format}
+
+### 样例
+
+${problem.example}
+`;
+
+    if (problem.limit_and_hint) article += `
+### 数据范围与提示
+
+${problem.limit_and_hint}`;
+
+    if (req.query.type === 'markdown' || req.query.type === 'md') {
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.end(article);
+      return;
+    }
+
+    let content = { article };
+
+    await syzoj.utils.markdown(content, ['article']);
+
+    let title = `${syzoj.config.title}${id} - ${problem.title}`;
+
+    res.render('problem_export', {
+      html: content.article,
+      title,
+      localResource: !!req.query.local
+    });
+  } catch (e) {
+    syzoj.log(e);
+    res.send({ success: false, error: e });
+  }
+});
+
 app.get('/problem/:id/edit', async (req, res) => {
   try {
     if (syzoj.config.cur_vip_contest && (!res.locals.user || !await res.locals.user.hasPrivilege('manage_problem'))) throw new ErrorMessage('比赛中！');
