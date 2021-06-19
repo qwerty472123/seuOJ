@@ -316,31 +316,22 @@ app.get('/problem/:id/export/html', async (req, res) => {
     prop.push(`* 题目标签：${tagsDesc}`);
     if (problem.additional_file_id != null) prop.push('* 存在附加文件');
 
-    let article = `## ${syzoj.config.title}${id} - ${problem.title}
+    const articleParts = [`## ${syzoj.config.title}${id} - ${problem.title}\n\n${prop.join('\n')}`];
 
-${prop.join('\n')}
-
-### 题目描述
-
-${problem.description}
-
-### 输入格式
-
-${problem.input_format}
-
-### 输出格式
-
-${problem.output_format}
-
-### 样例
-
-${problem.example}
-`;
-
-    if (problem.limit_and_hint) article += `
-### 数据范围与提示
-
-${problem.limit_and_hint}`;
+    for (const [prop, name] of [
+      ['description', '题目描述'],
+      ['input_format', '输入格式'],
+      ['output_format', '输出格式'],
+      ['example', '样例'],
+      ['limit_and_hint', '数据范围与提示'],
+    ]) {
+      const val = problem[prop];
+      if (val) {
+        articleParts.push(`### ${name}\n\n${val}`);
+      }
+    }
+    
+    const article = articleParts.join('\n\n');
 
     if (req.query.type === 'markdown' || req.query.type === 'md') {
       res.setHeader('Content-Type', 'text/plain; charset=utf-8');
