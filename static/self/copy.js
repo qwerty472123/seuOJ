@@ -1,6 +1,6 @@
 $(function (){
     if (!$(".copy-button").length) {
-        $(".ui.segment > pre").parent().prepend("<a class=\"copy-button ui tiny button\" style=\"position: absolute;top: 0;right: -4px;border-top-left-radius: 0px;border-bottom-right-radius: 0px\">复制</a>");
+        $(".ui.segment > pre").parent().prepend("<a class=\"copy-button ui tiny button\" style=\"position: absolute;top: -1px;right: -4px;border-top-left-radius: 0px;border-bottom-right-radius: 0px\">复制</a>");
     }
     $(".copy-button").click(function() {
         var dataFor = $(this).attr('data-for');
